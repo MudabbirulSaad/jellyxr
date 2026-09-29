@@ -1,10 +1,10 @@
 # Test and validation strategy
 
-Status: M1 unit/build checks passed and initial server/sign-in-screen observations recorded; no complete application/device acceptance scenario below has passed. Updated: 2026-09-29. See [M1 readiness evidence](m1-readiness.md).
+Status: M1 unit/build checks passed; signed-in desktop video start, Quest USB setup and owner-reported Quest library access recorded. No complete application/device acceptance scenario below has passed. Updated: 2026-09-29. See [M1 readiness evidence](m1-readiness.md).
 
 ## Environments and fixtures
 
-Quest 3 and Jellyfin 10.11.4 are the initial configuration; locked SDK 1.0.0 declares minimum server 10.10.0. G1 must still record Quest OS/Browser and fixture evidence. Test ordinary behaviour on named desktop/mobile browsers as well as Quest Browser. Vision Pro is a later platform gate.
+Quest 3 and Jellyfin 10.11.4 are the initial configuration; locked SDK 1.0.0 declares minimum server 10.10.0. G1 has Android build/Browser package identifiers; About UI labels and complete fixture evidence remain pending. Test ordinary behaviour on named desktop/mobile browsers as well as Quest Browser. Vision Pro is a later platform gate.
 
 Use an ordinary user, a restricted user and an administrator on a test server. Prepare permissioned movie/series media with known resume positions, alternate editions, multiple audio tracks, chapters and text/ASS/bitmap subtitles. Include a compatible direct-play file, remux/direct-stream case, forced transcode case, prohibited-transcode case and malformed/unavailable source. Record codec/profile, container, resolution, frame rate, bitrate, audio and subtitle properties.
 

@@ -1,6 +1,6 @@
 # Development testing on PC and Quest
 
-Status: M1 build and client connection setup exercised; authenticated playback, emulator installation and Quest verification remain pending. Updated: 2026-09-29. Actual results are in the [M1 readiness report](m1-readiness.md).
+Status: M1 build, signed-in desktop smoke test and Quest USB forwarding exercised; full playback checks, emulator installation and manual remote inspection remain pending. Updated: 2026-09-29. Actual results are in the [M1 readiness report](m1-readiness.md).
 
 Use the PC for rapid ordinary-browser and simulated XR iteration, then test the same increment on Quest when its correctness depends on the device. This document describes how to execute the [test strategy](test-strategy.md); it does not add a competing set of acceptance requirements. Work belongs to [W-02](roadmap.md#w-02) and continues through W-09.
 

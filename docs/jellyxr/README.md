@@ -33,7 +33,7 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 | Architecture | [Deployment and security](04-architecture/deployment-security.md) | Reference topology; device validation pending |
 | Delivery | [Roadmap and work breakdown](05-delivery/roadmap.md) | M0 complete; M1 readiness in progress; immersive implementation not started |
 | Delivery | [Test and validation strategy](05-delivery/test-strategy.md) | Unit/build baseline passed; application acceptance scenarios remain incomplete |
-| Delivery | [PC and Quest development testing](05-delivery/development-testing-workflow.md) | Build/ADB setup exercised; sign-in, emulator and Quest verification pending |
+| Delivery | [PC and Quest development testing](05-delivery/development-testing-workflow.md) | Build, signed-in desktop and Quest USB setup exercised; complete playback, emulator and remote inspection pending |
 | Delivery | [M1 readiness evidence](05-delivery/m1-readiness.md) | Actual build results, fixture inventory and outstanding actions |
 | Delivery | [Risks and open questions](05-delivery/risks.md) | Active decision backlog |
 | Decisions | [Decision register](06-decisions/decision-register.md) | Confirmed, proposed and deferred entries |
