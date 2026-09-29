@@ -1,6 +1,6 @@
 # Requirements traceability
 
-Status: planning coverage complete; scenario execution pending. Updated: 2026-09-29.
+Status: planning coverage complete; M1 build/readiness evidence recorded, application acceptance scenarios incomplete. Updated: 2026-09-29.
 
 Authoritative behaviour is defined in the linked requirements. This matrix maps intent to design, delivery and evidence without restating acceptance text.
 
@@ -70,6 +70,6 @@ Goals are defined in the [Product BRD](../01-business/product-brd.md); BF/BX ent
 
 All 22 P0 functional requirements and all 10 nonfunctional requirements have work and test mappings. FR-023 through FR-029 remain extension requirements with future scenarios. Documentation completeness does not mean those scenarios have passed.
 
-W-01 produces the package; W-02 prepares the baseline/test workflow and resolves experimental choices before production implementation. The [roadmap](../05-delivery/roadmap.md) maps W-01 through W-11 to milestones M0 through M7 and ordered implementation steps. The [testing workflow](../05-delivery/development-testing-workflow.md) separates PC iteration from actual-device evidence; it adds no competing product requirements. The [feature parity matrix](feature-parity.md) provides per-capability preservation status. The [decision register](../06-decisions/decision-register.md) and [risks](../05-delivery/risks.md) identify remaining gates.
+W-01 produced the package. W-02 preparation now has [M1 evidence](../05-delivery/m1-readiness.md), including initial build and server-screen checks; experimental choices remain open before production implementation. The [roadmap](../05-delivery/roadmap.md) maps W-01 through W-11 to milestones M0 through M7 and ordered implementation steps. The [testing workflow](../05-delivery/development-testing-workflow.md) separates PC iteration from actual-device evidence; it adds no competing product requirements. The [feature parity matrix](feature-parity.md) provides per-capability preservation status. The [decision register](../06-decisions/decision-register.md) and [risks](../05-delivery/risks.md) identify remaining gates.
 
 When a requirement changes, update its work/scenario mappings and any affected business goal. Do not remove an inherited feature merely by moving its XR adaptation to a later release.

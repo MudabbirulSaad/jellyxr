@@ -1,6 +1,6 @@
 # XR experience BRD
 
-Status: first-release journey confirmed; visual treatment and detailed interaction targets proposed. Updated: 2026-09-29.
+Status: first-release journey and Cinema Observatory direction confirmed; detailed spatial behaviour awaits device validation. Updated: 2026-09-29.
 
 ## Intended experience
 

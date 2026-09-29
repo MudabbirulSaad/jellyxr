@@ -60,6 +60,8 @@ All links below were consulted in this planning conversation or inspected locall
 | <a id="s20"></a>S20 | [Meta Immersive Web Emulation Runtime](https://github.com/meta-quest/immersive-web-emulation-runtime), consulted 2026-09-29 | Optional embeddable WebXR emulation runtime; no project integration selected |
 | <a id="s21"></a>S21 | [Meta browser remote debugging](https://developers.meta.com/horizon/documentation/web/browser-remote-debugging/), updated 2026-07-22, consulted 2026-09-29 | Developer Mode, ADB port reversal and desktop DevTools workflow; development access is distinct from deployment qualification |
 | <a id="s22"></a>S22 | [Playwright visual comparisons](https://playwright.dev/docs/test-snapshots), consulted 2026-09-29 | Controlled screenshot baselines and environment variance; candidate automation only |
+| <a id="s23"></a>S23 | [Google Android repository metadata](https://dl.google.com/android/repository/repository2-3.xml), inspected 2026-09-29; Windows platform-tools_r37.0.1-win.zip | Actual Platform Tools download/version/checksum; device connection still needs local evidence |
+| <a id="s24"></a>S24 | Locked @jellyfin/sdk 1.0.0 package installed from [package-lock.json](../../../package-lock.json); lib/versions.js inspected 2026-09-29 | Installed minimum server 10.10.0 and generated API version 13.0.0; constants are not a runtime compatibility result |
 
 ## Provenance rules
 
@@ -67,4 +69,4 @@ Record the exact commit for code-derived observations. For web guidance, keep th
 
 The local UI/UX skill was downloaded from nextlevelbuilder/ui-ux-pro-max-skill at commit 09170eec67eefd46a7ae85de61b40c194020f997. Its search examples were adapted to this workspace. Its licence is separate from the Jellyfin application licence.
 
-No application benchmark, support matrix pass or headset usability result exists from this documentation work.
+No XR benchmark, complete support-matrix pass or headset usability result exists from M1. Build results and limited connection observations are recorded separately in [M1 readiness evidence](../05-delivery/m1-readiness.md).

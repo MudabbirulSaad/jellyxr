@@ -2,7 +2,7 @@
 
 ## Current phase
 
-The authorised phase is repository setup and development documentation. Product implementation and selection of additional XR technologies follow the documentation review. The product owner is MudabbirulSaad.
+The authorised phase is M1 development and Quest 3 readiness: reproduce the inherited build, connect the existing test configuration, prepare development-only emulation and headset debugging, define Cinema Observatory, and add checks for xr. The product owner is MudabbirulSaad. Renderer selection and immersive playback experiments belong to M2; M1 does not authorise replacing the inherited stack or media player.
 
 Start with [the documentation index](docs/jellyxr/README.md), then the [decision register](docs/jellyxr/06-decisions/decision-register.md) and requirements relevant to the task.
 
@@ -16,7 +16,8 @@ Start with [the documentation index](docs/jellyxr/README.md), then the [decision
 - New implementation code follows upstream TypeScript and Jellyfin SDK conventions. Do not introduce an XR engine, replace the playback system or upgrade the inherited stack merely to prepare documentation.
 - Reuse the server's accounts, permissions and media; do not create a second account system.
 - Read the exact baseline source before claiming a reusable interface. Distinguish source inspection, vendor documentation, design proposals and device-tested behaviour.
-- No headset or server compatibility has been demonstrated by this documentation phase.
+- Record ordinary desktop, emulated XR and actual Quest evidence separately in the M1 readiness report. Public server reachability does not prove authenticated playback or headset compatibility.
+- Use UI/UX Pro Max for applicable guidance. Cinema Observatory is the selected direction; new copy must describe real actions and states. Do not add filler text, fabricated statistics, invented testimonials or decorative controls without behaviour.
 - Keep credentials, server tokens, private endpoints and personal media out of committed examples and diagnostics.
 - Preserve upstream source layout and keep future XR integration changes narrow enough to review during upstream updates.
 

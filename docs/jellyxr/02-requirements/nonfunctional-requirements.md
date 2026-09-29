@@ -1,10 +1,10 @@
 # Nonfunctional requirements
 
-Status: proposed targets, not measured results. Updated: 2026-09-29.
+Status: initial qualification targets accepted by the product owner for M1; measured results pending. Updated: 2026-09-29.
 
-All requirements below are P0 for the first release. The product and validation leads accept or revise numeric targets at G1 before they become release criteria. Record actual device, OS/browser, server, media and network conditions. See [test strategy](../05-delivery/test-strategy.md).
+All requirements below are P0 for the first release. The product owner accepted the current targets in the M1 plan (D-10). Record actual device, OS/browser, server, media and network conditions; acceptance of a target does not imply it has been measured or met. See [test strategy](../05-delivery/test-strategy.md).
 
-| ID | Requirement and rationale | Proposed acceptance target | Dependencies / source |
+| ID | Requirement and rationale | Accepted initial target | Dependencies / source |
 | --- | --- | --- | --- |
 | <a id="nfr-001"></a>NFR-001 | Sustain XR rendering while decoding video | At the selected supported refresh rate, p95 application frame work stays below 80% of its interval in the controlled cinema fixture; e.g. 11.1 ms at 72 Hz. Track application timing separately from compositor/decoder timing; report missed frames and measurement limitations. Reduce environment complexity before independently changing video quality | EXP-01/03; exact hardware and rate at G1; S09, S10 |
 | <a id="nfr-002"></a>NFR-002 | Remain stable for a full film | Complete a 120-minute representative movie run without crash, unwanted session termination, unrecoverable audio loss or progressively worsening frame timing. Repeat ten XR enter/exit cycles; inspect resource growth after warmup and cleanup. Battery/thermal observations are recorded only where observable; do not claim unavailable sensors | AT-24; R-04; S01 |
@@ -23,4 +23,4 @@ Frame rate of the movie and refresh rate of the XR scene are distinct. A 24 fps 
 
 Video resolution, HDR, stereo projection, multichannel audio and battery behaviour require independent qualification. Do not derive them from processor specifications or a desktop browser run.
 
-Initial numeric targets are deliberately limited. G1 must resolve test hardware and representative fixtures; G2 may revise targets only with written evidence and product acceptance, not silently to make a candidate pass.
+Initial numeric targets are deliberately limited. Quest 3 is the first device; G1 must still record its OS/Browser, selected runtime rate and representative fixtures. G2 may revise targets only with written evidence and product acceptance, not silently to make a candidate pass.
