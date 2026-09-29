@@ -3,7 +3,7 @@ import type { ActivationState } from './activationState';
 
 export function controlVisualState(target: ControlTarget, input: ReturnType<ActivationState['read']>): 'idle' | 'focus' | 'pressed' {
     if (input.pressed === target.id) return 'pressed';
-    return input.hover === target.id ? 'focus' : 'idle';
+    return (input.hover || input.focus) === target.id ? 'focus' : 'idle';
 }
 
 /** Opaque world-space text, with shape and explicit state text in addition to colour. */

@@ -17,7 +17,7 @@ export function bindDesktopPointer(
     };
     const cancel = () => input.pointer('cancel', null);
     const key = (event: KeyboardEvent) => {
-        if (!['Enter', ' ', 'Escape', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        if (!['Enter', ' ', 'Escape', 'Home', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
         event.preventDefault();
         if (!event.repeat) input.key(event.type === 'keydown' ? 'down' : 'up', event.key);
     };

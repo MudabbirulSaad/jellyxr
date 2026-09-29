@@ -117,7 +117,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             else input.report('No immersive session is active.');
         }
     }, physicalRemote?.grab);
-    const controls = createBabylonControls(scene, input.state);
+    const controls = createBabylonControls(scene, input.state, input.layout);
     const recovery = new SessionRecovery({
         cancelPending() {
             movement.cancel();
@@ -161,13 +161,16 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
                     camera.position.set(...viewerWorldPosition(root, [0, 1.65, 0]));
                     camera.rotation.set(0, root.yaw, 0);
                 });
-            if (moved) input.cancel();
+            if (moved) input.summonControls();
         } catch {
             input.report('Movement failed. Check playback before retrying or exit XR.');
         }
         input.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null,
-            xr?.sessionManager.inXRSession ? xr.sessionManager.currentFrame || undefined : undefined);
+            xr?.sessionManager.inXRSession ? xr.sessionManager.currentFrame || undefined : undefined, {
+                position: [camera.position.x, camera.position.y, camera.position.z],
+                forward: [-Math.sin(camera.rotation.y), 0, -Math.cos(camera.rotation.y)]
+            });
         controls.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
@@ -202,6 +205,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             if (xr?.sessionManager.inXRSession) await xr.exitXRAsync();
         },
         recallRemote,
+        summonControls: () => input.summonControls(),
         async dispose() {
             if (disposed) return;
             disposed = true;
