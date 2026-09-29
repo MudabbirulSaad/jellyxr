@@ -126,7 +126,7 @@ Primary references: [WebXR primary-action events](https://immersive-web.github.i
 
 ## Deliberate movement increment — 2026-09-30
 
-Source revision: 82a5e40afa, based on xr d5d590d571. Implements part of FR-030 / EXP-04; AT-26 remains open.
+Source revision: 82a5e40afa, based on xr d5d590d571; merged in PR #7 at xr dc18e92a06. Implements part of FR-030 / EXP-04; AT-26 remains open.
 
 Both candidates now expose Turn left 30°, Turn right 30°, Library position, Return to seat and Resume video in addition to the four earlier controls. Identical controls are anchored at the seat and library destinations. This duplication supports the fixed-destination experiment; summoned controls and recovery after arbitrary orientation remain unfinished.
 
@@ -144,3 +144,25 @@ Movement first pauses the attached media owner. The labelled fixture uses its ow
 No headset movement is claimed as tested. Native reference-space offsets/reset events, media-layer alignment through movement, arbitrary valid-floor selection, all-angle recovery, tracked-space boundaries, hands/controllers and comfort remain G2 work. PC previews test the desktop camera adapter, not the XR compositor. The additional XRRigidTransform compatibility suppression is limited to a feature-guarded call in the optional experiment; ordinary browser requirements are unchanged.
 
 Full local lint initially scanned the generated comparison bundles. The generated `.jellyxr-experiments` directory is now excluded alongside `dist`; all experiment source remains linted. The corrected full run passed. Documentation checks found 371 valid relative links and no requirement/traceability errors.
+
+## Physical remote increment — 2026-09-30
+
+Source revision: 42b56f1c99, based on xr dc18e92a06. Implements part of FR-031 / EXP-04; AT-27 remains open.
+
+The shared fixture adds a small stand so the remote settles above the floor. A controller can grip it within 18 cm; a hand uses a deliberate near pinch, requiring both thumb-tip and index-tip poses. One source owns the grab, and button selection is suppressed while it is held. Source removal, pose loss, hidden/end events, movement and disposal release ownership immediately. Tracking restoration cannot restart a previous grab. Recall remains available through ordinary and spatial buttons.
+
+While held, the remote retains its initial orientation. A fixed-step target uses exponential settling, caps travel at 3 m/s and sweeps its orientation-expanded box through the room's static proxies. This detects a thin wall even when a requested endpoint lies beyond it. The fixture permits shallow resting contact to move out or slide; it refuses deeper penetration. Havok uses animated-body targets and Rapier uses position-based kinematic targets. Release restores a dynamic body with zero inherited throw velocity. Free orientation, authored remote controls, artwork/panel constraints and fast throws remain future experiments; this is not the finished physical interface.
+
+Source inspection found that the previous Babylon recall call was ignored with the default disabled pre-step state. Recall now temporarily requests the explicit teleport pre-step, restores its prior setting and clears velocity. This is a deliberate recovery action; ordinary grabbing uses bounded targets.
+
+| Check | Observed result / limit |
+| --- | --- |
+| Constraint tests | Thin-wall/furniture/floor sweeps, shallow-contact escape, nonfinite input, rotated bounds, single ownership, cancellation and bounded catch-up pass |
+| Native-event adapter tests | Controller squeeze and near hand pinch remain distinct; held inputs cannot commit buttons; source loss, joint loss and hidden sessions release safely |
+| Actual engine tests on PC | Havok with Babylon NullEngine and Rapier both settle on the stand, hold, stop before a wall, drop and recall using the same fixture and 72 Hz simulation steps; no GPU, browser XR or headset involved |
+| Desktop preview | Babylon scene starts and displays a settled remote height of 0.717 m; this is a fixture observation, not a comfort/performance measurement |
+| Local checks | TypeScript, full lint (98 inherited warnings, no errors), styles and 219 tests in 24 files pass; ordinary production/ES5 passes 982 files and comparison production/ES5 passes 990 files with existing exclusions |
+
+UI/UX Pro Max's dragging-alternatives guidance was reviewed again: recall and ordinary/spatial button operation remain independent of grabbing. Held state has a visual change plus an explicit diagnostic label. Quest near reach, pinch reliability, source switching with real hardware, no-jitter behaviour over long sessions, physics cost and final feedback latency still need device evidence.
+
+Implementation references: exact installed Havok/Babylon and Rapier sources, plus [Rapier rigid bodies](https://rapier.rs/docs/user_guides/javascript/rigid_bodies/), accessed 2026-09-30. The online guide currently describes a newer Rapier version; adapter calls were checked against the installed 0.20.0 declarations and exercised in the tests above.
