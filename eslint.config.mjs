@@ -230,7 +230,8 @@ export default tseslint.config(
                 __PACKAGE_JSON_NAME__: false,
                 __PACKAGE_JSON_VERSION__: false,
                 __USE_SYSTEM_FONTS__: false,
-                __WEBPACK_SERVE__: false
+                __WEBPACK_SERVE__: false,
+                __JELLYXR_EXPERIMENTS__: false
             }
         },
         settings: {

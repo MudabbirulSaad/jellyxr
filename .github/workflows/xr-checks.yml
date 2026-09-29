@@ -48,3 +48,8 @@ jobs:
 
       - name: Build production assets and check JavaScript compatibility
         run: npm run build:es-check
+
+      - name: Build isolated XR comparison and check JavaScript compatibility
+        run: |
+          npm run build:xr-experiments
+          npm run escheck:xr-experiments

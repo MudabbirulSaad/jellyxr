@@ -1,6 +1,6 @@
 # Technology evaluation brief
 
-Status: decision preparation; no additional XR technology selected. Updated: 2026-09-29.
+Status: comparison workbench and candidate versions recorded in [M2 evidence](../05-delivery/m2-experiments.md); no production XR technology selected. Updated: 2026-09-29.
 
 ## Fixed foundation and open choices
 
