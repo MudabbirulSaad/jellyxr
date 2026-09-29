@@ -26,6 +26,7 @@ import { ComparisonInput } from '../input/comparisonInput';
 import { createBabylonControls } from '../input/babylonControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
 import { movementAction, MovementSession } from '../input/movementSession';
+import { SessionRecovery } from '../input/sessionRecovery';
 import { viewerWorldPosition } from '../input/movement';
 import { createHavokRemote } from '../input/havokRemote';
 import { loadBabylonChairs } from '../assets/babylonChairs';
@@ -104,8 +105,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     };
     const recallRemote = () => physicalRemote?.recall();
-    const movement = new MovementSession(playback.pauseForMovement);
+    const movement = new MovementSession(() => playback.pause('movement'));
     const input = new ComparisonInput(action => {
+        if (recovery.isSuspended()) return;
         const move = movementAction(action);
         if (move) movement.request(move);
         if (action === 'resume-media') playback.resume();
@@ -116,6 +118,17 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     }, physicalRemote?.grab);
     const controls = createBabylonControls(scene, input.state);
+    const recovery = new SessionRecovery({
+        cancelPending() {
+            movement.cancel();
+            input.update(null, null);
+            input.cancel();
+            clock.reset();
+            video.interrupt();
+        },
+        pause: playback.pause,
+        report: message => input.report(message)
+    });
     const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
         const ray = scene.createPickingRay(x * engine.getRenderWidth(), y * engine.getRenderHeight(), Matrix.Identity(), camera);
         return { origin: [ray.origin.x, ray.origin.y, ray.origin.z], direction: [ray.direction.x, ray.direction.y, ray.direction.z] };
@@ -123,16 +136,17 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     let disposed = false;
     const resize = () => engine.resize();
     const visibility = () => {
-        clock.reset();
-        movement.cancel();
-        input.cancel();
+        if (document.hidden) recovery.pageVisibility(true);
+        else recovery.pageVisibility(false);
     };
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', visibility);
     resize();
     const bodies = aggregates.map(aggregate => aggregate.body);
     engine.runRenderLoop(() => {
-        if (document.hidden) {
+        recovery.bind(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
+            xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
+        if (document.hidden || !recovery.canPresent()) {
             clock.reset();
             return;
         }
@@ -157,10 +171,14 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         controls.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
-        clock.advance(start, seconds => {
-            physicalRemote?.grab.step(seconds);
-            plugin.executeStep(seconds, bodies);
-        });
+        if (recovery.isSuspended()) {
+            clock.reset();
+        } else {
+            clock.advance(start, seconds => {
+                physicalRemote?.grab.step(seconds);
+                plugin.executeStep(seconds, bodies);
+            });
+        }
         updateRemoteFeedback();
         scene.render();
         sampler.record(performance.now() - start);
@@ -178,6 +196,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             await xr.enterXRAsync('immersive-vr', 'local-floor', undefined, {
                 optionalFeatures: ['hand-tracking', 'layers']
             });
+            recovery.bind(xr.sessionManager.session, xr.sessionManager.referenceSpace);
         },
         async exitXR() {
             if (xr?.sessionManager.inXRSession) await xr.exitXRAsync();
@@ -186,6 +205,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async dispose() {
             if (disposed) return;
             disposed = true;
+            recovery.dispose();
             movement.dispose();
             unbindPointer();
             input.dispose();

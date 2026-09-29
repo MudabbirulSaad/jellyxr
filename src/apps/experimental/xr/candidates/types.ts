@@ -1,5 +1,6 @@
 import type { BorrowedVideoSurface } from '../media/borrowVideoSurface';
 import type { VideoPresentationMode } from '../media/videoPresentation';
+import type { PauseReason } from '../input/sessionRecovery';
 
 export interface ComparisonSample {
     frames: number;
@@ -20,7 +21,7 @@ export interface ComparisonScene {
 }
 
 export interface ComparisonPlaybackActions {
-    pauseForMovement(): void;
+    pause(reason: PauseReason): void;
     resume(): void;
 }
 

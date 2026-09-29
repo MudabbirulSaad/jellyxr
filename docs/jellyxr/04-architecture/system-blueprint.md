@@ -70,6 +70,10 @@ These are presentation states; playback has its own loading/buffering/playing/pa
 
 Retain one playback owner across presentation changes. Explicit XR exit retains position and accepted paused state; normal return from a stopped title restores the library. D-15 governs interruption and deliberate movement behaviour; event handling is qualified at G2.
 
+The M2 comparison handles XR hidden/blurred visibility, ordinary-page hiding and session end immediately through the existing owner's Pause command. It cancels queued movement, activation and grabs, releases presentation resources and resets the simulation clock; regaining visibility never calls Resume. If Pause cannot be confirmed, report that failure rather than claiming a paused state. Disposing an active XR comparison also pauses before detaching, while closing an ordinary desktop overlay preserves ordinary playback.
+
+Reference-space reset uses a conservative experimental recovery: pause, cancel stale poses/actions, suspend frame work and end the XR session. The viewer can explicitly enter again from the ordinary page. This avoids applying an unvalidated transform or teleport after a native origin discontinuity. Seamless world-anchor continuity and reachable in-room recovery remain G2 work; this fallback does not qualify them. See the platform's [reset event](https://developer.mozilla.org/en-US/docs/Web/API/XRReferenceSpace/reset_event) and [visibility states](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState).
+
 If a media layer fails, dispose it cleanly and offer the tested fallback or ordinary viewing. Do not duplicate video/audio or silently lose subtitles. Authentication loss stops access and returns to login. Reconnection may require new playback negotiation; reuse of a stale stream URL is not guaranteed.
 
 Changing environments or screen placement must not submit new playback reports. Session end disposes layers, scene assets and event listeners it owns, without tearing down unrelated ordinary-mode resources.
