@@ -14,7 +14,7 @@ The [roadmap](roadmap.md) owns implementation order, [requirements](../02-requir
 | M1-B | Detailed baseline evidence; AT-07/09/10 and G1 | Basic Quest playback owner-confirmed; USB reconnected and forwarding restored. Detailed controls and delivery-path evidence remain open |
 | M1-C | Emulator and remote-debug workflow; NFR-010 | Owner reports emulator ready; exact profile/version unverified. Remote inspection not completed; automated internal-page navigation was rejected by browser security policy |
 | M2-A | Deterministic scene/catalogue/media fixture specification; EXP-01 through EXP-04 | Implemented shared room, clock and catalogue fixtures; unit checks and ordinary-bundle exclusion passed |
-| M2-B | Equal candidate harness, borrowed-video experiment and build compatibility | [Comparison workbench](m2-experiments.md) merged in PR #3 at xr 5efb2609aa. Borrowed contracts merged in PR #4 at xr 6a108272fd. Video paths merged in PR #5 at xr f9323ff789, spatial input in PR #6 at xr d5d590d571, movement in PR #7 at xr dc18e92a06 and remote grabbing in PR #8 at xr 1f286b0ad5. Player-preserving overlay added next; actual Jellyfin video observed in both PC texture paths with owner pause/resume and clean detach. R-22 audio-sheet cancellation needs a narrow follow-up. Native layers, subtitles, hands/controllers, full media/physics qualification and G2 remain open; no production engine selected |
+| M2-B | Equal candidate harness, borrowed-video experiment and build compatibility | [Comparison workbench](m2-experiments.md) merged in PR #3 at xr 5efb2609aa. Borrowed contracts merged in PR #4 at xr 6a108272fd. Video paths merged in PR #5 at xr f9323ff789, spatial input in PR #6 at xr d5d590d571, movement in PR #7 at xr dc18e92a06 and remote grabbing in PR #8 at xr 1f286b0ad5. Player-preserving overlay merged in PR #9 at xr 27c2f023cd; actual Jellyfin video observed in both PC texture paths with owner pause/resume and clean detach. R-22 cancellation fixed and retested on PC in the next focused slice; device regression remains open. Native layers, subtitles, hands/controllers, full media/physics qualification and G2 remain open; no production engine selected |
 | M2-C | Actual-device experiments and architecture decision; G2 | Open; hands, subtitle classes, sustained timing and complete transition evidence cannot be inferred from emulation |
 | M3 | Production boundaries and ordinary regression | Awaiting G2 for renderer binding; independent contracts and fixture work may proceed |
 | M4 | Complete spatial journey | Awaiting production integration; both input methods required |
@@ -40,3 +40,10 @@ An hourly thread follow-up is configured to resume unfinished goal work when cap
 Do not mark the goal complete because the code is merged or an archive can be generated. Keep device-dependent gates open until the accepted scenarios actually pass; do not silently reduce mandatory hands, spatial depth, physics, comfort or media requirements.
 
 Related: [decisions](../06-decisions/decision-register.md), [risks](risks.md), [M1 evidence](m1-readiness.md), [technology comparison](../06-decisions/technology-evaluation.md).
+
+
+## Next independent work
+
+Complete EXP-02 subtitle composition and fixture preparation, then representative asset/text loading. Preserve the current renderer comparison: G2 cannot select a winner without the mandatory real Quest hands/media/comfort measurements. Test the overlay with server source/track changes and repeated open/close; complete locomotion recovery and native reference-space reset handling. Do not treat PC physics or playback observations as headset passes.
+
+Checkpoint on 2026-09-30: account usage reached 99%; ordinary usage was still allowed. Two free reset credits were reported, but no available tool can redeem them and native app control is unavailable. The existing hourly continuation remains configured. No credits were purchased or reset claimed.
