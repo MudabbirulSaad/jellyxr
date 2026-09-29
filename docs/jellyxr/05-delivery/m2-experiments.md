@@ -232,3 +232,20 @@ Both candidates now load the same original chair GLBs into the existing room. De
 | Checks | Application and authoring TypeScript, full lint (98 inherited warnings), styles and 230 tests pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992. Chair GLBs and checked model-control markers are absent from ordinary output |
 
 The first experiment ES5 check failed on the new Babylon loader chunk. Adding that exact package to the existing Babel transpilation list resolved it; no application compatibility check or XR source directory was exempted. The separate Node authoring script has its own typecheck and a Node-only lint compatibility setting. Texture detail/compression, baked lighting/reflections, room-scale asset loading and actual-device budgets remain pending.
+
+## Panel-facing and lighting comparison follow-up — 2026-09-30
+
+Source revision: 892f920477, based on xr 1a941de17b (PR #12's original chair assets). This resolves the two comparison inconsistencies observed above; it does not establish identical renderer output or close EXP-03/04.
+
+Both candidates now receive the same four directional sources, intensities and linear colours. Exposure is one and output is sRGB without tone mapping. Babylon uses exact sRGB conversions. The previous Babylon hemisphere and Three ambient source were different shader paths, so matching their numeric intensity alone was insufficient. This fill rig is a technical reference; production baked lighting, shadows and reflection assets remain open. PBR BRDF differences still need controlled visual assessment.
+
+Babylon's default plane faced away from the shared +Z hit regions. Double-sided rendering concealed that discrepancy but exposed mirrored labels from behind. The shared Babylon panel now reverses its geometry side without rotating the artwork, keeps back-face culling and is used by controls, video and text captions.
+
+| Check | Actual observation / limit |
+| --- | --- |
+| PC room views | Front and rear views inspected in both candidates, using six deliberate 30-degree turns. Rear control labels are absent in both; chairs and room surfaces remain visible |
+| Video and captions | Babylon's paused technical video preserves the top-left label and non-mirrored caption 3 after the plane change |
+| Geometry regression | Both real panel geometries have +Z normals and matching UVs at the same vertex positions; front-only hit regions accept the front and reject the back |
+| Local checks | TypeScript, full lint (98 inherited warnings), styles and all 231 tests in 28 files pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992 |
+
+UI/UX Pro Max's targeted focus-indicator guidance informed agreement between visible controls and actionable geometry. Access after arbitrary turns, summon/recovery controls and actual Quest readability remain required work. No private media was used in this follow-up. Primary documentation reviewed: [Three lighting](https://threejs.org/manual/pages/lights.html) and [Babylon PBR](https://github.com/BabylonJS/Documentation/blob/master/content/features/featuresDeepDive/materials/using/masterPBR.md); actual implementation behaviour was checked against the pinned installed engine sources.

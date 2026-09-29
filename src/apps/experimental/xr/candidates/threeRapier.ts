@@ -1,11 +1,12 @@
 import {
-    AmbientLight, BoxGeometry, Color, DirectionalLight, Mesh, MeshStandardMaterial,
-    PerspectiveCamera, Raycaster, Scene, Vector2, WebGLRenderer
+    BoxGeometry, Color, DirectionalLight, Mesh, MeshStandardMaterial, NoToneMapping,
+    PerspectiveCamera, Raycaster, Scene, SRGBColorSpace, Vector2, WebGLRenderer
 } from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
 import { ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createThreeVideoTexture } from '../media/threeVideoTexture';
@@ -25,6 +26,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     await RAPIER.init();
     const renderer = new WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(1);
+    renderer.outputColorSpace = SRGBColorSpace;
+    renderer.toneMapping = NoToneMapping;
+    renderer.toneMappingExposure = 1;
     renderer.xr.enabled = true;
     renderer.xr.setReferenceSpaceType('local-floor');
     const scene = new Scene();
@@ -32,10 +36,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const camera = new PerspectiveCamera(70, 1, 0.05, 50);
     camera.position.set(0, 1.65, 0);
     camera.lookAt(0, 1.65, -6.5);
-    scene.add(new AmbientLight(0xffffff, 1));
-    const light = new DirectionalLight(0xffecd1, 2);
-    light.position.set(0, 3.5, 0);
-    scene.add(light);
+    scene.add(...COMPARISON_LIGHTS.map(fixture => {
+        const light = new DirectionalLight(fixture.colour, fixture.intensity);
+        light.position.set(...fixture.towardSource).normalize();
+        return light;
+    }));
 
     const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
     const meshes: Mesh<BoxGeometry, MeshStandardMaterial>[] = [];
