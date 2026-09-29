@@ -19,6 +19,27 @@ function setup() {
 }
 
 describe('video comparison lifecycle', () => {
+    it('drops presentation resources immediately on interruption without releasing or controlling the owner', () => {
+        const { surface, presentation, backend, session, space } = setup();
+        const play = vi.spyOn(surface.video, 'play');
+        const pause = vi.spyOn(surface.video, 'pause');
+        presentation.attach(surface, 'media-layer');
+        presentation.update(session, space);
+        presentation.interrupt();
+        presentation.interrupt();
+        expect(backend.createLayer.mock.results[0].value.dispose).toHaveBeenCalledTimes(1);
+        expect(surface.release).not.toHaveBeenCalled();
+        expect(play).not.toHaveBeenCalled();
+        expect(pause).not.toHaveBeenCalled();
+        expect(presentation.readStatus()).toContain('interrupted');
+        presentation.update(null, null);
+        expect(backend.createLayer).toHaveBeenCalledTimes(1);
+        presentation.update(session, space);
+        expect(backend.createLayer).toHaveBeenCalledTimes(2);
+        presentation.dispose();
+        expect(surface.release).toHaveBeenCalledTimes(1);
+    });
+
     it('waits for XR when layers are selected, without silently choosing a texture', () => {
         const { surface, presentation, backend, session, space } = setup();
         presentation.attach(surface, 'media-layer');

@@ -103,13 +103,20 @@ export class VideoPresentation {
         }
     }
 
-    dispose(): void {
+    /** Drop session/GPU resources immediately, keeping the borrowed owner available for recovery. */
+    interrupt(): void {
         this.clearResource();
-        this.surface?.release();
-        this.surface = undefined;
         this.session = null;
         this.space = null;
         this.dimensions = '';
+        this.failed = false;
+        this.status = this.surface ? 'Video presentation interrupted. Resume deliberately after recovery.' : 'No video attached.';
+    }
+
+    dispose(): void {
+        this.interrupt();
+        this.surface?.release();
+        this.surface = undefined;
         this.status = 'No video attached.';
     }
 }

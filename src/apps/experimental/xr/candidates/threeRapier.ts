@@ -14,6 +14,7 @@ import { ComparisonInput } from '../input/comparisonInput';
 import { createThreeControls } from '../input/threeControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
 import { movementAction, MovementSession } from '../input/movementSession';
+import { SessionRecovery } from '../input/sessionRecovery';
 import { viewerWorldPosition } from '../input/movement';
 import { createRapierRemote } from '../input/rapierRemote';
 import { loadThreeChairs } from '../assets/threeChairs';
@@ -80,8 +81,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const clock = new FixedStepClock();
     const physicalRemote = createRapierRemote(remoteBody);
     const recallRemote = () => physicalRemote?.recall();
-    const movement = new MovementSession(playback.pauseForMovement);
+    const movement = new MovementSession(() => playback.pause('movement'));
     const input = new ComparisonInput(action => {
+        if (recovery.isSuspended()) return;
         const move = movementAction(action);
         if (move) movement.request(move);
         if (action === 'resume-media') playback.resume();
@@ -104,6 +106,17 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         createLayer: createNativeMediaLayer
     });
     const sampler = new FrameSampler();
+    const recovery = new SessionRecovery({
+        cancelPending() {
+            movement.cancel();
+            input.update(null, null);
+            input.cancel();
+            clock.reset();
+            video.interrupt();
+        },
+        pause: playback.pause,
+        report: message => input.report(message)
+    });
     let disposed = false;
     const resize = () => {
         if (renderer.xr.isPresenting) return;
@@ -114,15 +127,15 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         camera.updateProjectionMatrix();
     };
     const visibility = () => {
-        clock.reset();
-        movement.cancel();
-        input.cancel();
+        if (document.hidden) recovery.pageVisibility(true);
+        else recovery.pageVisibility(false);
     };
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', visibility);
     resize();
     renderer.setAnimationLoop((time, frame) => {
-        if (document.hidden) {
+        recovery.bind(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
+        if (document.hidden || !recovery.canPresent()) {
             clock.reset();
             return;
         }
@@ -140,11 +153,15 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         input.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), frame);
         controls.update();
         video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
-        clock.advance(time, seconds => {
-            physicalRemote?.grab.step(seconds);
-            world.timestep = seconds;
-            world.step();
-        });
+        if (recovery.isSuspended()) {
+            clock.reset();
+        } else {
+            clock.advance(time, seconds => {
+                physicalRemote?.grab.step(seconds);
+                world.timestep = seconds;
+                world.step();
+            });
+        }
         if (remote && remoteBody) {
             remote.material.emissive.set(physicalRemote?.grab.source() ? FIXTURE_COLOURS.warm : 0);
             remote.position.copy(remoteBody.translation());
@@ -170,6 +187,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             });
             try {
                 await renderer.xr.setSession(session);
+                recovery.bind(session, renderer.xr.getReferenceSpace());
             } catch (error) {
                 await session.end();
                 throw error;
@@ -182,6 +200,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async dispose() {
             if (disposed) return;
             disposed = true;
+            recovery.dispose();
             movement.dispose();
             unbindPointer();
             input.dispose();

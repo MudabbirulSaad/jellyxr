@@ -71,16 +71,21 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
             instance = await module.createComparison(target, value => {
                 if (!cancelled) setSample(value);
             }, {
-                pauseForMovement() {
+                pause(reason) {
                     fixture?.pause();
                     if (mediaOwner.current === 'jellyfin') {
                         const player = playbackManager.getCurrentPlayer();
-                        if (player?.isLocalPlayer && player.id === 'htmlvideoplayer') {
-                            playbackManager.pause();
-                            if (!player.getVideoPresentationSurface()?.paused) throw new Error('Pause not confirmed.');
-                        }
+                        if (!player?.isLocalPlayer || player.id !== 'htmlvideoplayer') throw new Error('Playback owner changed.');
+                        playbackManager.pause();
+                        if (!player.getVideoPresentationSurface()?.paused) throw new Error('Pause not confirmed.');
                     }
-                    setStatus('Video paused for movement. Select Resume video when ready.');
+                    if (reason === 'tracking-reset') {
+                        setStatus('Tracking changed. Video paused and XR is closing. Enter again when ready.');
+                    } else if (reason === 'session-ended') {
+                        setStatus('XR session ended. Video paused; resume deliberately in the ordinary player or comparison.');
+                    } else {
+                        setStatus('Video paused for movement or interruption. Select Resume video when ready.');
+                    }
                 },
                 resume() {
                     if (mediaOwner.current === 'fixture' && fixture) {
@@ -112,9 +117,10 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
         return () => {
             cancelled = true;
             fixture?.pause();
+            // Active XR disposal must reach the current owner before this attachment is cleared.
+            if (instance) void instance.dispose().catch(() => undefined);
             mediaOwner.current = null;
             active.current = undefined;
-            if (instance) void instance.dispose().catch(() => undefined);
         };
     }, [candidate, chairQuality]);
 
