@@ -5,11 +5,13 @@ import type { Scene } from '@babylonjs/core/scene';
 import { createBabylonPanel } from '../candidates/babylonPanel';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
+import { createBabylonCanvasSubtitles } from './babylonCanvasSubtitles';
 import { createSubtitleArtwork, SUBTITLE_PANEL } from './textSubtitles';
 
 export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Scene) {
+    const rich = createBabylonCanvasSubtitles(surface, scene);
     const canvas = document.createElement('canvas');
-    const artwork = createSubtitleArtwork(surface, canvas);
+    const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning);
     const texture = new DynamicTexture('borrowed-subtitles', canvas, scene, false);
     const material = new StandardMaterial('borrowed-subtitles', scene);
     material.disableLighting = true;
@@ -21,12 +23,14 @@ export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Sce
     mesh.setEnabled(false);
     return {
         update() {
+            rich.update();
             if (!artwork.update()) return;
             mesh.setEnabled(artwork.isVisible());
             if (artwork.isVisible()) texture.update();
         },
-        readStatus: artwork.readStatus,
+        readStatus: () => rich.isVisible() ? rich.readStatus() : artwork.readStatus(),
         dispose() {
+            rich.dispose();
             mesh.dispose();
             material.dispose();
             texture.dispose();

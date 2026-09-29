@@ -10,6 +10,8 @@ import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { currentSettings as userSettings } from 'scripts/settings/userSettings';
 import { MediaError } from 'types/mediaError';
 
+import { readAssPresentation } from './assPresentation';
+
 import browser from '../../scripts/browser';
 import appSettings from '../../scripts/settings/appSettings';
 import { appHost } from '../../components/apphost';
@@ -951,10 +953,12 @@ export class HtmlVideoPlayer {
     getSubtitlePresentationSurface() {
         let unsupportedRenderer = null;
         if (this.#currentBitmapSubRenderer) unsupportedRenderer = 'bitmap';
-        if (this.#currentAssRenderer) unsupportedRenderer = 'ASS';
+        const canvas = readAssPresentation(this.#currentAssRenderer);
+        if (this.#currentAssRenderer && !canvas) unsupportedRenderer = 'ASS';
         return {
             textElements: [this.#videoSubtitlesElem, this.#videoSecondarySubtitlesElem],
-            unsupportedRenderer
+            unsupportedRenderer,
+            canvas
         };
     }
 
