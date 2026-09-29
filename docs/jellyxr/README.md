@@ -2,7 +2,7 @@
 
 Status: M6 goal active; M1 scope integrated and M2 comparison workbench implemented, device qualification still open, 2026-09-29. Owner: MudabbirulSaad.
 
-JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive cinema for Meta Quest. It uses an existing Jellyfin endpoint and account. Vision Pro is a future platform. This package prepares implementation and the next technology decision; it does not claim that XR functionality is implemented or tested.
+JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive cinema for Meta Quest. It uses an existing Jellyfin endpoint and account. Vision Pro is a future platform. This package records requirements, implemented comparison experiments and the remaining technology/release gates. Experimental PC results do not establish a finished XR client or headset qualification.
 
 ## Start here
 
