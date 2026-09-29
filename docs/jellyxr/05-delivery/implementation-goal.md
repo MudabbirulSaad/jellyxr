@@ -10,11 +10,11 @@ The [roadmap](roadmap.md) owns implementation order, [requirements](../02-requir
 
 | Slice | Deliverable / authority | State and next action |
 | --- | --- | --- |
-| M1-A | Scope reconciliation; FR-023/030/031, D-25 through D-31 | Scope and validation complete on milestone/m1-closure; integration pending |
+| M1-A | Scope reconciliation; FR-023/030/031, D-25 through D-31 | Merged in PR #2 at xr 8ea4c39a83; requirements and documentation checks passed |
 | M1-B | Detailed baseline evidence; AT-07/09/10 and G1 | Basic Quest playback owner-confirmed; USB reconnected and forwarding restored. Detailed controls and delivery-path evidence remain open |
 | M1-C | Emulator and remote-debug workflow; NFR-010 | Owner reports emulator ready; exact profile/version unverified. Remote inspection not completed; automated internal-page navigation was rejected by browser security policy |
-| M2-A | Deterministic scene/catalogue/media fixture specification; EXP-01 through EXP-04 | Next independent implementation slice; fixtures must be labelled and excluded from normal production content |
-| M2-B | Equal candidate harness, borrowed-video experiment and build compatibility | Pending preparation; exact versions to record before runs, no production engine selected |
+| M2-A | Deterministic scene/catalogue/media fixture specification; EXP-01 through EXP-04 | Implemented shared room, clock and catalogue fixtures; unit checks and ordinary-bundle exclusion passed |
+| M2-B | Equal candidate harness, borrowed-video experiment and build compatibility | Initial [comparison workbench](m2-experiments.md) renders both candidates on PC; exact versions locked, media/input experiments next; no production engine selected |
 | M2-C | Actual-device experiments and architecture decision; G2 | Open; hands, subtitle classes, sustained timing and complete transition evidence cannot be inferred from emulation |
 | M3 | Production boundaries and ordinary regression | Awaiting G2 for renderer binding; independent contracts and fixture work may proceed |
 | M4 | Complete spatial journey | Awaiting production integration; both input methods required |
