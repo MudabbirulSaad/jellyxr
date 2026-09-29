@@ -281,6 +281,7 @@ export class HtmlVideoPlayer {
      */
     #currentBitmapSubRenderer;
     #bitmapPresentation = new BitmapPresentation();
+    #subtitleRendererGeneration = 0;
     /**
      * @type {number | undefined}
      */
@@ -1330,6 +1331,8 @@ export class HtmlVideoPlayer {
      * @private
      */
     destroyCustomTrack(videoElement, targetTrackIndex) {
+        // Invalidate pending imports/configuration and callbacks before disposing either canvas owner.
+        this.#subtitleRendererGeneration++;
         if (targetTrackIndex === undefined) {
             this.endPendingSubtitleLoad(PRIMARY_TEXT_TRACK_INDEX);
             this.endPendingSubtitleLoad(SECONDARY_TEXT_TRACK_INDEX);
@@ -1425,6 +1428,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     renderSsaAss(videoElement, track, item) {
+        const isCurrent = this.createSubtitleRendererGuard();
         const supportedFonts = ['application/vnd.ms-opentype', 'application/x-truetype-font', 'font/otf', 'font/ttf', 'font/woff', 'font/woff2'];
         const availableFonts = [];
         const attachments = this._currentPlayOptions.mediaSource.MediaAttachments || [];
@@ -1441,6 +1445,7 @@ export class HtmlVideoPlayer {
         });
         const htmlVideoPlayer = this;
         import('@jellyfin/libass-wasm').then(({ default: SubtitlesOctopus }) => {
+            if (!isCurrent()) return;
             const mediaSource = this._currentPlayOptions.mediaSource;
             const videoStream = getMediaStreamVideoTracks(mediaSource)[0];
 
@@ -1451,12 +1456,13 @@ export class HtmlVideoPlayer {
                 workerUrl: `${appRouter.baseUrl()}/libraries/subtitles-octopus-worker.js`,
                 legacyWorkerUrl: `${appRouter.baseUrl()}/libraries/subtitles-octopus-worker-legacy.js`,
                 onError() {
+                    if (!isCurrent()) return;
                     // HACK: Clear JavascriptSubtitlesOctopus: it gets disposed when an error occurs
                     htmlVideoPlayer.#currentAssRenderer = null;
 
                     // HACK: Give JavascriptSubtitlesOctopus time to dispose itself
                     setTimeout(() => {
-                        onErrorInternal(this, MediaError.ASS_RENDER_ERROR);
+                        if (isCurrent()) onErrorInternal(htmlVideoPlayer, MediaError.ASS_RENDER_ERROR);
                     }, 0);
                 },
                 timeOffset: (this._currentPlayOptions.transcodingOffsetTicks || 0) / 10000000,
@@ -1474,17 +1480,19 @@ export class HtmlVideoPlayer {
                 renderAhead: 90
             };
 
-            Promise.all([
+            return Promise.all([
                 apiClient.getNamedConfiguration('encoding'),
                 // Worker in Tizen 5 doesn't resolve relative path with async request
                 resolveUrl(options.workerUrl),
                 resolveUrl(options.legacyWorkerUrl)
             ]).then(([config, workerUrl, legacyWorkerUrl]) => {
+                if (!isCurrent()) return;
                 options.workerUrl = workerUrl;
                 options.legacyWorkerUrl = legacyWorkerUrl;
 
                 if (config.EnableFallbackFont) {
-                    apiClient.getJSON(fallbackFontList).then((fontFiles = []) => {
+                    return apiClient.getJSON(fallbackFontList).then((fontFiles = []) => {
+                        if (!isCurrent()) return;
                         fontFiles.forEach(font => {
                             const fontUrl = apiClient.getUrl(`/FallbackFont/Fonts/${encodeURIComponent(font.Name)}`, {
                                 ApiKey: apiClient.accessToken()
@@ -1497,6 +1505,8 @@ export class HtmlVideoPlayer {
                     this.#currentAssRenderer = new SubtitlesOctopus(options);
                 }
             });
+        }).catch(() => {
+            if (isCurrent()) onErrorInternal(htmlVideoPlayer, MediaError.ASS_RENDER_ERROR);
         });
     }
 
@@ -1504,39 +1514,49 @@ export class HtmlVideoPlayer {
      * @private
      */
     renderPgs(videoElement, track, item, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+        const isCurrent = this.createSubtitleRendererGuard();
         let presentationRenderer;
         const options = this.createBitmapSubtitleRendererOptions(videoElement, track, item, targetTextTrackIndex);
         const onLoaded = options.onLoaded;
         const onError = options.onError;
+        const onLoading = options.onLoading;
+        options.onLoading = () => {
+            if (isCurrent()) onLoading?.();
+        };
         options.onLoaded = () => {
-            if (this.#currentBitmapSubRenderer) {
-                this.#currentBitmapSubRenderer.timeOffset = getSubtitleTimeOffset(this._currentPlayOptions, this.#currentTrackOffset);
-                this.#currentBitmapSubRenderer.updateCanvasSize?.();
-            }
             onLoaded?.();
+            if (!isCurrent()) return;
+            if (presentationRenderer && this.#currentBitmapSubRenderer === presentationRenderer) {
+                presentationRenderer.timeOffset = getSubtitleTimeOffset(this._currentPlayOptions, this.#currentTrackOffset);
+                presentationRenderer.updateCanvasSize?.();
+            }
         };
         options.onError = (error) => {
+            onError?.(error);
+            if (!isCurrent()) return;
             this.#bitmapPresentation.invalidate(presentationRenderer);
             console.error('[libbitsub] pgs error', error);
-            onError?.(error);
         };
         options.onEvent = (event) => {
+            if (!isCurrent()) return;
             if (event?.type === 'stats') this.#bitmapPresentation.capture(presentationRenderer);
             if (event?.type === 'error' || event?.type === 'loaded' || event?.type === 'cue-change' || event?.type === 'renderer-change' || event?.type === 'worker-state') {
                 console.debug('[libbitsub] pgs', event);
             }
         };
         import('libbitsub').then((libbitsub) => {
+            if (!isCurrent()) return;
             this.#currentBitmapSubRenderer = new libbitsub.PgsRenderer(options);
             presentationRenderer = this.#currentBitmapSubRenderer;
             this.#bitmapPresentation.setRenderer(presentationRenderer, 'PGS');
             requestAnimationFrame(() => {
-                if (this.#currentBitmapSubRenderer) {
-                    this.#currentBitmapSubRenderer.updateCanvasSize?.();
+                if (isCurrent() && this.#currentBitmapSubRenderer === presentationRenderer) {
+                    presentationRenderer.updateCanvasSize?.();
                 }
             });
         }).catch((error) => {
-            this.endPendingSubtitleLoad(targetTextTrackIndex);
+            onError?.(error);
+            if (!isCurrent()) return;
             console.error(error);
         });
     }
@@ -1545,6 +1565,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     renderVobSub(videoElement, track, item, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+        const isCurrent = this.createSubtitleRendererGuard();
         let presentationRenderer;
         const options = {
             ...this.createBitmapSubtitleRendererOptions(videoElement, track, item, targetTextTrackIndex),
@@ -1552,40 +1573,58 @@ export class HtmlVideoPlayer {
         };
         const onLoaded = options.onLoaded;
         const onError = options.onError;
+        const onLoading = options.onLoading;
+        options.onLoading = () => {
+            if (isCurrent()) onLoading?.();
+        };
         options.onLoaded = () => {
-            if (this.#currentBitmapSubRenderer) {
-                this.#currentBitmapSubRenderer.timeOffset = getSubtitleTimeOffset(this._currentPlayOptions, this.#currentTrackOffset);
-                this.#currentBitmapSubRenderer.setDebandEnabled?.(true);
-                this.#currentBitmapSubRenderer.setDebandThreshold?.(VOBSUB_DEBAND_THRESHOLD);
-                this.#currentBitmapSubRenderer.setDebandRange?.(VOBSUB_DEBAND_RANGE);
-                this.#currentBitmapSubRenderer.updateCanvasSize?.();
-            }
             onLoaded?.();
+            if (!isCurrent()) return;
+            if (presentationRenderer && this.#currentBitmapSubRenderer === presentationRenderer) {
+                presentationRenderer.timeOffset = getSubtitleTimeOffset(this._currentPlayOptions, this.#currentTrackOffset);
+                presentationRenderer.setDebandEnabled?.(true);
+                presentationRenderer.setDebandThreshold?.(VOBSUB_DEBAND_THRESHOLD);
+                presentationRenderer.setDebandRange?.(VOBSUB_DEBAND_RANGE);
+                presentationRenderer.updateCanvasSize?.();
+            }
         };
         options.onError = (error) => {
+            onError?.(error);
+            if (!isCurrent()) return;
             this.#bitmapPresentation.invalidate(presentationRenderer);
             console.error('[libbitsub] vobsub error', error);
-            onError?.(error);
         };
         options.onEvent = (event) => {
+            if (!isCurrent()) return;
             if (event?.type === 'stats') this.#bitmapPresentation.capture(presentationRenderer);
             if (event?.type === 'error' || event?.type === 'loaded' || event?.type === 'cue-change' || event?.type === 'renderer-change' || event?.type === 'worker-state') {
                 console.debug('[libbitsub] vobsub', event);
             }
         };
         import('libbitsub').then((libbitsub) => {
+            if (!isCurrent()) return;
             this.#currentBitmapSubRenderer = new libbitsub.VobSubRenderer(options);
             presentationRenderer = this.#currentBitmapSubRenderer;
             this.#bitmapPresentation.setRenderer(presentationRenderer, 'VobSub');
             requestAnimationFrame(() => {
-                if (this.#currentBitmapSubRenderer) {
-                    this.#currentBitmapSubRenderer.updateCanvasSize?.();
+                if (isCurrent() && this.#currentBitmapSubRenderer === presentationRenderer) {
+                    presentationRenderer.updateCanvasSize?.();
                 }
             });
         }).catch((error) => {
-            this.endPendingSubtitleLoad(targetTextTrackIndex);
+            onError?.(error);
+            if (!isCurrent()) return;
             console.error(error);
         });
+    }
+
+    /**
+     * @private
+     */
+    createSubtitleRendererGuard() {
+        const generation = this.#subtitleRendererGeneration;
+        const options = this._currentPlayOptions;
+        return () => generation === this.#subtitleRendererGeneration && options === this._currentPlayOptions;
     }
 
     /**
