@@ -158,8 +158,10 @@ export function Component() {
                 <Typography component='p' gutterBottom>{sample?.mediaStatus || 'No video attached.'}</Typography>
                 <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop playsInline preload='metadata'
                     aria-label='Silent orientation fixture source' sx={{ width: '12rem', maxWidth: '100%' }} />
-                <Box component='canvas' key={candidate} ref={canvas} aria-label='Technical Observatory room preview'
+                <Box component='canvas' key={candidate} ref={canvas} tabIndex={0} aria-label='Technical Observatory room preview'
                     sx={{ display: 'block', width: '100%', height: '55vh', backgroundColor: '#151B23' }} />
+                <Typography component='p'>{sample?.inputStatus || 'Spatial controls are preparing.'}</Typography>
+                <Typography component='p'>The four controls in the room use world-space hit testing. On PC, click a target or focus the canvas, use arrow keys and press Enter. In XR, point and deliberately trigger or pinch. Looking alone does nothing. Hands, depth and comfort still need Quest validation.</Typography>
                 <Typography component='p' gutterBottom sx={{ marginTop: 2 }}>
                     {sample ? `${sample.frames} frames; recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms; remote height ${sample.remoteHeight.toFixed(3)} m.` : 'Frame observations will appear after the scene starts.'}
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.

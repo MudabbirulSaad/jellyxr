@@ -100,3 +100,26 @@ The native path invokes `XRMediaBinding.createQuadLayer` with the borrowed eleme
 Desktop observations are from the in-app browser without XR emulation. They do not qualify colour accuracy, HDR, Quest decoding, audio, subtitles, tracked depth or native layers. Attaching actual Jellyfin playback through ordinary navigation is still unverified. The existing development WebSocket Host/Origin rejection remains; HTTP assets load and manual reload was used without weakening host validation.
 
 Sources reviewed: installed Babylon 9.27.1 and Three 0.186.0 implementation; [Meta video guidance](https://developers.meta.com/horizon/documentation/web/browser-video/) and [Layers guidance](https://developers.meta.com/horizon/documentation/web/webxr-layers/), accessed 2026-09-30. Vendor recommendations are not JellyXR measurements. G2 remains open.
+
+## Spatial input increment — 2026-09-30
+
+Source revision: 1a23681e9f, based on xr f9323ff789.
+
+Both candidates render the same four opaque, labelled controls as world-space planes: Select fixture, Reset count, Recall remote and Exit XR. Their visible dimensions and analytic ray/near hit bounds come from one fixture. Buttons sit at a fixed room anchor and do not follow the head. Target dimensions, font size, reach and depth still require headset validation. These are technical controls, not the production library or playback tray.
+
+The shared input adapter accepts tracked controller/hand sources and rejects gaze. It uses native `selectstart` to begin, `select` to commit, and `selectend` to cancel any remaining press, following the WebXR event sequence. A hand must have a current index-finger joint pose as well as a ray. A single pending action prevents two sources from activating the same press; target departure, tracking/source loss, visibility loss, blur and disposal cancel it. Logical focus remains available after cancellation. Near selection requires explicit activation; proximity alone does nothing. Grabbing, teleportation, snap turning and visual hand/controller models are still pending.
+
+Desktop controls use the same target geometry. Canvas keyboard access supports arrows, Enter/Space and Escape, with explicit focus/held labels and outline changes. The fixture selection count measures actual actions; it is not a product statistic. Recall has both ordinary-button and spatial-button paths. UI/UX Pro Max's dragging-alternatives guidance supports keeping those recovery actions independent of grabbing.
+
+| Check | Observed result / limit |
+| --- | --- |
+| Desktop visual | Both renderers show four opaque controls in the room; focus changes the outline and state label |
+| Keyboard | Babylon selection and reset observed; Three selection observed; no head or hover activation used |
+| Pointer browser check | In-app coordinate clicks did not deliver pointer events to the canvas, as reported by the fixture diagnostic; actual pointer selection remains unverified |
+| Input unit tests | Twelve cases cover visible-centre/gap/back-face/nonfinite hits, bounded near contact, explicit activation, tracking loss, switching ownership, native select cancellation, hand joint loss, gaze rejection, visibility loss, keyboard cancellation, canvas coordinate mapping and listener removal |
+| Local checks | TypeScript, changed-code lint and all 200 tests in 19 files pass |
+| Build compatibility | Ordinary output remains at 982 ES5-checked files; comparison output is 990, with only inherited worker exclusions |
+
+The normal client remains unchanged. This prepares FR-021/023 and EXP-04; it does not close AT-17/26/27 or G2. Actual hands/controllers, occlusion beyond this unobstructed fixture, seated/reclining reach, input latency and physical movement remain pending.
+
+Primary references: [WebXR primary-action events](https://immersive-web.github.io/webxr/#events), [Meta hand input](https://developers.meta.com/horizon/documentation/web/webxr-hands/), accessed 2026-09-30. Source documentation describes available APIs; only the observations above are claimed as tested.
