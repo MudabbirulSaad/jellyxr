@@ -93,8 +93,10 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             if (session) void session.end().catch(() => input.report('Exit failed. Use headset system exit.'));
             else input.report('No immersive session is active.');
         }
-    }, physicalRemote?.grab);
-    const controls = createThreeControls(scene, input.state, input.layout);
+    }, physicalRemote?.grab, point => {
+        if (!recovery.isSuspended()) movement.requestDestination(point);
+    });
+    const controls = createThreeControls(scene, input.state, input.layout, input.floor);
     const raycaster = new Raycaster();
     const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
         raycaster.setFromCamera(new Vector2(x * 2 - 1, 1 - y * 2), camera);

@@ -116,8 +116,10 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             if (xr?.sessionManager.inXRSession) void xr.exitXRAsync().catch(() => input.report('Exit failed. Use headset system exit.'));
             else input.report('No immersive session is active.');
         }
-    }, physicalRemote?.grab);
-    const controls = createBabylonControls(scene, input.state, input.layout);
+    }, physicalRemote?.grab, point => {
+        if (!recovery.isSuspended()) movement.requestDestination(point);
+    });
+    const controls = createBabylonControls(scene, input.state, input.layout, input.floor);
     const recovery = new SessionRecovery({
         cancelPending() {
             movement.cancel();

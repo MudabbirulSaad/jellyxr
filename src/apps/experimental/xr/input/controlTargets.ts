@@ -2,7 +2,7 @@ import type { Point3 } from '../fixtures/roomFixture';
 import type { MovementAction } from './movementSession';
 import { rotateFloorPoint } from './movement';
 
-export type ControlAction = 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | MovementAction;
+export type ControlAction = 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
 export interface ControlTarget {
     id: ControlAction;
     label: string;
@@ -24,12 +24,20 @@ export const CONTROL_TARGETS: readonly ControlTarget[] = [
     { id: 'turn-right', label: 'Turn right 30°', position: [0.9, 1.18, -1.4], width: 0.52, height: 0.22 },
     { id: 'library-position', label: 'Library position', position: [-0.9, 0.92, -1.4], width: 0.52, height: 0.22 },
     { id: 'return-seat', label: 'Return to seat', position: [0.9, 0.92, -1.4], width: 0.52, height: 0.22 },
-    { id: 'resume-media', label: 'Resume video', position: [0, 1.46, -1.4], width: 0.52, height: 0.22 }
+    { id: 'resume-media', label: 'Resume video', position: [0, 1.46, -1.4], width: 0.52, height: 0.22 },
+    { id: 'choose-floor', label: 'Choose floor', position: [-0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
+    { id: 'cancel-floor', label: 'Cancel move', position: [0.6, 1.46, -1.4], width: 0.52, height: 0.22 }
 ];
 
 export const RECOVERY_TARGETS: readonly ControlTarget[] = [
     { id: 'return-seat', label: 'Return to seat', position: [0, 1.8, -1.4], width: 0.52, height: 0.22 },
     { id: 'exit-xr', label: 'Exit XR', position: [0, 1.5, -1.4], width: 0.52, height: 0.22 }
+];
+
+export const FLOOR_TARGETS: readonly ControlTarget[] = [
+    { id: 'cancel-floor', label: 'Cancel move', position: [-0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
+    { id: 'return-seat', label: 'Return to seat', position: [0, 1.46, -1.4], width: 0.52, height: 0.22 },
+    { id: 'exit-xr', label: 'Exit XR', position: [0.6, 1.46, -1.4], width: 0.52, height: 0.22 }
 ];
 
 export function controlLocalPoint(point: Point3, anchor: ControlAnchor): Point3 {
