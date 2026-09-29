@@ -19,6 +19,7 @@ import { installPgsFixture } from './fixtures/pgsFixture';
 import type { ChairQuality } from './assets/chairAssets';
 
 type Candidate = 'babylon' | 'three';
+type CanvasCaptionFixture = Awaited<ReturnType<typeof installAssFixture>> & { acquire?(): () => void };
 
 function ComparisonFrame({ embedded, children }: PropsWithChildren<{ embedded: boolean }>) {
     if (embedded) return <div>{children}</div>;
@@ -29,7 +30,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const fixtureVideo = useRef<HTMLVideoElement>(null);
     const fixtureSubtitles = useRef<ReturnType<typeof installSubtitleFixture>>(null);
-    const canvasFixture = useRef<Awaited<ReturnType<typeof installAssFixture>> | null>(null);
+    const canvasFixture = useRef<CanvasCaptionFixture | null>(null);
     const [captionKind, setCaptionKind] = useState<'text' | 'ass' | 'pgs'>('text');
     const [bitmapBackend, setBitmapBackend] = useState('Not started');
     const captionEnabled = useRef(true);
@@ -64,7 +65,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     useEffect(() => {
         if (captionKind === 'text' || !fixtureVideo.current) return;
         let cancelled = false;
-        let fixture: Awaited<ReturnType<typeof installAssFixture>> | undefined;
+        let fixture: CanvasCaptionFixture | undefined;
         const failed = () => {
             if (!cancelled) setStatus('Caption fixture could not load. Switch to Text fixture and retry.');
         };
@@ -229,7 +230,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
         mediaOwner.current = 'jellyfin';
         setStatus('Attached Jellyfin’s existing video. Playback and progress remain owned by Jellyfin.');
     }, [mediaMode]);
-    const playFixture = useCallback(() => {
+    const attachFixture = useCallback((startPlayback: boolean) => {
         const video = fixtureVideo.current;
         const instance = active.current;
         if (!video || !instance) return;
@@ -238,15 +239,34 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
             return;
         }
         let current = true;
+        let capturedFixture: CanvasCaptionFixture | null = null;
+        let releaseCaption: (() => void) | undefined;
         instance.setVideo({
             video, isCurrent: () => current && fixtureVideo.current === video,
-            readSubtitles: () => canvasFixture.current?.read(),
-            release: () => { current = false; }
+            readSubtitles: () => {
+                if (!current) return;
+                if (capturedFixture !== canvasFixture.current) {
+                    releaseCaption?.();
+                    capturedFixture = canvasFixture.current;
+                    releaseCaption = capturedFixture?.acquire?.();
+                }
+                return capturedFixture?.read();
+            },
+            release: () => {
+                current = false;
+                releaseCaption?.();
+            }
         }, mediaMode);
         mediaOwner.current = 'fixture';
-        void video.play().then(() => setStatus('Silent technical video started. This is not a Jellyfin delivery-path test.'))
-            .catch(() => setStatus('The technical video could not start. Try Start technical video again.'));
+        if (startPlayback) {
+            void video.play().then(() => setStatus('Silent technical video started. This is not a Jellyfin delivery-path test.'))
+                .catch(() => setStatus('The technical video could not start. Try Start technical video again.'));
+        } else {
+            setStatus('Technical video attached. Its playback position and paused state are unchanged.');
+        }
     }, [mediaMode]);
+    const playFixture = useCallback(() => attachFixture(true), [attachFixture]);
+    const attachFixtureOnly = useCallback(() => attachFixture(false), [attachFixture]);
     const detachVideo = useCallback(() => {
         active.current?.setVideo(null, mediaMode);
         fixtureVideo.current?.pause();
@@ -284,10 +304,11 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Button onClick={chooseTexture} aria-pressed={mediaMode === 'video-texture'} variant={mediaMode === 'video-texture' ? 'contained' : 'outlined'} disabled={busy || !!sample?.immersive}>Video texture</Button>
                     <Button onClick={attachPlayback} disabled={!ready || busy}>Attach current Jellyfin video</Button>
                     <Button onClick={playFixture} disabled={!ready || busy}>Start technical video</Button>
+                    <Button onClick={attachFixtureOnly} disabled={!ready || busy}>Attach technical video</Button>
                     <Button onClick={detachVideo} disabled={!ready || busy}>Detach video</Button>
                 </Stack>
                 <Typography component='p' gutterBottom>{sample?.mediaStatus || 'No video attached.'}</Typography>
-                <Typography component='p'>Video texture mode compares plain-text captions and the existing ASS canvas. The PGS fixture tests bitmap capture only; real bitmap tracks and media-layer captions still need integration work. Keep the ordinary player for those paths. Fonts, timing, placement and headset readability remain unqualified.</Typography>
+                <Typography component='p'>Video texture mode compares plain-text captions and borrowed renderer canvases. The PGS fixture tests bitmap attachment and capture; server-delivered bitmap tracks remain unqualified. Media-layer captions are not composed yet. Return to the ordinary player if captions are unavailable. Fonts, timing, placement and headset readability remain unqualified.</Typography>
                 <Button onClick={chooseTextCaptions} aria-pressed={captionKind === 'text'}>Text fixture</Button>
                 <Button onClick={chooseAssCaptions} aria-pressed={captionKind === 'ass'}>ASS fixture</Button>
                 <Button onClick={choosePgsCaptions} aria-pressed={captionKind === 'pgs'}>PGS fixture</Button>
