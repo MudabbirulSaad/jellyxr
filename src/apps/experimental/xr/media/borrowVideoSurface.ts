@@ -3,7 +3,7 @@ import Events from 'utils/events';
 export interface BorrowedSubtitleSurface {
     readonly textElements: readonly (HTMLElement | null | undefined)[];
     readonly unsupportedRenderer: 'ASS' | 'bitmap' | null;
-    readonly canvas?: { canvas: HTMLCanvasElement; revision?: string; format: 'ASS' } | null;
+    readonly canvas?: { canvas: HTMLCanvasElement; revision?: string; format: 'ASS' | 'PGS' } | null;
 }
 
 export interface VideoPresentationPlayer {
