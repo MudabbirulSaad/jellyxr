@@ -88,3 +88,5 @@ Evidence: [ASS canvas comparison](../05-delivery/m2-experiments.md#ass-canvas-co
 ### Bitmap capture experiment boundary
 
 Before exposing real bitmap tracks, test an original PGS stream through the installed libbitsub 1.11.0 renderer. Its synchronous `stats` event follows each render/clear attempt within the renderer's animation callback. Copy its canvas into an owned 2D snapshot at that point, then let the XR comparison sample the stable copy. Record the actual chosen backend and clear gaps, seeks and track-off; do not assume a later GPU-canvas read is preserved. The fixture may own its renderer, while real Jellyfin bitmap tracks remain under the existing unsupported warning until a lifecycle-safe subscription and initial-frame strategy are proven. No debug events, cue contents or private sources enter reports.
+
+The [PGS fixture evidence](../05-delivery/m2-experiments.md#pgs-capture-fixture-increment--2026-09-30) records actual-parser and PC webgpu-backend observations. WebGL2/Canvas2D bitmap capture, VobSub and real-player subscriptions remain unqualified; the XR renderer baseline remains WebGL.

@@ -324,3 +324,22 @@ The original ASS fixture runs through the actual installed libass worker on the 
 These are ordinary PC browser observations using original technical content. No private media, authenticated ASS delivery, actual headset, native layer, burn-in fallback, precise sync tolerance or sustained cost was tested in this slice. Dev-server hot reload continues to report the previously documented rejected origin; manual reload was used without weakening that check. Transient browser screenshots were inspected, not committed as private/media evidence.
 
 UI/UX Pro Max's pause/caption and error-recovery guidance supports explicit controls and visible fallback. Authored subtitle styling is retained by borrowing pixels instead of reconstructing ASS as plain text. Installed libbitsub 1.11.0 can choose a GPU canvas without a preserved drawing buffer, so bitmap capture still needs its own timed-copy experiment. Native-layer composition, secondary-track overlap, user caption placement and actual Quest readability remain G2 work. Primary libass reference reviewed 2026-09-30: [JavascriptSubtitlesOctopus](https://github.com/jellyfin/JavascriptSubtitlesOctopus); revision behaviour was checked against the installed 4.2.4 source.
+
+
+## PGS capture fixture increment — 2026-09-30
+
+Source revision: c944310e1a, based on xr 47fc91fa24 (PR #17). This is a bitmap-capture feasibility fixture for FR-011 / AT-10 / EXP-02, not real Jellyfin bitmap-track integration.
+
+An original PGS stream contains two labelled pixel captions at different coordinates, transparent corners, a translucent background, a warm stripe and explicit clear compositions. The stream is generated in TypeScript without external artwork or private media. The installed libbitsub 1.11.0 parser decodes its bytes. Its renderer's synchronous post-render `stats` event captures the canvas into an owned 2D snapshot; both XR texture candidates sample that stable copy. The fixture records the actual bitmap backend, owns its renderer and waits for initialization before disposal to avoid a late overlay after cancellation. Real Jellyfin bitmap renderers remain untouched and explicitly unsupported by the comparison.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Actual WASM parser | Four compositions at 500, 2500, 4000 and 6500 ms decode at 640×360. Two caption bounds and alpha values 0/192/255 match; clear intervals return empty compositions. The parser reports its expected EMPTY_CUE diagnostic for those clears |
+| Babylon PC texture | PGS 1 near 1.12 s, blank interval near 2.88 s and PGS 2 near 4.48 s inspected; authored horizontal/vertical placement survives the copy |
+| Three PC texture | PGS 2 near 4.8 s, paused Hide/Show and a seek back to the empty interval near 2.8 s inspected. Switching PGS back to Text removes the bitmap overlay; quick PGS/Text cancellation also leaves only the room canvas |
+| Backend identification | The inherited bitmap renderer reports webgpu in this PC browser. Both XR scenes still render with WebGL. No WebGL2/Canvas2D bitmap backend, Quest backend or native composition-layer result is inferred |
+| Local checks | TypeScript, full lint (98 inherited warnings), styles and all 258 tests in 33 files pass. Ordinary production/ES5 passes 983 files; experimental production/ES5 passes 993. Checked technical PGS/ASS markers remain absent from ordinary output. No dependency versions or compatibility exclusions changed |
+
+The capture adds a copy before the scene's texture upload, so actual-device cost must be measured. Server-delivered PGS, VobSub, track offsets/settings, renderer replacement, native layers and mid-cue attachment are still open. A real-player subscription must neither miss its initial frame nor keep copying when no XR consumer exists; this fixture does not solve that ownership boundary. The technical source was left paused and detached. UI/UX Pro Max's previously applied caption/recovery guidance carries through the explicit type and Hide/Show controls. No additional headset or human evidence is claimed.
+
+Protocol/source references: installed libbitsub 1.11.0 plus its npm gitHead [b49bc7082d](https://github.com/altqx/libbitsub/tree/b49bc7082d17287d238e7626744d1c991c5f6a2a), inspected 2026-09-30. The PGS composition/segment definitions and compatibility fixtures informed the binary format; the glyph pixels and two-cue test content are original. The moving current upstream branch is not treated as the installed API.
