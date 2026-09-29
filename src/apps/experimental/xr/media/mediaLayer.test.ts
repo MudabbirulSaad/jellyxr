@@ -69,4 +69,15 @@ describe('borrowed-video compositor attachment', () => {
         expect(host.updateLayers).toHaveBeenCalledTimes(1);
         expect(layer.destroy).toHaveBeenCalledTimes(1);
     });
+
+    it('still destroys the layer when render-state removal is rejected', () => {
+        const { surface, host, layer, createLayer } = createFixture();
+        const attachment = attachMediaLayer(surface, host, createLayer);
+        host.updateLayers.mockImplementation(() => {
+            throw new Error('Session is ending');
+        });
+        expect(() => attachment.detach()).toThrow('Session is ending');
+        attachment.detach();
+        expect(layer.destroy).toHaveBeenCalledTimes(1);
+    });
 });

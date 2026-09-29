@@ -14,10 +14,14 @@ import { PhysicsAggregate } from '@babylonjs/core/Physics/v2/physicsAggregate';
 import { PhysicsShapeType } from '@babylonjs/core/Physics/v2/IPhysicsEnginePlugin';
 import { HavokPlugin } from '@babylonjs/core/Physics/v2/Plugins/havokPlugin';
 import { WebXRExperienceHelper } from '@babylonjs/core/XR/webXRExperienceHelper';
+import { WebXRLayers } from '@babylonjs/core/XR/features/WebXRLayers';
 import '@babylonjs/core/Physics/joinedPhysicsEngineComponent';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
 import { FIXTURE_REMOTE, ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { VideoPresentation } from '../media/videoPresentation';
+import { createNativeMediaLayer } from '../media/nativeMediaLayer';
+import { createBabylonVideoTexture } from '../media/babylonVideoTexture';
 
 import { FrameSampler } from './frameSampler';
 import { FIXTURE_COLOURS, type ComparisonScene, type SampleListener } from './types';
@@ -69,6 +73,14 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const clock = new FixedStepClock();
     const sampler = new FrameSampler();
     const xr = await WebXRExperienceHelper.CreateAsync(scene).catch(() => undefined);
+    // Optional on ordinary browsers; no automatic mesh fallback hides a layer failure.
+    if (xr && typeof XRWebGLBinding !== 'undefined') {
+        xr.featuresManager.enableFeature(WebXRLayers.Name, 'latest', {}, true, false);
+    }
+    const video = new VideoPresentation({
+        createTexture: surface => createBabylonVideoTexture(surface, scene, engine),
+        createLayer: createNativeMediaLayer
+    });
     let disposed = false;
     const resize = () => engine.resize();
     const visibility = () => clock.reset();
@@ -82,16 +94,19 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             return;
         }
         const start = performance.now();
+        video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
+            xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
         clock.advance(start, seconds => plugin.executeStep(seconds, bodies));
         scene.render();
         sampler.record(performance.now() - start);
     });
     const timer = window.setInterval(() => onSample({
         ...sampler.read(), remoteHeight: remote?.transformNode.position.y || 0,
-        immersive: !!xr?.sessionManager.inXRSession
+        immersive: !!xr?.sessionManager.inXRSession, mediaStatus: video.readStatus()
     }), 1000);
 
     return {
+        setVideo: (surface, mode) => video.attach(surface, mode),
         async enterXR() {
             if (!xr) throw new Error('WebXR is unavailable in this browser.');
             await xr.enterXRAsync('immersive-vr', 'local-floor', undefined, {
@@ -111,6 +126,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async dispose() {
             if (disposed) return;
             disposed = true;
+            video.dispose();
             engine.stopRenderLoop();
             window.clearInterval(timer);
             window.removeEventListener('resize', resize);

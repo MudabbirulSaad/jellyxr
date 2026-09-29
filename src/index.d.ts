@@ -3,6 +3,11 @@ declare module '*.wasm' {
     export default value;
 }
 
+declare module '*.mp4' {
+    const value: string;
+    export default value;
+}
+
 declare module '*.png' {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const value: any;
