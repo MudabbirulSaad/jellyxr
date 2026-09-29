@@ -62,3 +62,15 @@ Local build/lint logs are outside Git under `%LOCALAPPDATA%\JellyXR`. The in-app
 5. Apply the [G2 selection rule](../06-decisions/technology-evaluation.md); no renderer is selected by these preparation passes.
 
 Related: [execution ledger](implementation-goal.md), [M1 evidence](m1-readiness.md), [test strategy](test-strategy.md), [source files](../../../src/apps/experimental/xr/ComparisonPage.tsx).
+
+## Borrowed media contract increment
+
+Source revision: 794d1b2610, based on xr 5efb2609aa. This increment adds the narrow `HtmlVideoPlayer.getVideoPresentationSurface()` accessor and experimental ownership helpers. Renderer attachment is still pending; the workbench does not yet play a Jellyfin video.
+
+The borrowing helper accepts only the current local HTML video player, retains the original element and listens for player change, stop, emptied, abort and error events. It invalidates once, removes its observers and never changes source, autoplay, looping, mute, position or playback. A per-frame identity check can detect replacement even when an event was missed. Releasing a borrow does not stop or unload the owner.
+
+The media-layer helper accepts a feature-tested binding from the renderer adapter. It requires an existing renderer projection-layer list, submits the borrowed element, cleans up a rejected layer, removes only its own layer on detach and preserves later subtitle/renderer additions. After session end it destroys its layer without submitting new render state. The host must retain its submitted layer list, including updates awaiting the next XR frame; reading only the runtime's previous render state is insufficient. Video-last layer ordering, geometry occlusion, subtitle composition and runtime support remain experiments, not qualified behaviour.
+
+Source inspection of installed Babylon 9.27.1 `VideoTexture` found default autoplay/loop changes and disposal pause behaviour; even `independentVideoSource` still passes the element through CORS setup. A direct stock-helper attachment is therefore not accepted for Jellyfin's borrowed video. Investigate media layers first and a manually managed GPU texture upload that leaves the element untouched; record measured outcomes before choosing either.
+
+Validation: TypeScript passed; changed-file lint passed with four existing player warnings; all 181 tests in 16 files passed, including ten new ownership/layer-contract cases. Ordinary production and ES5 checks passed for 982 files with inherited size warnings. The getter is the only ordinary-player change; it has no effect until called. Actual player transitions, decoded frames, audio/subtitle integrity, real compositor behaviour and device timing remain untested by this increment.

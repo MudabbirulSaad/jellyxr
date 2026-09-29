@@ -14,7 +14,7 @@ The [roadmap](roadmap.md) owns implementation order, [requirements](../02-requir
 | M1-B | Detailed baseline evidence; AT-07/09/10 and G1 | Basic Quest playback owner-confirmed; USB reconnected and forwarding restored. Detailed controls and delivery-path evidence remain open |
 | M1-C | Emulator and remote-debug workflow; NFR-010 | Owner reports emulator ready; exact profile/version unverified. Remote inspection not completed; automated internal-page navigation was rejected by browser security policy |
 | M2-A | Deterministic scene/catalogue/media fixture specification; EXP-01 through EXP-04 | Implemented shared room, clock and catalogue fixtures; unit checks and ordinary-bundle exclusion passed |
-| M2-B | Equal candidate harness, borrowed-video experiment and build compatibility | Initial [comparison workbench](m2-experiments.md) renders both candidates on PC; exact versions locked, media/input experiments next; no production engine selected |
+| M2-B | Equal candidate harness, borrowed-video experiment and build compatibility | [Comparison workbench](m2-experiments.md) merged in PR #3 at xr 5efb2609aa. Borrowed media and layer-ownership contracts unit-tested; renderer attachment, subtitles and input experiments next; no production engine selected |
 | M2-C | Actual-device experiments and architecture decision; G2 | Open; hands, subtitle classes, sustained timing and complete transition evidence cannot be inferred from emulation |
 | M3 | Production boundaries and ordinary regression | Awaiting G2 for renderer binding; independent contracts and fixture work may proceed |
 | M4 | Complete spatial journey | Awaiting production integration; both input methods required |
