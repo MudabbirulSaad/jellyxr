@@ -5,7 +5,7 @@ import {
 import RAPIER from '@dimforge/rapier3d-compat';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
-import { FIXTURE_REMOTE, ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { ROOM_FIXTURE } from '../fixtures/roomFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createThreeVideoTexture } from '../media/threeVideoTexture';
@@ -14,6 +14,7 @@ import { createThreeControls } from '../input/threeControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
 import { movementAction, MovementSession } from '../input/movementSession';
 import { viewerWorldPosition } from '../input/movement';
+import { createRapierRemote } from '../input/rapierRemote';
 
 import { FrameSampler } from './frameSampler';
 import { FIXTURE_COLOURS, type ComparisonPlaybackActions, type ComparisonScene, type SampleListener } from './types';
@@ -68,11 +69,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     }
 
     const clock = new FixedStepClock();
-    const recallRemote = () => {
-        remoteBody?.setTranslation({ x: FIXTURE_REMOTE[0], y: FIXTURE_REMOTE[1], z: FIXTURE_REMOTE[2] }, true);
-        remoteBody?.setLinvel({ x: 0, y: 0, z: 0 }, true);
-        remoteBody?.setAngvel({ x: 0, y: 0, z: 0 }, true);
-    };
+    const physicalRemote = createRapierRemote(remoteBody);
+    const recallRemote = () => physicalRemote?.recall();
     const movement = new MovementSession(playback.pauseForMovement);
     const input = new ComparisonInput(action => {
         const move = movementAction(action);
@@ -84,7 +82,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             if (session) void session.end().catch(() => input.report('Exit failed. Use headset system exit.'));
             else input.report('No immersive session is active.');
         }
-    });
+    }, physicalRemote?.grab);
     const controls = createThreeControls(scene, input.state);
     const raycaster = new Raycaster();
     const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
@@ -109,7 +107,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const visibility = () => {
         clock.reset();
         movement.cancel();
-        input.state.cancel();
+        input.cancel();
     };
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', visibility);
@@ -126,7 +124,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
                     camera.position.set(...viewerWorldPosition(root, [0, 1.65, 0]));
                     camera.rotation.set(0, root.yaw, 0);
                 });
-            if (moved) input.state.cancel();
+            if (moved) input.cancel();
         } catch {
             input.report('Movement failed. Check playback before retrying or exit XR.');
         }
@@ -134,10 +132,12 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         controls.update();
         video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
         clock.advance(time, seconds => {
+            physicalRemote?.grab.step(seconds);
             world.timestep = seconds;
             world.step();
         });
         if (remote && remoteBody) {
+            remote.material.emissive.set(physicalRemote?.grab.source() ? FIXTURE_COLOURS.warm : 0);
             remote.position.copy(remoteBody.translation());
             remote.quaternion.copy(remoteBody.rotation());
         }

@@ -18,7 +18,7 @@ import { WebXRLayers } from '@babylonjs/core/XR/features/WebXRLayers';
 import '@babylonjs/core/Physics/joinedPhysicsEngineComponent';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
-import { FIXTURE_REMOTE, ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { ROOM_FIXTURE } from '../fixtures/roomFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createBabylonVideoTexture } from '../media/babylonVideoTexture';
@@ -27,6 +27,7 @@ import { createBabylonControls } from '../input/babylonControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
 import { movementAction, MovementSession } from '../input/movementSession';
 import { viewerWorldPosition } from '../input/movement';
+import { createHavokRemote } from '../input/havokRemote';
 import '@babylonjs/core/Culling/ray';
 
 import { FrameSampler } from './frameSampler';
@@ -87,13 +88,15 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         createTexture: surface => createBabylonVideoTexture(surface, scene, engine),
         createLayer: createNativeMediaLayer
     });
-    const recallRemote = () => {
-        if (!remote) return;
-        remote.transformNode.position.set(...FIXTURE_REMOTE);
-        plugin.setPhysicsBodyTransformation(remote.body, remote.transformNode);
-        remote.body.setLinearVelocity(Vector3.Zero());
-        remote.body.setAngularVelocity(Vector3.Zero());
+    const physicalRemote = remote ? createHavokRemote(remote, plugin) : undefined;
+    const remoteMaterial = scene.getMaterialByName('remote-material');
+    const updateRemoteFeedback = () => {
+        if (remoteMaterial instanceof PBRMaterial) {
+            const held = !!physicalRemote?.grab.source();
+            remoteMaterial.emissiveColor.set(held ? 0.3 : 0, held ? 0.15 : 0, 0);
+        }
     };
+    const recallRemote = () => physicalRemote?.recall();
     const movement = new MovementSession(playback.pauseForMovement);
     const input = new ComparisonInput(action => {
         const move = movementAction(action);
@@ -104,7 +107,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             if (xr?.sessionManager.inXRSession) void xr.exitXRAsync().catch(() => input.report('Exit failed. Use headset system exit.'));
             else input.report('No immersive session is active.');
         }
-    });
+    }, physicalRemote?.grab);
     const controls = createBabylonControls(scene, input.state);
     const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
         const ray = scene.createPickingRay(x * engine.getRenderWidth(), y * engine.getRenderHeight(), Matrix.Identity(), camera);
@@ -115,7 +118,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const visibility = () => {
         clock.reset();
         movement.cancel();
-        input.state.cancel();
+        input.cancel();
     };
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', visibility);
@@ -137,7 +140,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
                     camera.position.set(...viewerWorldPosition(root, [0, 1.65, 0]));
                     camera.rotation.set(0, root.yaw, 0);
                 });
-            if (moved) input.state.cancel();
+            if (moved) input.cancel();
         } catch {
             input.report('Movement failed. Check playback before retrying or exit XR.');
         }
@@ -147,7 +150,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         controls.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
-        clock.advance(start, seconds => plugin.executeStep(seconds, bodies));
+        clock.advance(start, seconds => {
+            physicalRemote?.grab.step(seconds);
+            plugin.executeStep(seconds, bodies);
+        });
+        updateRemoteFeedback();
         scene.render();
         sampler.record(performance.now() - start);
     });

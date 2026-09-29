@@ -195,6 +195,7 @@ export function Component() {
                     sx={{ display: 'block', width: '100%', height: '55vh', backgroundColor: '#151B23' }} />
                 <Typography component='p'>{sample?.inputStatus || 'Spatial controls are preparing.'}</Typography>
                 <Typography component='p'>Room controls use world-space hit testing. On PC, click a target or focus the canvas, use arrow keys and press Enter. In XR, point and deliberately trigger or pinch. Movement pauses video and requires Resume. Looking alone does nothing. Hands, depth and comfort still need Quest validation.</Typography>
+                <Typography component='p'>Remote fixture: bring a controller close and hold its grip, or bring thumb and index finger close and pinch. Release to drop. Recall remote restores it to the stand. Held orientation is constrained; throwing and production remote controls are not part of this fixture.</Typography>
                 <Typography component='p' gutterBottom sx={{ marginTop: 2 }}>
                     {sample ? `${sample.frames} frames; recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms; remote height ${sample.remoteHeight.toFixed(3)} m.` : 'Frame observations will appear after the scene starts.'}
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.

@@ -9,6 +9,7 @@ export interface FixtureBox {
 }
 
 export const FIXTURE_REMOTE: Point3 = [0.35, 1, -1.2];
+export const REMOTE_SIZE: Point3 = [0.08, 0.035, 0.19];
 
 const seat = (id: string, x: number, z: number): FixtureBox[] => [
     {
@@ -35,7 +36,8 @@ export const ROOM_FIXTURE: readonly FixtureBox[] = [
     { id: 'light-right', size: [0.035, 0.035, 10], position: [4.5, 3.8, 0], material: 'warm', collision: 'none' },
     ...seat('seat-left', -1.25, 1.5),
     ...seat('seat-right', 1.25, 1.5),
-    { id: 'remote', size: [0.08, 0.035, 0.19], position: FIXTURE_REMOTE, material: 'metal', collision: 'dynamic' }
+    { id: 'remote-stand', size: [0.32, 0.7, 0.32], position: [0.35, 0.35, -1.2], material: 'surface', collision: 'static' },
+    { id: 'remote', size: REMOTE_SIZE, position: FIXTURE_REMOTE, material: 'metal', collision: 'dynamic' }
 ];
 
 export const FIXTURE_SEAT: Point3 = [0, 0, 0];

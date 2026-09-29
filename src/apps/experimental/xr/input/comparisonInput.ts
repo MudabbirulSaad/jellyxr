@@ -2,6 +2,7 @@ import type { Point3 } from '../fixtures/roomFixture';
 
 import { ActivationState } from './activationState';
 import { CONTROL_TARGETS, hitControl, type ControlAction, type InputRay } from './controlTargets';
+import type { RemoteGrab } from './remoteGrab';
 
 /** Uses one native select event stream for controller trigger and hand pinch; never gaze. */
 export class ComparisonInput {
@@ -14,7 +15,23 @@ export class ComparisonInput {
     private lastAction = 'No spatial action yet.';
     private lastPointer = 'No desktop pointer event.';
 
-    constructor(private readonly onAction: (action: ControlAction) => void) {}
+    constructor(private readonly onAction: (action: ControlAction) => void, private readonly grab?: RemoteGrab) {}
+
+    private anchor(frame: XRFrame, source: XRInputSource): Point3 | null {
+        if (!this.space || source.targetRayMode !== 'tracked-pointer') return null;
+        if (!source.hand) {
+            const pose = source.gripSpace && frame.getPose(source.gripSpace, this.space);
+            return pose ? [pose.transform.position.x, pose.transform.position.y, pose.transform.position.z] : null;
+        }
+        const index = source.hand.get('index-finger-tip');
+        const thumb = source.hand.get('thumb-tip');
+        const a = index && frame.getJointPose?.(index, this.space);
+        const b = thumb && frame.getJointPose?.(thumb, this.space);
+        if (!a || !b) return null;
+        const p = a.transform.position;
+        const q = b.transform.position;
+        return [(p.x + q.x) / 2, (p.y + q.y) / 2, (p.z + q.z) / 2];
+    }
 
     private id(source: XRInputSource): string {
         let id = this.ids.get(source);
@@ -44,20 +61,41 @@ export class ComparisonInput {
     }
 
     private start = (event: XRInputSourceEvent) => {
-        if (this.session?.visibilityState !== 'visible') return;
-        this.state.begin(this.id(event.inputSource), this.target(event.frame, event.inputSource));
+        if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
+        const target = this.target(event.frame, event.inputSource);
+        if (event.inputSource.hand && !target && this.beginGrab(event)) return;
+        this.state.begin(this.id(event.inputSource), target);
     };
 
     private select = (event: XRInputSourceEvent) => {
-        if (this.session?.visibilityState !== 'visible') return;
+        if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
         this.perform(this.state.commit(this.id(event.inputSource), this.target(event.frame, event.inputSource)));
     };
 
-    private end = (event: XRInputSourceEvent) => this.state.cancel(this.id(event.inputSource));
-    private visibility = () => this.state.cancel();
+    private end = (event: XRInputSourceEvent) => {
+        this.state.cancel(this.id(event.inputSource));
+        if (event.inputSource.hand) this.grab?.release(this.id(event.inputSource));
+    };
+    private beginGrab = (event: XRInputSourceEvent): boolean => {
+        if (this.session?.visibilityState !== 'visible' || this.state.read().source) return false;
+        const began = this.grab?.begin(this.id(event.inputSource), this.anchor(event.frame, event.inputSource)) || false;
+        if (began) this.state.cancel();
+        return began;
+    };
+    private squeeze = (event: XRInputSourceEvent) => {
+        if (!event.inputSource.hand) this.beginGrab(event);
+    };
+    private unsqueeze = (event: XRInputSourceEvent) => {
+        if (!event.inputSource.hand) this.grab?.release(this.id(event.inputSource));
+    };
+    cancel = (): void => {
+        this.state.cancel();
+        this.grab?.release();
+    };
     private changed = (event: XRInputSourcesChangeEvent) => {
         for (const source of event.removed) {
             this.state.cancel(this.id(source));
+            this.grab?.release(this.id(source));
             this.ids.delete(source);
         }
     };
@@ -77,13 +115,22 @@ export class ComparisonInput {
             session?.addEventListener('selectstart', this.start);
             session?.addEventListener('select', this.select);
             session?.addEventListener('selectend', this.end);
+            session?.addEventListener('squeezestart', this.squeeze);
+            session?.addEventListener('squeezeend', this.unsqueeze);
             session?.addEventListener('inputsourceschange', this.changed);
-            session?.addEventListener('visibilitychange', this.visibility);
-            session?.addEventListener('end', this.visibility);
+            session?.addEventListener('visibilitychange', this.cancel);
+            session?.addEventListener('end', this.cancel);
         }
         this.space = space;
         if (!session || !frame || session.visibilityState !== 'visible') {
-            if (session) this.state.cancel();
+            if (session) this.cancel();
+            return;
+        }
+        const grabOwner = this.grab?.source();
+        if (grabOwner) {
+            const source = Array.from(session.inputSources).find(value => this.id(value) === grabOwner);
+            this.grab?.update(grabOwner, source ? this.anchor(frame, source) : null);
+            this.state.cancel();
             return;
         }
         const owner = this.state.read().source;
@@ -109,7 +156,7 @@ export class ComparisonInput {
         if (phase === 'move') this.state.observe('desktop', target);
         if (phase === 'down') this.state.begin('desktop', target);
         if (phase === 'up') this.perform(this.state.commit('desktop', target));
-        if (phase === 'cancel') this.state.cancel();
+        if (phase === 'cancel') this.cancel();
     }
 
     key(phase: 'down' | 'up', key: string): void {
@@ -130,7 +177,7 @@ export class ComparisonInput {
     }
 
     readStatus(): string {
-        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer}`;
+        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}.`;
     }
 
     report(message: string): void {
@@ -141,11 +188,13 @@ export class ComparisonInput {
         this.session?.removeEventListener('selectstart', this.start);
         this.session?.removeEventListener('select', this.select);
         this.session?.removeEventListener('selectend', this.end);
+        this.session?.removeEventListener('squeezestart', this.squeeze);
+        this.session?.removeEventListener('squeezeend', this.unsqueeze);
         this.session?.removeEventListener('inputsourceschange', this.changed);
-        this.session?.removeEventListener('visibilitychange', this.visibility);
-        this.session?.removeEventListener('end', this.visibility);
+        this.session?.removeEventListener('visibilitychange', this.cancel);
+        this.session?.removeEventListener('end', this.cancel);
         this.ids.clear();
-        this.state.cancel();
+        this.cancel();
     }
 
     dispose(): void {
