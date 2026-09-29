@@ -1,10 +1,10 @@
-/* eslint new-cap: ["error", { "capIsNewExceptions": ["HavokPhysics", "CreateBox", "Color3.FromHexString", "Color4.FromHexString", "Color3.White", "Vector3.Zero", "WebXRExperienceHelper.CreateAsync"] }] */
+/* eslint new-cap: ["error", { "capIsNewExceptions": ["HavokPhysics", "CreateBox", "Color3.FromHexString", "Color4.FromHexString", "Color3.White", "Vector3.Zero", "Matrix.Identity", "WebXRExperienceHelper.CreateAsync"] }] */
 import HavokPhysics from '@babylonjs/havok';
 import havokWasm from '@babylonjs/havok/lib/esm/HavokPhysics.wasm';
 import { Engine } from '@babylonjs/core/Engines/engine';
 import { Scene } from '@babylonjs/core/scene';
 import { UniversalCamera } from '@babylonjs/core/Cameras/universalCamera';
-import { Vector3 } from '@babylonjs/core/Maths/math.vector';
+import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
 import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
@@ -22,6 +22,10 @@ import { FIXTURE_REMOTE, ROOM_FIXTURE } from '../fixtures/roomFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createBabylonVideoTexture } from '../media/babylonVideoTexture';
+import { ComparisonInput } from '../input/comparisonInput';
+import { createBabylonControls } from '../input/babylonControls';
+import { bindDesktopPointer } from '../input/desktopPointer';
+import '@babylonjs/core/Culling/ray';
 
 import { FrameSampler } from './frameSampler';
 import { FIXTURE_COLOURS, type ComparisonScene, type SampleListener } from './types';
@@ -81,6 +85,25 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         createTexture: surface => createBabylonVideoTexture(surface, scene, engine),
         createLayer: createNativeMediaLayer
     });
+    const recallRemote = () => {
+        if (!remote) return;
+        remote.transformNode.position.set(...FIXTURE_REMOTE);
+        plugin.setPhysicsBodyTransformation(remote.body, remote.transformNode);
+        remote.body.setLinearVelocity(Vector3.Zero());
+        remote.body.setAngularVelocity(Vector3.Zero());
+    };
+    const input = new ComparisonInput(action => {
+        if (action === 'recall-remote') recallRemote();
+        if (action === 'exit-xr') {
+            if (xr?.sessionManager.inXRSession) void xr.exitXRAsync().catch(() => input.report('Exit failed. Use headset system exit.'));
+            else input.report('No immersive session is active.');
+        }
+    });
+    const controls = createBabylonControls(scene, input.state);
+    const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
+        const ray = scene.createPickingRay(x * engine.getRenderWidth(), y * engine.getRenderHeight(), Matrix.Identity(), camera);
+        return { origin: [ray.origin.x, ray.origin.y, ray.origin.z], direction: [ray.direction.x, ray.direction.y, ray.direction.z] };
+    });
     let disposed = false;
     const resize = () => engine.resize();
     const visibility = () => clock.reset();
@@ -94,6 +117,10 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             return;
         }
         const start = performance.now();
+        input.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
+            xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null,
+            xr?.sessionManager.inXRSession ? xr.sessionManager.currentFrame || undefined : undefined);
+        controls.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
         clock.advance(start, seconds => plugin.executeStep(seconds, bodies));
@@ -102,7 +129,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     });
     const timer = window.setInterval(() => onSample({
         ...sampler.read(), remoteHeight: remote?.transformNode.position.y || 0,
-        immersive: !!xr?.sessionManager.inXRSession, mediaStatus: video.readStatus()
+        immersive: !!xr?.sessionManager.inXRSession, mediaStatus: video.readStatus(), inputStatus: input.readStatus()
     }), 1000);
 
     return {
@@ -116,16 +143,13 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async exitXR() {
             if (xr?.sessionManager.inXRSession) await xr.exitXRAsync();
         },
-        recallRemote() {
-            if (!remote) return;
-            remote.transformNode.position.set(...FIXTURE_REMOTE);
-            plugin.setPhysicsBodyTransformation(remote.body, remote.transformNode);
-            remote.body.setLinearVelocity(Vector3.Zero());
-            remote.body.setAngularVelocity(Vector3.Zero());
-        },
+        recallRemote,
         async dispose() {
             if (disposed) return;
             disposed = true;
+            unbindPointer();
+            input.dispose();
+            controls.dispose();
             video.dispose();
             engine.stopRenderLoop();
             window.clearInterval(timer);

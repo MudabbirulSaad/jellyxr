@@ -1,6 +1,6 @@
 import {
     AmbientLight, BoxGeometry, Color, DirectionalLight, Mesh, MeshStandardMaterial,
-    PerspectiveCamera, Scene, WebGLRenderer
+    PerspectiveCamera, Raycaster, Scene, Vector2, WebGLRenderer
 } from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 
@@ -9,6 +9,9 @@ import { FIXTURE_REMOTE, ROOM_FIXTURE } from '../fixtures/roomFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createThreeVideoTexture } from '../media/threeVideoTexture';
+import { ComparisonInput } from '../input/comparisonInput';
+import { createThreeControls } from '../input/threeControls';
+import { bindDesktopPointer } from '../input/desktopPointer';
 
 import { FrameSampler } from './frameSampler';
 import { FIXTURE_COLOURS, type ComparisonScene, type SampleListener } from './types';
@@ -63,6 +66,26 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     }
 
     const clock = new FixedStepClock();
+    const recallRemote = () => {
+        remoteBody?.setTranslation({ x: FIXTURE_REMOTE[0], y: FIXTURE_REMOTE[1], z: FIXTURE_REMOTE[2] }, true);
+        remoteBody?.setLinvel({ x: 0, y: 0, z: 0 }, true);
+        remoteBody?.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    };
+    const input = new ComparisonInput(action => {
+        if (action === 'recall-remote') recallRemote();
+        if (action === 'exit-xr') {
+            const session = renderer.xr.getSession();
+            if (session) void session.end().catch(() => input.report('Exit failed. Use headset system exit.'));
+            else input.report('No immersive session is active.');
+        }
+    });
+    const controls = createThreeControls(scene, input.state);
+    const raycaster = new Raycaster();
+    const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
+        raycaster.setFromCamera(new Vector2(x * 2 - 1, 1 - y * 2), camera);
+        const { origin, direction } = raycaster.ray;
+        return { origin: [origin.x, origin.y, origin.z], direction: [direction.x, direction.y, direction.z] };
+    });
     const video = new VideoPresentation({
         createTexture: surface => createThreeVideoTexture(surface, scene),
         createLayer: createNativeMediaLayer
@@ -81,12 +104,14 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', visibility);
     resize();
-    renderer.setAnimationLoop(time => {
+    renderer.setAnimationLoop((time, frame) => {
         if (document.hidden) {
             clock.reset();
             return;
         }
         const start = performance.now();
+        input.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), frame);
+        controls.update();
         video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
         clock.advance(time, seconds => {
             world.timestep = seconds;
@@ -101,7 +126,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     });
     const timer = window.setInterval(() => onSample({
         ...sampler.read(), remoteHeight: remote?.position.y || 0, immersive: renderer.xr.isPresenting,
-        mediaStatus: video.readStatus()
+        mediaStatus: video.readStatus(), inputStatus: input.readStatus()
     }), 1000);
 
     return {
@@ -123,14 +148,13 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async exitXR() {
             await renderer.xr.getSession()?.end();
         },
-        recallRemote() {
-            remoteBody?.setTranslation({ x: FIXTURE_REMOTE[0], y: FIXTURE_REMOTE[1], z: FIXTURE_REMOTE[2] }, true);
-            remoteBody?.setLinvel({ x: 0, y: 0, z: 0 }, true);
-            remoteBody?.setAngvel({ x: 0, y: 0, z: 0 }, true);
-        },
+        recallRemote,
         async dispose() {
             if (disposed) return;
             disposed = true;
+            unbindPointer();
+            input.dispose();
+            controls.dispose();
             video.dispose();
             renderer.setAnimationLoop(null);
             window.clearInterval(timer);

@@ -7,6 +7,7 @@ export interface ComparisonSample {
     remoteHeight: number;
     immersive: boolean;
     mediaStatus: string;
+    inputStatus: string;
 }
 
 export interface ComparisonScene {
