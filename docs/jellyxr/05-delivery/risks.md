@@ -27,7 +27,7 @@ Roles are accountable functions, not invented team assignments. Product owner co
 | R-19 | Physics catch-up, jitter or tunnelling can exceed budgets or break presence | Compare Havok/Rapier using identical simple colliders and motion; bounded steps, sleeping, damping and fast-body protection; profile viewing and active interaction separately | Implementation lead | G2, G4 |
 | R-20 | Asset detail or unclear download licences can block distribution | Prefer original/verified CC0; maintain source/licence/runtime manifest; measure compression/load cost; audit every distributed import | Design + implementation lead | G2 pipeline, G4 archive |
 | R-21 | Autonomous work can outrun human/device evidence | Continue independent fixtures, contracts and desktop checks; keep qualification gates open and never infer hands, comfort or five-viewer success from code or emulation | Implementation + validation lead | Every milestone |
-| R-22 | Cancelling the inherited audio action sheet raises an unhandled rejection | Observed during the M2 desktop media run: ActionSheet closed without resolving. Audio-sheet source was unchanged. Reproduce in ordinary mode and handle deliberate cancellation separately from playback errors before a complete regression pass | Implementation lead | G2 reproduction/fix; G4 retest |
+| R-22 | Cancelling the inherited audio action sheet raises an unhandled rejection | Reproduced during the M2 desktop media run. Named cancellation handling now passes the actual PC retest and three action-sheet regression tests; real selection errors still propagate. Keep actual-device and full ordinary regression open | Implementation lead | G2 reproduction/fix; G4 retest |
 
 ## Questions already settled
 

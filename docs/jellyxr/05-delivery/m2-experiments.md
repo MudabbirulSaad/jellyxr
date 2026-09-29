@@ -169,7 +169,7 @@ Implementation references: exact installed Havok/Babylon and Rapier sources, plu
 
 ## Player-preserving overlay increment — 2026-09-30
 
-Source revision: df1846c073, based on xr 1f286b0ad5. The comparison route remains useful for synthetic fixtures. Actual media testing now uses **Open XR media test**, shown only in an experiment build while a local HTML video surface exists. It opens the same workbench in an overlay, leaving the ordinary video route mounted. Source inspection found that the inherited Page/view-hide lifecycle invokes stop-on-back for active video; navigating to a separate comparison route was therefore an unsuitable way to retain its surface.
+Source revision: df1846c073, based on xr 1f286b0ad5; merged in PR #9 at xr 27c2f023cd. The comparison route remains useful for synthetic fixtures. Actual media testing now uses **Open XR media test**, shown only in an experiment build while a local HTML video surface exists. It opens the same workbench in an overlay, leaving the ordinary video route mounted. Source inspection found that the inherited Page/view-hide lifecycle invokes stop-on-back for active video; navigating to a separate comparison route was therefore an unsuitable way to retain its surface.
 
 The overlay loads the workbench on demand. Closing it disposes presentation resources and restores focus without issuing Stop to Jellyfin. Keyboard/wheel/click propagation is contained so canvas navigation does not also invoke the ordinary player's shortcuts. Initial testing caught Enter being intercepted by those global handlers; the input boundary was corrected before the following checks.
 
@@ -186,3 +186,12 @@ The overlay loads the workbench on demand. Closing it disposes presentation reso
 These PC observations do not qualify audible synchronization, subtitle composition, HDR colour, actual Quest layers or sustained timing. SUBRIP remained selected in ordinary playback, but no synchronized XR subtitle pass is claimed. Screenshots were inspected only during the test; private media, titles, identifiers and artwork are not stored in the repository.
 
 Cancelling the inherited audio-selection sheet subsequently raised `ActionSheet closed without resolving` in the development error overlay. That sheet code was unchanged by this increment. The test stream was stopped through browser Back. R-22 tracks reproducing and fixing cancellation before declaring complete ordinary-player regression; this is not hidden as a passed audio-switching scenario.
+
+
+## Ordinary menu cancellation follow-up — 2026-09-30
+
+Source revision: 46d022623a, based on xr 27c2f023cd. R-22 was reproduced in the inherited audio-selection flow. Closing a sheet without a selection rejected its promise, and the player did not handle that normal dismissal. Audio, primary/secondary subtitle and playback-settings handlers now consume only a specifically named cancellation error. Other selection/loading failures still propagate; no track is changed on cancellation, and existing idle cleanup still runs.
+
+An initial Error-subclass check passed unit tests but failed in the browser under the inherited ES5 transform. The final implementation uses a named plain Error, matching existing error-name discrimination elsewhere in this client. The actual browser retest closed the audio menu through Back without a new action-sheet error; leaving playback then removed its video element. This does not qualify audible track switching or all ordinary feature parity.
+
+Three regression tests exercise the real action-sheet DOM with only its dialog host mocked: dismissal performs cleanup without selection, a chosen identifier is preserved, and an actual selection failure remains rejected. TypeScript, full lint/styles and all 222 tests in 25 files pass. Ordinary production/ES5 passes 982 files and experiment production/ES5 passes 991. Actual-device menu/input regression remains part of G4.
