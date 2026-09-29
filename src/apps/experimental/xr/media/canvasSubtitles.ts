@@ -9,6 +9,7 @@ export function createCanvasSubtitleArtwork(surface: BorrowedVideoSurface, canva
     let revision: string | undefined;
     let visible = false;
     let warning: string | undefined;
+    let format: 'ASS' | 'PGS' = 'ASS';
     const clear = () => {
         const changed = visible;
         if (visible) context.clearRect(0, 0, canvas.width, canvas.height);
@@ -54,11 +55,12 @@ export function createCanvasSubtitleArtwork(surface: BorrowedVideoSurface, canva
             }
             source = next;
             revision = presentation.revision;
+            format = presentation.format;
             visible = true;
             return true;
         },
         isVisible: () => visible,
         readWarning: () => warning,
-        readStatus: () => 'Borrowed ASS canvas; fonts, timing and headset readability remain unqualified.'
+        readStatus: () => `Borrowed ${format} canvas; timing and headset readability remain unqualified.`
     };
 }

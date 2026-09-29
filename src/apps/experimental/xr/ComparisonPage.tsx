@@ -15,6 +15,7 @@ import type { VideoPresentationMode } from './media/videoPresentation';
 import fixtureVideoUrl from './fixtures/video-orientation.mp4';
 import { installSubtitleFixture } from './fixtures/subtitleFixture';
 import { installAssFixture } from './fixtures/assFixture';
+import { installPgsFixture } from './fixtures/pgsFixture';
 import type { ChairQuality } from './assets/chairAssets';
 
 type Candidate = 'babylon' | 'three';
@@ -28,8 +29,9 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const fixtureVideo = useRef<HTMLVideoElement>(null);
     const fixtureSubtitles = useRef<ReturnType<typeof installSubtitleFixture>>(null);
-    const assFixture = useRef<Awaited<ReturnType<typeof installAssFixture>> | null>(null);
-    const [assCaptions, setAssCaptions] = useState(false);
+    const canvasFixture = useRef<Awaited<ReturnType<typeof installAssFixture>> | null>(null);
+    const [captionKind, setCaptionKind] = useState<'text' | 'ass' | 'pgs'>('text');
+    const [bitmapBackend, setBitmapBackend] = useState('Not started');
     const captionEnabled = useRef(true);
     const mediaOwner = useRef<'fixture' | 'jellyfin' | null>(null);
     const active = useRef<ComparisonScene>();
@@ -60,27 +62,31 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     }, []);
 
     useEffect(() => {
-        if (!assCaptions || !fixtureVideo.current) return;
+        if (captionKind === 'text' || !fixtureVideo.current) return;
         let cancelled = false;
         let fixture: Awaited<ReturnType<typeof installAssFixture>> | undefined;
         const failed = () => {
-            if (!cancelled) setStatus('ASS fixture could not load. Switch to Text fixture and retry.');
+            if (!cancelled) setStatus('Caption fixture could not load. Switch to Text fixture and retry.');
         };
-        void installAssFixture(fixtureVideo.current, failed).then(value => {
+        const installed = captionKind === 'ass' ? installAssFixture(fixtureVideo.current, failed) :
+            installPgsFixture(fixtureVideo.current, failed, name => {
+                if (!cancelled) setBitmapBackend(name);
+            });
+        void installed.then(value => {
             fixture = value;
             if (cancelled) {
                 value.dispose();
             } else {
-                assFixture.current = value;
+                canvasFixture.current = value;
                 if (!captionEnabled.current) value.setEnabled(false);
             }
         }).catch(failed);
         return () => {
             cancelled = true;
-            assFixture.current = null;
+            canvasFixture.current = null;
             fixture?.dispose();
         };
-    }, [assCaptions]);
+    }, [captionKind]);
 
     useEffect(() => {
         let cancelled = false;
@@ -183,22 +189,29 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const chooseTexture = useCallback(() => setMediaMode('video-texture'), []);
     const toggleFixtureCaptions = useCallback(() => {
         captionEnabled.current = !fixtureCaptions;
-        if (assCaptions) assFixture.current?.setEnabled(!fixtureCaptions);
+        if (captionKind !== 'text') canvasFixture.current?.setEnabled(!fixtureCaptions);
         else fixtureSubtitles.current?.setEnabled(!fixtureCaptions);
         setFixtureCaptions(!fixtureCaptions);
-    }, [fixtureCaptions, assCaptions]);
+    }, [fixtureCaptions, captionKind]);
     const chooseTextCaptions = useCallback(() => {
-        setAssCaptions(false);
+        setCaptionKind('text');
         setFixtureCaptions(true);
         captionEnabled.current = true;
         fixtureSubtitles.current?.setEnabled(true);
     }, []);
     const chooseAssCaptions = useCallback(() => {
         fixtureSubtitles.current?.setEnabled(false);
-        assFixture.current?.setEnabled(true);
+        canvasFixture.current?.setEnabled(true);
         setFixtureCaptions(true);
         captionEnabled.current = true;
-        setAssCaptions(true);
+        setCaptionKind('ass');
+    }, []);
+    const choosePgsCaptions = useCallback(() => {
+        fixtureSubtitles.current?.setEnabled(false);
+        canvasFixture.current?.setEnabled(true);
+        setFixtureCaptions(true);
+        captionEnabled.current = true;
+        setCaptionKind('pgs');
     }, []);
     const attachPlayback = useCallback(() => {
         const instance = active.current;
@@ -227,7 +240,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
         let current = true;
         instance.setVideo({
             video, isCurrent: () => current && fixtureVideo.current === video,
-            readSubtitles: () => assFixture.current?.read(),
+            readSubtitles: () => canvasFixture.current?.read(),
             release: () => { current = false; }
         }, mediaMode);
         mediaOwner.current = 'fixture';
@@ -274,10 +287,12 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Button onClick={detachVideo} disabled={!ready || busy}>Detach video</Button>
                 </Stack>
                 <Typography component='p' gutterBottom>{sample?.mediaStatus || 'No video attached.'}</Typography>
-                <Typography component='p'>Video texture mode compares plain-text captions and the existing ASS canvas. Bitmap and media-layer captions still need composition work. Keep the ordinary player for those paths. Fonts, timing, placement and headset readability remain unqualified.</Typography>
-                <Button onClick={chooseTextCaptions} aria-pressed={!assCaptions}>Text fixture</Button>
-                <Button onClick={chooseAssCaptions} aria-pressed={assCaptions}>ASS fixture</Button>
+                <Typography component='p'>Video texture mode compares plain-text captions and the existing ASS canvas. The PGS fixture tests bitmap capture only; real bitmap tracks and media-layer captions still need integration work. Keep the ordinary player for those paths. Fonts, timing, placement and headset readability remain unqualified.</Typography>
+                <Button onClick={chooseTextCaptions} aria-pressed={captionKind === 'text'}>Text fixture</Button>
+                <Button onClick={chooseAssCaptions} aria-pressed={captionKind === 'ass'}>ASS fixture</Button>
+                <Button onClick={choosePgsCaptions} aria-pressed={captionKind === 'pgs'}>PGS fixture</Button>
                 <Button onClick={toggleFixtureCaptions} aria-pressed={fixtureCaptions}>{fixtureCaptions ? 'Hide fixture captions' : 'Show fixture captions'}</Button>
+                {captionKind === 'pgs' && <Typography component='p'>Technical PGS renderer: {bitmapBackend}. Server-delivered bitmap tracks remain unqualified.</Typography>}
                 <Box sx={{ width: '12rem', maxWidth: '100%', position: 'relative' }}>
                     <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop controls playsInline preload='metadata'
                         aria-label='Silent orientation fixture source' sx={{ width: '100%' }} />

@@ -84,3 +84,7 @@ Use an original, labelled ASS script on the existing silent technical clip to te
 Bitmap capture needs a distinct experiment. Installed libbitsub 1.11.0 can use a GPU canvas without a preserved WebGL drawing buffer, so a later canvas copy cannot be assumed faithful. Retain the explicit bitmap warning until capture timing/backend and clearing have been demonstrated. Native media-layer subtitle composition remains separate work.
 
 Evidence: [ASS canvas comparison](../05-delivery/m2-experiments.md#ass-canvas-comparison-increment--2026-09-30). The installed renderer source establishes the seam; desktop fixture observations do not qualify server-delivered ASS or headset output.
+
+### Bitmap capture experiment boundary
+
+Before exposing real bitmap tracks, test an original PGS stream through the installed libbitsub 1.11.0 renderer. Its synchronous `stats` event follows each render/clear attempt within the renderer's animation callback. Copy its canvas into an owned 2D snapshot at that point, then let the XR comparison sample the stable copy. Record the actual chosen backend and clear gaps, seeks and track-off; do not assume a later GPU-canvas read is preserved. The fixture may own its renderer, while real Jellyfin bitmap tracks remain under the existing unsupported warning until a lifecycle-safe subscription and initial-frame strategy are proven. No debug events, cue contents or private sources enter reports.
