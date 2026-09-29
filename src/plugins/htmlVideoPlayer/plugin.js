@@ -939,6 +939,14 @@ export class HtmlVideoPlayer {
         }
     }
 
+    /**
+     * Borrow the active video for an optional presentation; playback remains player-owned.
+     * @returns {HTMLVideoElement | null}
+     */
+    getVideoPresentationSurface() {
+        return this.#mediaElement || null;
+    }
+
     stop(destroyPlayer) {
         const elem = this.#mediaElement;
         const src = this.#currentSrc;
