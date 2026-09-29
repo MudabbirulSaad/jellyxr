@@ -81,7 +81,7 @@ export class VideoPresentation {
             }
             this.resource.update();
             this.status = this.mode === 'media-layer' ?
-                'Media layer attached. Separate subtitles are not composed in this path yet; use the ordinary player for captions.' :
+                `Media underlay attached. ${this.resource.readSubtitleStatus?.() || 'Caption composition remains unqualified.'} Alpha and occlusion need headset testing.` :
                 `Video texture attached. ${this.resource.readSubtitleStatus?.() || 'Subtitle and colour qualification remain open.'}`;
         } catch {
             this.clearResource();

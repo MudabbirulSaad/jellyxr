@@ -22,6 +22,7 @@ import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createBabylonVideoTexture } from '../media/babylonVideoTexture';
+import { createBabylonMediaUnderlay } from '../media/babylonMediaUnderlay';
 import { ComparisonInput } from '../input/comparisonInput';
 import { createBabylonControls } from '../input/babylonControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
@@ -94,7 +95,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     }
     const video = new VideoPresentation({
         createTexture: surface => createBabylonVideoTexture(surface, scene, engine),
-        createLayer: createNativeMediaLayer
+        createLayer: (surface, session, space) => createNativeMediaLayer(surface, session, space,
+            () => createBabylonMediaUnderlay(surface, scene))
     });
     const physicalRemote = remote ? createHavokRemote(remote, plugin) : undefined;
     const remoteMaterial = scene.getMaterialByName('remote-material');

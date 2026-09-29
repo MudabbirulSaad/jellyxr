@@ -10,6 +10,7 @@ import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createThreeVideoTexture } from '../media/threeVideoTexture';
+import { createThreeMediaUnderlay } from '../media/threeMediaUnderlay';
 import { ComparisonInput } from '../input/comparisonInput';
 import { createThreeControls } from '../input/threeControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
@@ -105,7 +106,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     });
     const video = new VideoPresentation({
         createTexture: surface => createThreeVideoTexture(surface, scene),
-        createLayer: createNativeMediaLayer
+        createLayer: (surface, session, space) => createNativeMediaLayer(surface, session, space,
+            () => createThreeMediaUnderlay(surface, scene))
     });
     const sampler = new FrameSampler();
     const recovery = new SessionRecovery({

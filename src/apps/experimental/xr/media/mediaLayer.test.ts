@@ -23,7 +23,7 @@ describe('borrowed-video compositor attachment', () => {
         const { surface, projection, subtitle, layer, host, createLayer } = createFixture();
         const attachment = attachMediaLayer(surface, host, createLayer);
         expect(createLayer).toHaveBeenCalledExactlyOnceWith(surface.video);
-        expect(host.readLayers()).toEqual([projection, layer]);
+        expect(host.readLayers()).toEqual([layer, projection]);
         host.updateLayers([...host.readLayers(), subtitle]);
         attachment.detach();
         attachment.detach();
