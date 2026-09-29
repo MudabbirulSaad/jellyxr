@@ -249,3 +249,20 @@ Babylon's default plane faced away from the shared +Z hit regions. Double-sided 
 | Local checks | TypeScript, full lint (98 inherited warnings), styles and all 231 tests in 28 files pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992 |
 
 UI/UX Pro Max's targeted focus-indicator guidance informed agreement between visible controls and actionable geometry. Access after arbitrary turns, summon/recovery controls and actual Quest readability remain required work. No private media was used in this follow-up. Primary documentation reviewed: [Three lighting](https://threejs.org/manual/pages/lights.html) and [Babylon PBR](https://github.com/BabylonJS/Documentation/blob/master/content/features/featuresDeepDive/materials/using/masterPBR.md); actual implementation behaviour was checked against the pinned installed engine sources.
+
+## Session interruption and reset increment — 2026-09-30
+
+Source revision: bd2782ca28, based on xr aaaf4d472c (PR #13's scene comparison corrections). This advances FR-018/030/031; it does not close native-session, hand or comfort qualification.
+
+Both candidates share an event-driven recovery controller. Hidden/blurred XR visibility, ordinary-page hiding and session end cancel pending movement, selection and held objects, reset the simulation clock and request Pause through the existing owner. Presentation resources release immediately while the borrowed owner remains available. Visibility restoration never calls Play. Blurred but still visible sessions retain head-tracked drawing with input/physics suspended; hidden or invalidated sessions skip frame work.
+
+A native reference-space reset cancels stale actions, pauses and closes the immersive session. Re-entry is explicit. This conservative comparison fallback makes no claim of seamless world-anchor compensation. Failed Pause or session-end requests produce actionable diagnostics and do not turn into a reported success. Active XR disposal reaches the owner before the attachment is cleared; closing a desktop overlay retains the earlier ordinary-playback contract.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Automated native-event cases | Hidden/blurred events, reset, cancellation of real movement/activation/grab state, rejected Pause/end, offset-space listener replacement, session end and disposal are exercised with synthetic EventTargets. They are unit evidence, not runtime/headset events |
+| Media resource lifecycle | Interruption disposes a presentation resource once without releasing, playing or pausing the borrowed surface; later explicit session attachment recreates it; final disposal releases once |
+| PC smoke | Technical texture playback, deliberate library-position pause and explicit Resume observed in both candidates. Both sources report paused=true after movement and paused=false after Resume, with readyState 4. No private media used |
+| Local checks | TypeScript, full lint (98 inherited warnings), styles and 239 tests in 29 files pass. Ordinary production/ES5 passes 982 files and experiment production/ES5 passes 992 |
+
+Actual Quest system overlays, headset removal, native resets and session exit remain untested. The ordinary-page hide path is covered by unit events, not a claimed browser visibility test. Full recovery controls after arbitrary turns, floor selection and seamless tracking-origin compensation remain in EXP-04/G2. Platform references reviewed 2026-09-30: [reference-space reset](https://developer.mozilla.org/en-US/docs/Web/API/XRReferenceSpace/reset_event), [reset transforms](https://developer.mozilla.org/en-US/docs/Web/API/XRReferenceSpaceEvent/transform) and [XR visibility](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState).
