@@ -195,3 +195,23 @@ Source revision: 46d022623a, based on xr 27c2f023cd. R-22 was reproduced in the 
 An initial Error-subclass check passed unit tests but failed in the browser under the inherited ES5 transform. The final implementation uses a named plain Error, matching existing error-name discrimination elsewhere in this client. The actual browser retest closed the audio menu through Back without a new action-sheet error; leaving playback then removed its video element. This does not qualify audible track switching or all ordinary feature parity.
 
 Three regression tests exercise the real action-sheet DOM with only its dialog host mocked: dismissal performs cleanup without selection, a chosen identifier is preserved, and an actual selection failure remains rejected. TypeScript, full lint/styles and all 222 tests in 25 files pass. Ordinary production/ES5 passes 982 files and experiment production/ES5 passes 991. Actual-device menu/input regression remains part of G4.
+
+## Text subtitle comparison increment — 2026-09-30
+
+Source revision: 728c4c8ef7, based on xr b8c2174263 (PR #10's cancellation fix). This increment advances FR-012 / EXP-02; it does not close the subtitle or G2 gates.
+
+The HTML player exposes its current custom-text elements and whether an ASS/bitmap renderer is active. The borrowed surface reads this presentation state and native `TextTrack.activeCues`; it does not fetch subtitle files, select tracks, change modes, duplicate a subtitle timeline or report playback progress. Native cue fragments become plain text without inserting HTML. Active primary/secondary text is combined; authored regions, ruby annotation, styling and karaoke are not preserved by this comparison.
+
+Both texture candidates draw the same opaque Noto Sans caption panel at a stable screen anchor. It updates on changed text/state, clears during seeking or cue gaps, and clears on track-off. The browser review found the initial low panel occluded by the permanent test controls, so its fixture anchor moved to y=2.65 m, z=-6.39 m. This is an experimental placement, not the final subtitle preference or comfort decision. Unsupported ASS/bitmap and excessive layout display a recovery message in the scene. Native media-layer captions remain unimplemented and explicitly labelled before testing that path.
+
+| Check | Actual observation / limit |
+| --- | --- |
+| Labelled browser fixture | Three original WebVTT cues and deliberate gaps are attached only to the eight-second technical clip. Both PC texture candidates visibly show caption 3 while paused. Babylon native-control seeking, caption-off and caption restoration were observed |
+| Existing Jellyfin source | F-01's active text captions visibly appeared in Babylon while its existing video played. Three borrowed the same source and displayed cue gaps during the observed portion; a real active Three caption was not captured, so no separate pass is claimed |
+| Return and stop | Closing the workbench left one non-muted playing video with readyState 4. Ordinary Back then removed all video elements |
+| Automated coverage | Five cases cover cue edits/cache, seeking, cue gaps, track-off, primary/secondary text, unsafe markup omission, source invalidation, unsupported renderers and bounded layout/repaint behaviour |
+| Checks | TypeScript, full lint (98 inherited warnings), styles and 227 tests in 26 files pass. Ordinary production/ES5 passes 982 files; final experiment production/ES5 passes 991. Checked caption/renderer fixture markers are absent from the ordinary output |
+
+UI/UX Pro Max's verified contrast guidance informed opaque backing and light text. Its mobile pixel minima were not treated as XR angular-size evidence. Quest readability, timing against audio, fonts/languages, server track changes, subtitle offsets, rich formats, user placement/size preferences and native-layer composition all remain open. Private dialogue and media screenshots were inspected transiently, not saved in the repository or diagnostics.
+
+Sources inspected 2026-09-30: the inherited HTML player; [MDN active cues](https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/activeCues) and [cue fragments](https://developer.mozilla.org/en-US/docs/Web/API/VTTCue/getCueAsHTML). Original fixture provenance is in the [fixture inventory](../../../src/apps/experimental/xr/fixtures/README.md#text-subtitle-fixture).

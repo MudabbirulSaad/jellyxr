@@ -10,6 +10,7 @@ import '@babylonjs/core/Engines/Extensions/engine.videoTexture';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { fitVideoScreen, type VideoPresentationResource } from './videoPresentation';
+import { createBabylonSubtitles } from './babylonSubtitles';
 
 export function createBabylonVideoTexture(
     surface: BorrowedVideoSurface, scene: Scene, engine: Engine
@@ -27,16 +28,20 @@ export function createBabylonVideoTexture(
     mesh.position.set(0, 2, -6.47);
     // Keep the authored UV direction; rotating this plane would mirror the borrowed video.
     mesh.material = material;
+    const subtitles = createBabylonSubtitles(surface, scene);
     let lastTime = -1;
     return {
         update() {
+            subtitles.update();
             if (video.readyState < 2 || video.currentTime === lastTime) return;
             const internal = texture.getInternalTexture();
             engine.updateVideoTexture(internal, video, false);
             if (!internal || internal._isDisabled) throw new Error('Video texture upload rejected.');
             lastTime = video.currentTime;
         },
+        readSubtitleStatus: subtitles.readStatus,
         dispose() {
+            subtitles.dispose();
             mesh.dispose();
             material.dispose();
             texture.dispose();
