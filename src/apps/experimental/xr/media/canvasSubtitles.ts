@@ -9,7 +9,7 @@ export function createCanvasSubtitleArtwork(surface: BorrowedVideoSurface, canva
     let revision: string | undefined;
     let visible = false;
     let warning: string | undefined;
-    let format: 'ASS' | 'PGS' = 'ASS';
+    let format: 'ASS' | 'PGS' | 'VobSub' = 'ASS';
     const clear = () => {
         const changed = visible;
         if (visible) context.clearRect(0, 0, canvas.width, canvas.height);

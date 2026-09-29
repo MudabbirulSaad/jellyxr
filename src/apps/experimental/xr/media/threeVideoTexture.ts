@@ -9,6 +9,8 @@ export function createThreeVideoTexture(surface: BorrowedVideoSurface, scene: Sc
     // Exact-version source inspection: VideoTexture observes frames and cancels only its own callback.
     const texture = new VideoTexture(surface.video);
     texture.colorSpace = SRGBColorSpace;
+    // Attachment already requires a ready frame. rVFC alone waits forever when paused.
+    texture.needsUpdate = true;
     const material = new MeshBasicMaterial({ map: texture, toneMapped: false });
     const mesh = new Mesh(new PlaneGeometry(dimensions.width, dimensions.height), material);
     mesh.position.set(0, 2, -6.47);

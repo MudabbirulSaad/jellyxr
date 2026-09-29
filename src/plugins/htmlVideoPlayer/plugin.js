@@ -11,6 +11,7 @@ import { currentSettings as userSettings } from 'scripts/settings/userSettings';
 import { MediaError } from 'types/mediaError';
 
 import { readAssPresentation } from './assPresentation';
+import { BitmapPresentation } from './bitmapPresentation';
 
 import browser from '../../scripts/browser';
 import appSettings from '../../scripts/settings/appSettings';
@@ -279,6 +280,7 @@ export class HtmlVideoPlayer {
      * @type {any | null | undefined}
      */
     #currentBitmapSubRenderer;
+    #bitmapPresentation = new BitmapPresentation();
     /**
      * @type {number | undefined}
      */
@@ -952,14 +954,20 @@ export class HtmlVideoPlayer {
     /** Borrow presentation only; selection, timing and renderer lifetime remain player-owned. */
     getSubtitlePresentationSurface() {
         let unsupportedRenderer = null;
-        if (this.#currentBitmapSubRenderer) unsupportedRenderer = 'bitmap';
-        const canvas = readAssPresentation(this.#currentAssRenderer);
+        const bitmap = this.#bitmapPresentation.read();
+        if (this.#currentBitmapSubRenderer && !bitmap) unsupportedRenderer = 'bitmap';
+        const canvas = readAssPresentation(this.#currentAssRenderer) || bitmap;
         if (this.#currentAssRenderer && !canvas) unsupportedRenderer = 'ASS';
         return {
             textElements: [this.#videoSubtitlesElem, this.#videoSecondarySubtitlesElem],
             unsupportedRenderer,
             canvas
         };
+    }
+
+    /** Acquire optional frame copies only; releasing never changes subtitle selection. */
+    acquireSubtitlePresentation() {
+        return this.#bitmapPresentation.acquire();
     }
 
     stop(destroyPlayer) {
@@ -1340,6 +1348,7 @@ export class HtmlVideoPlayer {
         this.#currentAssRenderer = null;
 
         const pgsOrVobSubRenderer = this.#currentBitmapSubRenderer;
+        this.#bitmapPresentation.setRenderer(null);
         if (pgsOrVobSubRenderer) {
             pgsOrVobSubRenderer.dispose();
         }
@@ -1495,6 +1504,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     renderPgs(videoElement, track, item, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+        let presentationRenderer;
         const options = this.createBitmapSubtitleRendererOptions(videoElement, track, item, targetTextTrackIndex);
         const onLoaded = options.onLoaded;
         const onError = options.onError;
@@ -1506,16 +1516,20 @@ export class HtmlVideoPlayer {
             onLoaded?.();
         };
         options.onError = (error) => {
+            this.#bitmapPresentation.invalidate(presentationRenderer);
             console.error('[libbitsub] pgs error', error);
             onError?.(error);
         };
         options.onEvent = (event) => {
+            if (event?.type === 'stats') this.#bitmapPresentation.capture(presentationRenderer);
             if (event?.type === 'error' || event?.type === 'loaded' || event?.type === 'cue-change' || event?.type === 'renderer-change' || event?.type === 'worker-state') {
                 console.debug('[libbitsub] pgs', event);
             }
         };
         import('libbitsub').then((libbitsub) => {
             this.#currentBitmapSubRenderer = new libbitsub.PgsRenderer(options);
+            presentationRenderer = this.#currentBitmapSubRenderer;
+            this.#bitmapPresentation.setRenderer(presentationRenderer, 'PGS');
             requestAnimationFrame(() => {
                 if (this.#currentBitmapSubRenderer) {
                     this.#currentBitmapSubRenderer.updateCanvasSize?.();
@@ -1531,6 +1545,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     renderVobSub(videoElement, track, item, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+        let presentationRenderer;
         const options = {
             ...this.createBitmapSubtitleRendererOptions(videoElement, track, item, targetTextTrackIndex),
             fileName: getSubtitleFileNameHint(track)
@@ -1548,16 +1563,20 @@ export class HtmlVideoPlayer {
             onLoaded?.();
         };
         options.onError = (error) => {
+            this.#bitmapPresentation.invalidate(presentationRenderer);
             console.error('[libbitsub] vobsub error', error);
             onError?.(error);
         };
         options.onEvent = (event) => {
+            if (event?.type === 'stats') this.#bitmapPresentation.capture(presentationRenderer);
             if (event?.type === 'error' || event?.type === 'loaded' || event?.type === 'cue-change' || event?.type === 'renderer-change' || event?.type === 'worker-state') {
                 console.debug('[libbitsub] vobsub', event);
             }
         };
         import('libbitsub').then((libbitsub) => {
             this.#currentBitmapSubRenderer = new libbitsub.VobSubRenderer(options);
+            presentationRenderer = this.#currentBitmapSubRenderer;
+            this.#bitmapPresentation.setRenderer(presentationRenderer, 'VobSub');
             requestAnimationFrame(() => {
                 if (this.#currentBitmapSubRenderer) {
                     this.#currentBitmapSubRenderer.updateCanvasSize?.();

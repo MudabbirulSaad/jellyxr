@@ -3,7 +3,7 @@ import Events from 'utils/events';
 export interface BorrowedSubtitleSurface {
     readonly textElements: readonly (HTMLElement | null | undefined)[];
     readonly unsupportedRenderer: 'ASS' | 'bitmap' | null;
-    readonly canvas?: { canvas: HTMLCanvasElement; revision?: string; format: 'ASS' | 'PGS' } | null;
+    readonly canvas?: { canvas: HTMLCanvasElement; revision?: string; format: 'ASS' | 'PGS' | 'VobSub' } | null;
 }
 
 export interface VideoPresentationPlayer {
@@ -11,6 +11,7 @@ export interface VideoPresentationPlayer {
     isLocalPlayer?: boolean;
     getVideoPresentationSurface?(): HTMLVideoElement | null;
     getSubtitlePresentationSurface?(): BorrowedSubtitleSurface;
+    acquireSubtitlePresentation?(): () => void;
 }
 
 export interface VideoPresentationOwner {
@@ -39,6 +40,8 @@ export function borrowVideoSurface(
     if (!video) return null;
 
     let current = true;
+    let releaseSubtitles: (() => void) | undefined;
+    let observingSubtitles = false;
     const release = () => {
         if (!current) return;
         current = false;
@@ -47,6 +50,7 @@ export function borrowVideoSurface(
         video.removeEventListener('emptied', replaced);
         video.removeEventListener('error', failed);
         video.removeEventListener('abort', replaced);
+        releaseSubtitles?.();
     };
     const invalidate = (reason: VideoInvalidationReason) => {
         if (!current) return;
@@ -66,7 +70,15 @@ export function borrowVideoSurface(
 
     return {
         video,
-        readSubtitles: () => current ? player.getSubtitlePresentationSurface?.() : undefined,
+        readSubtitles() {
+            if (!current) return;
+            // A video-only media layer does not need the optional subtitle copy.
+            if (!observingSubtitles) {
+                releaseSubtitles = player.acquireSubtitlePresentation?.();
+                observingSubtitles = true;
+            }
+            return player.getSubtitlePresentationSurface?.();
+        },
         isCurrent() {
             if (current && (owner.getCurrentPlayer() !== player || player.getVideoPresentationSurface?.() !== video)) {
                 invalidate('media-replaced');

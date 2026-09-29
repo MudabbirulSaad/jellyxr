@@ -78,4 +78,25 @@ describe('borrowed player surface', () => {
         next?.release();
         expect(invalidated).toHaveBeenCalledExactlyOnceWith('media-error');
     });
+
+    it('scopes optional subtitle copying to a lease and releases on replacement or explicit detach', () => {
+        const { owner, player, video, play, pause } = createOwner();
+        const release = vi.fn();
+        player.acquireSubtitlePresentation = vi.fn(() => release);
+        const first = borrowVideoSurface(owner, vi.fn());
+        expect(player.acquireSubtitlePresentation).not.toHaveBeenCalled();
+        first?.readSubtitles?.();
+        first?.readSubtitles?.();
+        expect(player.acquireSubtitlePresentation).toHaveBeenCalledOnce();
+        video.dispatchEvent(new Event('emptied'));
+        first?.release();
+        expect(release).toHaveBeenCalledOnce();
+        const second = borrowVideoSurface(owner, vi.fn());
+        second?.readSubtitles?.();
+        second?.release();
+        expect(release).toHaveBeenCalledTimes(2);
+        expect(play).not.toHaveBeenCalled();
+        expect(pause).not.toHaveBeenCalled();
+        expect(video.currentTime).toBe(12);
+    });
 });
