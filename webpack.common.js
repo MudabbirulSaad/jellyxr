@@ -8,6 +8,9 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { DefinePlugin, IgnorePlugin } = require('webpack');
 const packageJson = require('./package.json');
 
+// .npmrc disables lifecycle scripts. Verify the narrow repair before resolving modules.
+require('./scripts/jellyxr/patchBitmapDependency.mjs');
+
 const Assets = [
     'native-promise-only/npo.js',
     'libarchive.js/dist/worker-bundle.js',

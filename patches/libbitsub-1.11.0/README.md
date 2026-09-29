@@ -1,0 +1,13 @@
+# libbitsub 1.11.0 startup disposal repair
+
+Source: the `libbitsub@1.11.0` npm artifact already pinned in the inherited lockfile, authored by altqx under MIT; [upstream repository](https://github.com/altqx/libbitsub). The unmodified licence is retained in [LICENSE](LICENSE). This patch was authored for JellyXR on 2026-09-30. Dependency versions and package integrity entries stay unchanged.
+
+The repository keeps `.npmrc`'s `ignore-scripts=true`. After `npm ci --no-audit`, run `npm run patch:dependencies` to invoke [the verifier](../../scripts/jellyxr/patchBitmapDependency.mjs). Webpack and Vitest also invoke it before module resolution; CI has an explicit verification step. No third-party installation scripts are enabled. The verifier accepts only the exact original or already-patched SHA-256 content recorded in [manifest.json](manifest.json). Hashes normalize CRLF to LF and a final newline. Every target and patched output is checked before writing any file. Unexpected versions, source or output stop the check/build.
+
+The two patches prevent canvas/temporary-surface startup after owner disposal, suppress canceled backend fallback, and make WebGPU destruction terminal across adapter, device, shader and pipeline awaits. A device returned after destruction is destroyed immediately. Normal startup remains covered. Modified modules stop referencing their now-invalid upstream source maps; the other files, WASM and workers are untouched.
+
+This is not a complete parser/network cancellation repair. Already-running subtitle loads, worker sessions and frame-cache continuations need separate investigation. It also does not prove hardware GPU output, Quest subtitle compatibility or the cause of the previously observed replacement blank frame.
+
+Regression tests run with `npm test`: [installed renderer/backend lifecycle](../../src/apps/experimental/xr/media/bitmapDisposal.test.ts) and [installer failure/retry behaviour](../../src/apps/experimental/xr/media/bitmapPatchInstall.test.ts). The former uses real installed classes with controlled WASM/loading/GPU completions; the latter uses explicitly synthetic temporary files. Neither substitutes for the actual media/device matrix.
+
+During an upstream/dependency update, compare the fixes with the new release, remove this patch if upstream covers them, or regenerate it deliberately against the new pinned artifact. Re-run lifecycle tests, ordinary/experimental builds and ES checks, then the media/device scenarios. Do not update hashes merely to make installation succeed. No upstream issue or contribution has been sent automatically.

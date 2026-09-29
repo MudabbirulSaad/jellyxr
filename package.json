@@ -164,6 +164,7 @@
     "Firefox ESR"
   ],
   "scripts": {
+    "patch:dependencies": "node scripts/jellyxr/patchBitmapDependency.mjs",
     "assets:observatory": "node scripts/jellyxr/buildObservatoryAssets.ts",
     "start": "npm run serve",
     "serve": "webpack serve --config webpack.dev.js",

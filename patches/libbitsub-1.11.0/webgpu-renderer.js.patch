@@ -1,0 +1,108 @@
+--- a/dist/ts/webgpu-renderer.js
++++ b/dist/ts/webgpu-renderer.js
+@@ -97,6 +97,7 @@
+     _canvas = null;
+     _initPromise = null;
+     _initialized = false;
++    _destroyed = false;
+     _lastCanvasWidth = 0;
+     _lastCanvasHeight = 0;
+     /**
+@@ -104,6 +105,8 @@
+      * Returns a promise that resolves when initialization is complete.
+      */
+     async init() {
++        if (this._destroyed)
++            return;
+         if (this._initPromise)
+             return this._initPromise;
+         this._initPromise = this._initDevice();
+@@ -129,10 +132,17 @@
+         const adapter = await navigator.gpu.requestAdapter({
+             powerPreference: 'high-performance'
+         });
++        if (this._destroyed)
++            return;
+         if (!adapter) {
+             throw new Error('No WebGPU adapter found');
+         }
+-        this.device = await adapter.requestDevice();
++        const device = await adapter.requestDevice();
++        if (this._destroyed) {
++            device.destroy();
++            return;
++        }
++        this.device = device;
+         this.format = navigator.gpu.getPreferredCanvasFormat();
+         // Create shader modules
+         const vertexModule = this.device.createShaderModule({
+@@ -142,7 +152,11 @@
+             code: FRAGMENT_SHADER
+         });
+         await this.assertShaderModuleValid(vertexModule, 'vertex');
++        if (this._destroyed)
++            return;
+         await this.assertShaderModuleValid(fragmentModule, 'fragment');
++        if (this._destroyed)
++            return;
+         // Create sampler - use linear filtering for smooth scaling
+         this.sampler = this.device.createSampler({
+             magFilter: 'linear',
+@@ -185,7 +199,7 @@
+             bindGroupLayouts: [this.bindGroupLayout]
+         });
+         // Create render pipeline with alpha blending
+-        this.pipeline = await this.device.createRenderPipelineAsync({
++        const pipeline = await this.device.createRenderPipelineAsync({
+             layout: pipelineLayout,
+             vertex: {
+                 module: vertexModule,
+@@ -216,6 +230,9 @@
+                 topology: 'triangle-list'
+             }
+         });
++        if (this._destroyed)
++            return;
++        this.pipeline = pipeline;
+         this._initialized = true;
+     }
+     /**
+@@ -223,6 +240,8 @@
+      */
+     async setCanvas(canvas, width, height) {
+         await this.init();
++        if (this._destroyed)
++            return;
+         if (!this.device) {
+             throw new Error('WebGPU device not initialized');
+         }
+@@ -521,6 +540,7 @@
+      * Destroy all resources.
+      */
+     destroy() {
++        this._destroyed = true;
+         for (const tex of this.textures) {
+             tex.texture.destroy();
+         }
+@@ -530,12 +550,16 @@
+         }
+         this.pendingDestroyTextures = [];
+         this.uniformBuffer?.destroy();
++        this.uniformBuffer = null;
+         for (const buf of this.quadDataBuffers) {
+             buf.destroy();
+         }
+         this.quadDataBuffers = [];
+         this.device?.destroy();
+         this.device = null;
++        this.pipeline = null;
++        this.sampler = null;
++        this.bindGroupLayout = null;
+         this.context = null;
+         this._canvas = null;
+         this._initialized = false;
+@@ -544,4 +568,3 @@
+         this._lastCanvasHeight = 0;
+     }
+ }
+-//# sourceMappingURL=webgpu-renderer.js.map

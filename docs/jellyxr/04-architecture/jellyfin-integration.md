@@ -105,6 +105,12 @@ The video texture must also upload an already available paused frame on attachme
 
 The [consumer bridge evidence](../05-delivery/m2-experiments.md#bitmap-consumer-bridge-increment--2026-09-30) records the implemented player seam, unit lifecycle checks and both PC paused-attachment observations. Server-delivered bitmap tracks remain unqualified; a blank observation during fixture replacement keeps replacement/initial-load latency open. The earlier fixture-only boundary above records the order of investigation, not the current set of source interfaces.
 
+### Disposed renderer startup
+
+Disposal is terminal for the owned bitmap renderer and its backend. Pending WASM, initialization yields, subtitle loading and GPU setup must not recreate a canvas, temporary surface, GPU device or render loop after disposal. A GPU device returned after cancellation must be destroyed; canceled initialization must not trigger fallback or report a current-track error. The implementation carries a narrow, version- and content-checked patch for inherited libbitsub 1.11.0, preserving dependency versions. Review and revalidate the patch during every dependency update; verification/build must fail on unexpected input instead of silently skipping it. Keep the inherited disabled installation-script policy; explicit verification runs after installation and before Webpack/Vitest module resolution. See [patch provenance and maintenance](../../../patches/libbitsub-1.11.0/README.md).
+
+This boundary addresses startup resource ownership. Cancellation inside parser, worker and network operations requires separate evidence; it is not proved by preventing the final render-loop start. Nor does mocked GPU initialization qualify hardware output or subtitle delivery.
+
 ### Native media underlay experiment
 
 Investigate placing the native video quad before the renderer's projection layer. Layers compose in list order without scene depth testing between them; placing video last can cover nearer scene controls and captions. The proposed projection pass therefore writes transparent black at a depth-tested, video-sized screen aperture, while the surrounding room stays opaque. Existing caption meshes render in the same projection pass as controls and foreground geometry. This keeps caption timing with the inherited owner and avoids a second subtitle timeline or direct manipulation of compositor-owned textures.

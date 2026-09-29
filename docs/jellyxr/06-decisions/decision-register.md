@@ -38,6 +38,10 @@ Updated: 2026-09-29. Confirmed means established by the approved plan or subsequ
 
 ## Decision process
 
+### Implementation record — bitmap startup disposal, 2026-09-30
+
+Under the approved FR-011/018 recovery scope, preserve libbitsub 1.11.0 and carry a narrow local startup-disposal patch with source hashes, provenance and unattended tests against its installed public classes. Tests reproduced late canvas creation in both PGS/VobSub and late GPU allocation or null-device errors at five asynchronous backend stages. This is an implementation repair, not a product-scope change or G2 renderer decision. Reassess the patch against upstream on dependency updates; parser/worker cancellation and actual-device subtitle qualification remain open.
+
 A deferred decision records alternatives, evidence, owner, impact and deadline in [risks](../05-delivery/risks.md). A selected technology needs a dated entry with experiment results and rejected alternatives; a vendor feature list is not a benchmark.
 
 Confirmed product direction does not approve unmeasured implementation details. M1 resolves the product direction and target decisions above; G1 remains open until its remaining environment/fixture evidence is recorded. G2 resolves technical choices. Update affected requirements, parity, traceability and work breakdown together.
