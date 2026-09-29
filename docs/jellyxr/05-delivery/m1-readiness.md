@@ -108,6 +108,6 @@ During desktop navigation, a browser-control action unintentionally toggled the 
 3. Keep the authorised Quest 3 connection and [two-port development workflow](development-testing-workflow.md#quest-3-usb-development-setup) active. Basic playback is owner-confirmed; record seek, subtitle and resume results plus anonymous fixture properties. Confirm About versions and manually open remote inspection.
 4. Review missing fixture cases and record the resulting G1 disposition. M2 immersive experiments and measurements remain separate work.
 
-The visual selection and target decisions are settled; environment and media evidence is still outstanding. Keep the M1 pull request in draft while required readiness checks are missing. Future evidence must update this report, roadmap and risks together rather than changing pending cells to passed by assumption.
+The visual selection and target decisions are settled; environment and media evidence is still outstanding. Under D-24, the owner authorised merging the current M1 work into xr without waiting for the CI runner, superseding the earlier draft hold. Integration does not close M1/G1 or pass the remaining checks. Future evidence must update this report, roadmap and risks together rather than changing pending cells to passed by assumption.
 
 Related: [roadmap](roadmap.md), [test strategy](test-strategy.md), [Cinema Observatory](../03-experience/cinema-observatory.md), [decisions](../06-decisions/decision-register.md).

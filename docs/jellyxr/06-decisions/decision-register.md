@@ -27,6 +27,7 @@ Updated: 2026-09-29. Confirmed means established by the approved plan or subsequ
 | D-21 | IWE browser extension for development; embedded IWER and browser-automation packages deferred | Confirmed tool direction; setup verification pending | Approved M1 plan. Keep emulation outside production bundles, retain Vitest and record actual installation/version evidence. This does not select an XR engine |
 | D-22 | Execute M1 on milestone/m1-readiness and deliver a pull request targeting xr | Confirmed | User approved the M1 implementation plan; xr is now the fork's default branch. Stop before M2 technology experiments |
 | D-23 | Use the owner's existing Jellyfin account for selected baseline playback tests | Confirmed | Owner accepted that resume positions and watched history may change. Normal sign-in only; no credentials, private titles or media in committed evidence |
+| D-24 | Merge the current M1 work into xr without waiting for the CI runner | Confirmed integration instruction | Owner explicitly requested integration after reporting successful Quest 3 playback. This supersedes the draft-hold instruction; outstanding M1/G1 checks remain open and no unmeasured result becomes a pass |
 
 ## Decision process
 
