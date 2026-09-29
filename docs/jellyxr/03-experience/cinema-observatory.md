@@ -6,7 +6,7 @@ Status: selected first-release direction and M1 reference specification, 2026-09
 
 The library feels like the quiet entrance to a private cinema: precise typography, graphite surfaces, artwork with shallow depth and warm architectural light. Selecting a film reduces surrounding information. Once playback starts, the screen, subtitles and necessary controls take priority.
 
-This specification elaborates D-12 and the [experience blueprint](experience-blueprint.md). Functional acceptance remains in [FR-005 through FR-022](../02-requirements/functional-requirements.md). It does not introduce an XR renderer, a new UI library or a second player.
+This specification elaborates D-12 and the [experience blueprint](experience-blueprint.md). Functional acceptance remains in [FR-005 through FR-023 and FR-030/031](../02-requirements/functional-requirements.md). It does not introduce an XR renderer, a new UI library or a second player.
 
 The installed [UI/UX Pro Max skill](../../../.agents/skills/ui-ux-pro-max/SKILL.md) was searched for motion sensitivity, error recovery and content hierarchy. The motion and recovery results fit this product. The broad design-system query returned a marketing funnel; a narrower product query still did not provide a verified XR match. Neither preset is adopted. The visual direction below is the product owner's choice, with project-specific spatial reasoning and applicable accessibility guidance.
 
@@ -79,7 +79,7 @@ Place the selected artwork on one side of a readable information plane. Present 
 
 ## Cinema composition
 
-Keep the viewer stationary. The neutral screen is the dominant forward element, framed by sparse architecture and restrained warm light. The library withdraws without moving the camera. Playback and environment quality remain separate controls.
+Keep the viewing horizon stable. The viewer may deliberately explore the connected room under FR-030; every task also works seated. The neutral screen is the dominant forward element, framed by sparse architecture and restrained warm light. The library withdraws without moving the camera. Playback and environment quality remain separate controls.
 
 | Region | Content and behaviour |
 | --- | --- |
@@ -105,7 +105,7 @@ Do not hide focused controls while a viewer is interacting with them. Do not att
 
 ## Motion and feedback
 
-For ordinary reference compositions, use approximately 120 ms for control feedback and 180 ms for panel appearance, favouring opacity rather than layout movement. These are initial design timings, not required runtime dependencies. Reduced motion presents the final readable state without parallax, scene travel or scroll-jacking. Essential feedback remains immediate and visible.
+For ordinary reference compositions, start control feedback within the accepted 100 ms budget, with approximately 180 ms for panel appearance, favouring opacity rather than layout movement. These are initial design timings, not required runtime dependencies. Reduced motion presents the final readable state without parallax, scene travel or scroll-jacking. Essential feedback remains immediate and visible.
 
 Focus and selection use shape/outline plus text context, not colour alone. Controller targeting must provide explicit feedback before activation; hover alone never performs an action. Tracking loss cancels an incomplete gesture and leaves a recoverable state. Input focus rules must be tested again in the chosen spatial UI implementation.
 
@@ -115,8 +115,18 @@ Every content region has a defined data source or user task. No filler paragraph
 
 Personal media titles and images may appear during local testing, but are excluded from committed review material. Record asset licences and source/version before adding distributed assets. This M1 specification adds no movie artwork or third-party font assets.
 
-## Handoff to M2
+## Room and asset production
 
-Compare library, detail and cinema tasks using the same fixture and viewing settings. Verify bright/dark video frames, long titles, large text, both controllers, reduced motion, poor screen placement, subtitle selection and interruption. Record visual feedback separately from frame timings. Changes justified by evidence update this specification and the linked requirements/decisions together.
+Compose a library bay and seating bay within one architectural shell. Use clear sight lines, detailed seats with simple collision proxies, recessed warm luminaires and restrained metal fixtures. Shelves are real geometry; poster surfaces and title panels have shallow, coherent separation. A seated library mode brings the same permitted content into the forward workspace rather than removing essential actions.
+
+Production models use authored proportions, PBR materials, normal/roughness detail, baked light and reflection references. Author source geometry separately from glTF/GLB runtime variants and simplified collision resources. Record texture compression, material count, triangles, draw calls, transfer size and load cost; budgets follow measured EXP-03 results, not an invented “high fidelity” polygon count. A visually coherent lower-cost variant is required.
+
+Prefer original models and verified CC0 resources. Every imported asset manifest entry records its source URL/version, author, licence text, modifications, attribution requirements, source file, runtime variants and collision resources. Website preview art is not automatically covered by an asset's licence. Review the actual download terms before importing. Do not redistribute personal movie posters as environment assets.
+
+Motion uses short, damped responses for deliberate interactions. Springs cannot move the camera or produce sustained oscillation; reduced motion settles directly while preserving essential feedback. Suspend unnecessary physical simulation while watching. The room and movie screen stay stable even when the remote or an artwork object moves.
+
+## M2 review
+
+Compare library, detail and cinema tasks using the same fixture and viewing settings. Verify bright/dark video frames, long titles, large text, both controllers, hands, seated teleport/turn/return, object recall, reduced motion, poor screen placement, subtitle selection and interruption. Record visual feedback separately from frame timings. Changes justified by evidence update this specification and the linked requirements/decisions together.
 
 Related: [visual alternatives](visual-direction.md), [M1 readiness evidence](../05-delivery/m1-readiness.md), [technology experiments](../06-decisions/technology-evaluation.md).

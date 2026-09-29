@@ -10,18 +10,18 @@ Compare these categories after G1:
 
 | Choice | Candidate approaches to investigate | Evidence needed |
 | --- | --- | --- |
-| Scene/rendering | Small scene library; integrated web engine; framework wrapper around either | Media-layer support, profiling, maintenance and integration cost |
+| Scene/rendering | Babylon.js with Havok; Three.js with Rapier, using the same WebGL fixture | Media-layer support, profiling, maintenance and integration cost |
 | Spatial UI | Scene-native controls; declarative 3D UI; selective browser overlays where supported | Readability, input, accessibility and library scalability |
 | Video presentation | WebXR media layers; texture-based fallback | Stream/HLS compatibility, sharpness, colour, subtitle visibility and ownership |
 | Assets | Optimised authored scene with baked lighting; controlled real-time additions | Load size, material cost, quality tiers and artist workflow |
-| Input | WebXR input profiles plus custom intent layer; framework input facilities | Controllers, future hands and clean lifecycle |
+| Input | WebXR input profiles plus custom intent layer; framework input facilities | Controllers, hands, near/ray input, grabbing, locomotion and clean lifecycle |
 | Deployment | Existing asset serving/proxy infrastructure | Base paths, updates, trusted HTTPS and endpoint compatibility |
 
-Specific packages and versions are chosen only after current primary documentation and measured experiments. This document does not preselect a winner.
+Candidate families are confirmed; exact versions and the winner require current primary documentation and measured experiments. WebGL is the release baseline; WebGPU is outside the critical path. Prefer Babylon/Havok when both pass comparably because this scope benefits from integrated XR/physics facilities. Choose Three/Rapier if Babylon fails a mandatory gate or a material measured advantage avoids greater inherited-player changes. If neither passes, record a revised approach; do not drop a mandatory feature silently.
 
 ## Evaluation criteria
 
-First apply pass/fail constraints: existing Jellyfin integration, working video plus subtitles, secure self-hosting, acceptable sustained performance and usable controller navigation.
+First apply pass/fail constraints: existing Jellyfin integration, working video plus subtitles, secure self-hosting, acceptable sustained performance and usable controller and hand navigation, seated movement/recovery, bounded physics and inherited build/ES5 compatibility.
 
 Then compare video/text clarity, measured frame cost, startup/memory, integration complexity, maintainability, asset tooling, licence compatibility and future platform support. Record raw evidence and tradeoffs before assigning any scores. An unsupported essential capability disqualifies a candidate regardless of visual polish.
 
@@ -31,8 +31,8 @@ Then compare video/text clarity, measured frame cost, startup/memory, integratio
 | --- | --- | --- |
 | <a id="exp-01"></a>EXP-01 | Same known film through media-layer and texture paths; enter from ordinary playback and start within XR | Sharpness, geometry support, single audio/session ownership, HLS seek and lifecycle; choose media bridge/presentation |
 | <a id="exp-02"></a>EXP-02 | Text, ASS and bitmap subtitle fixtures with direct and converted playback | Visibility, timing, seek, appearance limits and burn-in fallback; choose subtitle path |
-| <a id="exp-03"></a>EXP-03 | Same chosen environment at static/baked baseline and optional dynamic-light tier, plus 1,000-item library | Frame/asset/memory cost and 120-minute stability; choose rendering/asset budget |
-| <a id="exp-04"></a>EXP-04 | Same home-to-film/control tasks with left/right controller and optional hands | Selection errors, reach, tracking loss, focus and cleanup; choose input/spatial UI |
+| <a id="exp-03"></a>EXP-03 | Same chosen environment at static/baked baseline with matched materials, colliders, active/sleeping bodies and quality tiers, plus 1,000-item library | Frame/asset/memory cost and 120-minute stability; choose rendering/asset budget |
+| <a id="exp-04"></a>EXP-04 | Same home-to-film/control tasks with left/right controller and hands, including near/ray selection, grab, teleport, snap turn and seated recovery | Selection errors, reach, input switching, tracking-loss cancellation, valid destinations, collisions, focus and cleanup; choose input/spatial UI |
 | <a id="exp-05"></a>EXP-05 | Reference HTTPS origin, trusted IP, subpath and separate endpoint; optional MR capability probes | Network/media/socket behaviour, permission states and manual fallback; qualify topology/capabilities |
 | <a id="exp-06"></a>EXP-06 | Ordinary-mode regression and capability-isolated design review for future Vision Pro | Identify portability blockers; actual Vision Pro support remains unclaimed until AT-23 |
 
@@ -46,11 +46,11 @@ W-02 first establishes the [development testing workflow](../05-delivery/develop
 | --- | --- | --- |
 | EXP-01/02 | Repeatable lifecycle and track-selection checks; compare integration approaches | Real Quest video/subtitle/seek/transition results for chosen media paths, including fallback and server-negotiated delivery |
 | EXP-03 | Reproducible scene/library fixtures and relative cost exploration | Actual Quest sustained rendering/video observations at accepted targets, with plain-scene control and measurement limits; final production qualification repeats at G4 |
-| EXP-04 | Simulated controller tasks, focus and cancellation | Actual left/right controller tasks, readable spatial UI and input-loss recovery; hands remain optional |
+| EXP-04 | Simulated controller tasks, focus and cancellation | Actual left/right controller and hands-only journeys, readable spatial UI, movement/physics recovery and input switching without duplicate actions |
 | EXP-05 | Configure origins/base paths and diagnose failures | Named Quest Browser network/media/socket and permission results for required topologies; optional MR probes cannot block v1 |
 | EXP-06 | Pinned ordinary-client comparison and architecture review | Recorded ordinary regressions and portability assumptions; Vision Pro device testing remains deferred |
 
-An emulator's advertised feature or desktop frame rate is not a candidate's Quest benchmark. Evaluate test tooling independently: IWE is a proposed development extension, IWER an optional runtime, and browser automation a proposed workflow addition. D-21 is not a rendering-stack decision. If hardware is unavailable, report the affected experiment blocked and continue independent desktop preparation; leave G2 open.
+An emulator's advertised feature or desktop frame rate is not a candidate's Quest benchmark. Evaluate test tooling independently: IWE is the selected development extension, IWER an optional runtime, and browser automation a proposed workflow addition. D-21 is not a rendering-stack decision. If hardware is unavailable, report the affected experiment blocked and continue independent desktop preparation; leave G2 open.
 
 ## Experiment protocol
 

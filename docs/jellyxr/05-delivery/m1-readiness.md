@@ -1,6 +1,6 @@
 # M1 readiness evidence
 
-Updated: 2026-09-29. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports successful library access and ordinary playback on Quest 3. Detailed playback checks, emulator setup and remote inspection remain pending. M1 and G1 are not closed.
+Updated: 2026-09-29. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports successful library access and ordinary playback on Quest 3. Detailed playback checks, emulator version/profile verification and remote inspection remain pending. The owner reports the emulator is ready. M1 and G1 are not closed.
 
 This report records observed results for W-02 preparation. It is not a device support announcement. The milestone branch starts at xr commit 84571b91b3362a4aaeaac81e6d9cec77ce89e3c6; application source and locked dependencies remain those of the pinned Jellyfin Web baseline.
 
@@ -65,17 +65,17 @@ The in-app browser smoke check is an initial development observation. Its exact 
 
 Android Platform Tools 37.0.1-15733141 (ADB 1.0.41) was installed outside the repository under `%LOCALAPPDATA%\JellyXR\tools\platform-tools`. The Windows archive was obtained from Google's repository metadata and checked against its published SHA-1 `e03e78b1d80b396f1c3358e31251cb31740e1110`. `adb version` succeeds. On the follow-up run, exactly one Quest 3 appeared with status `device`; its serial is omitted from this report.
 
-Both `adb reverse tcp:8080 tcp:8080` and `adb reverse tcp:8096 tcp:8096` succeeded, and `adb reverse --list` showed both mappings. Both host loopback services returned HTTP 200. The mappings remain active for the owner's headset test. Reconnect/reboot may require repeating the documented setup; a port mapping alone does not prove media delivery.
+Both `adb reverse tcp:8080 tcp:8080` and `adb reverse tcp:8096 tcp:8096` succeeded, and `adb reverse --list` showed both mappings. Both host loopback services returned HTTP 200. On the M6-goal follow-up, the headset was briefly disconnected, then reconnected by the owner; both reverse commands succeeded again and Android incremental/browser package versions matched the prior record. Reconnect/reboot may require repeating the documented setup; a port mapping alone does not prove media delivery.
 
 Automatic navigation to `chrome://inspect/#devices` was rejected by browser security policy, which allows only HTTP(S) navigation. No alternate inspector surface or raw debugging-protocol workaround was attempted. The owner must open desktop Chrome's inspector manually and record successful inspection of the Quest client before that check is closed.
 
-The automation inventory exposes a personal Brave profile and the Codex in-app browser. Attempts to create dedicated Chrome/Edge sessions returned browser-unavailable results; the extension gallery reports that it cannot be scripted. No personal-profile settings were changed and no extension installation is claimed. The user has been asked to create a separate JellyXR Emulation profile and install the official extension; version/profile verification is pending.
+The automation inventory exposes a personal Brave profile and the Codex in-app browser. Attempts to create dedicated Chrome/Edge sessions returned browser-unavailable results; the extension gallery reports that it cannot be scripted. No personal-profile settings were changed and no extension installation is claimed. The owner subsequently reported “Only emulator is ready.” Installation is owner-reported; browser/profile, extension version, virtual-device and clean-profile verification remain pending. Remote inspection is not yet successful.
 
 | Task | State | Required completion evidence |
 | --- | --- | --- |
 | Platform Tools installation | Complete | Recorded version and archive verification |
 | Clean comparison environment | Initial in-app browser available | Named desktop browser/version still required for qualification |
-| Dedicated emulator profile and IWE | Pending manual setup | Browser/profile, extension version and selected virtual device; confirm clean environment remains unmodified |
+| Dedicated emulator profile and IWE | Owner reports ready; not independently verified | Browser/profile, extension version and selected virtual device; confirm clean environment remains unmodified |
 | Quest Developer Mode and USB authorisation | Complete | Owner approved debugging; one Quest 3 observed with ADB status device |
 | Client and server port forwarding | Complete for this connection | Both reverse mappings listed; owner reports Quest library loads |
 | Quest OS/Browser inventory | Package/build identifiers recorded | About UI release labels remain to be confirmed; do not substitute Android 14 for a Horizon OS release number |
@@ -104,7 +104,7 @@ During desktop navigation, a browser-control action unintentionally toggled the 
 ## Remaining steps and gate disposition
 
 1. Complete the desktop ordinary playback, seek, subtitle and resume checks using a newly established resume point; finish the media/delivery inventory without exporting personal titles/artwork.
-2. Complete the separate emulator-profile installation and record version/profile evidence.
+2. Verify the owner-reported emulator setup and record version/profile evidence.
 3. Keep the authorised Quest 3 connection and [two-port development workflow](development-testing-workflow.md#quest-3-usb-development-setup) active. Basic playback is owner-confirmed; record seek, subtitle and resume results plus anonymous fixture properties. Confirm About versions and manually open remote inspection.
 4. Review missing fixture cases and record the resulting G1 disposition. M2 immersive experiments and measurements remain separate work.
 

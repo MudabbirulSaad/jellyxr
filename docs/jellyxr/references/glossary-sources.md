@@ -38,7 +38,7 @@ All links below were consulted in this planning conversation or inspected locall
 
 | ID | Primary source and version | Supports / limitation |
 | --- | --- | --- |
-| <a id="s01"></a>S01 | User-approved JellyXR Workspace and Development Documentation Plan, 2026-09-29, captured in this package's BRDs and decisions | Product authority; not device evidence |
+| <a id="s01"></a>S01 | User-approved documentation plan, M1 plan and Spatial Cinema Implementation Goal Through M6, 2026-09-29; latest instruction to continue autonomously and merge without waiting for GitHub Actions | Product/execution authority; not device evidence |
 | <a id="s02"></a>S02 | [Official client release v12.1](https://github.com/jellyfin/jellyfin-web/releases/tag/v12.1), commit fae41f33eb7cd636a9ef68984adb82bb247a6e1b; [local source assessment](../04-architecture/upstream-assessment.md) | Source structure, connection/playback ownership and pinned dependencies |
 | <a id="s03"></a>S03 | [Pinned contribution guide](https://github.com/jellyfin/jellyfin-web/blob/v12.1/CONTRIBUTING.md), [package manifest](../../../package.json), [licence](../../../LICENSE) | Inherited implementation conventions and provenance |
 | <a id="s04"></a>S04 | [Jellyfin networking](https://jellyfin.org/docs/general/post-install/networking/) | Endpoint, ports, self-hosting, HTTPS and Base URL behaviour |
@@ -62,6 +62,10 @@ All links below were consulted in this planning conversation or inspected locall
 | <a id="s22"></a>S22 | [Playwright visual comparisons](https://playwright.dev/docs/test-snapshots), consulted 2026-09-29 | Controlled screenshot baselines and environment variance; candidate automation only |
 | <a id="s23"></a>S23 | [Google Android repository metadata](https://dl.google.com/android/repository/repository2-3.xml), inspected 2026-09-29; Windows platform-tools_r37.0.1-win.zip | Actual Platform Tools download/version/checksum; device connection still needs local evidence |
 | <a id="s24"></a>S24 | Locked @jellyfin/sdk 1.0.0 package installed from [package-lock.json](../../../package-lock.json); lib/versions.js inspected 2026-09-29 | Installed minimum server 10.10.0 and generated API version 13.0.0; constants are not a runtime compatibility result |
+| <a id="s25"></a>S25 | [Poly Haven licence](https://polyhaven.com/license), consulted 2026-09-29 | CC0 asset distribution terms; inspect individual downloads and distinguish website material |
+| <a id="s26"></a>S26 | [ambientCG licence](https://docs.ambientcg.com/license/), consulted 2026-09-29 | CC0 asset terms; no asset has yet been imported |
+| <a id="s27"></a>S27 | [Meta browser video guidance](https://developers.meta.com/horizon/documentation/web/browser-video/), consulted 2026-09-29 | Investigate media layers first; subtitle composition and Jellyfin lifecycle still need experiments |
+| <a id="s28"></a>S28 | [Babylon Havok integration](https://github.com/BabylonJS/havok), [Rapier CCD](https://rapier.rs/docs/user_guides/javascript/rigid_body_ccd/), consulted 2026-09-29 | Candidate physics facilities and fast-body collision guidance; no measured comparison or package choice |
 
 ## Provenance rules
 
