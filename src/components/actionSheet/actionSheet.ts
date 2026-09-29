@@ -1,4 +1,5 @@
 import escapeHtml from 'escape-html';
+import { actionSheetCancelled } from './actionSheetErrors';
 import dialogHelper from '../dialogHelper/dialogHelper';
 import layoutManager from '../layoutManager';
 import globalize from '../../lib/globalize';
@@ -366,7 +367,7 @@ export function show(options: Options) {
 
                     resolve(selectedId);
                 } else {
-                    reject(new Error('ActionSheet closed without resolving'));
+                    reject(actionSheetCancelled());
                 }
             }
         });

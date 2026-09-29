@@ -1,4 +1,5 @@
 import escapeHtml from 'escape-html';
+import { ignoreActionSheetCancellation } from 'components/actionSheet/actionSheetErrors';
 
 import { PlayerEvent } from 'apps/legacy/features/playback/constants/playerEvent';
 import { AppFeature } from 'constants/appFeature';
@@ -974,7 +975,7 @@ export default function (view) {
                     stats: true,
                     suboffset: showSubOffset,
                     onOption: onSettingsOption
-                }).finally(() => {
+                }).catch(ignoreActionSheetCancellation).finally(() => {
                     resetIdle();
                 });
 
@@ -1047,7 +1048,7 @@ export default function (view) {
                 if (index !== currentIndex) {
                     playbackManager.setAudioStreamIndex(index, player);
                 }
-            }).finally(() => {
+            }).catch(ignoreActionSheetCancellation).finally(() => {
                 resetIdle();
             });
 
@@ -1095,6 +1096,7 @@ export default function (view) {
                 }
             }
         })
+            .catch(ignoreActionSheetCancellation)
             .finally(() => {
                 resetIdle();
             });
@@ -1174,7 +1176,7 @@ export default function (view) {
                 }
 
                 toggleSubtitleSync();
-            }).finally(() => {
+            }).catch(ignoreActionSheetCancellation).finally(() => {
                 resetIdle();
             });
 
