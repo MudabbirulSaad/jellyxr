@@ -6,6 +6,9 @@ import RAPIER from '@dimforge/rapier3d-compat';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
 import { FIXTURE_REMOTE, ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { VideoPresentation } from '../media/videoPresentation';
+import { createNativeMediaLayer } from '../media/nativeMediaLayer';
+import { createThreeVideoTexture } from '../media/threeVideoTexture';
 
 import { FrameSampler } from './frameSampler';
 import { FIXTURE_COLOURS, type ComparisonScene, type SampleListener } from './types';
@@ -60,6 +63,10 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     }
 
     const clock = new FixedStepClock();
+    const video = new VideoPresentation({
+        createTexture: surface => createThreeVideoTexture(surface, scene),
+        createLayer: createNativeMediaLayer
+    });
     const sampler = new FrameSampler();
     let disposed = false;
     const resize = () => {
@@ -80,6 +87,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             return;
         }
         const start = performance.now();
+        video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
         clock.advance(time, seconds => {
             world.timestep = seconds;
             world.step();
@@ -92,10 +100,12 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         sampler.record(performance.now() - start);
     });
     const timer = window.setInterval(() => onSample({
-        ...sampler.read(), remoteHeight: remote?.position.y || 0, immersive: renderer.xr.isPresenting
+        ...sampler.read(), remoteHeight: remote?.position.y || 0, immersive: renderer.xr.isPresenting,
+        mediaStatus: video.readStatus()
     }), 1000);
 
     return {
+        setVideo: (surface, mode) => video.attach(surface, mode),
         async enterXR() {
             // The comparison is optional; unsupported ordinary browsers retain the fixture preview.
             if (!navigator.xr) throw new Error('WebXR is unavailable in this browser.');
@@ -121,6 +131,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async dispose() {
             if (disposed) return;
             disposed = true;
+            video.dispose();
             renderer.setAnimationLoop(null);
             window.clearInterval(timer);
             window.removeEventListener('resize', resize);

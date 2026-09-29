@@ -1,14 +1,19 @@
+import type { BorrowedVideoSurface } from '../media/borrowVideoSurface';
+import type { VideoPresentationMode } from '../media/videoPresentation';
+
 export interface ComparisonSample {
     frames: number;
     p95WorkMs: number;
     remoteHeight: number;
     immersive: boolean;
+    mediaStatus: string;
 }
 
 export interface ComparisonScene {
     enterXR(): Promise<void>;
     exitXR(): Promise<void>;
     recallRemote(): void;
+    setVideo(surface: BorrowedVideoSurface | null, mode: VideoPresentationMode): void;
     dispose(): Promise<void>;
 }
 

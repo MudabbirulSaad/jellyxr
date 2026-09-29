@@ -35,11 +35,14 @@ export function attachMediaLayer(
     const detach = () => {
         if (!attached) return;
         // Remove only our layer; preserve renderer/subtitle layers added after attachment.
-        if (!host.isSessionEnded()) {
-            host.updateLayers(host.readLayers().filter(candidate => candidate !== layer));
-        }
         attached = false;
-        layer.destroy();
+        try {
+            if (!host.isSessionEnded()) {
+                host.updateLayers(host.readLayers().filter(candidate => candidate !== layer));
+            }
+        } finally {
+            layer.destroy();
+        }
     };
 
     return {

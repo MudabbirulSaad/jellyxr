@@ -6,14 +6,19 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import Page from 'components/Page';
 import loading from 'components/loading/loading';
+import { playbackManager } from 'components/playback/playbackmanager';
 
 import { readCatalogueFixture } from './fixtures/catalogueFixture';
 import type { ComparisonSample, ComparisonScene } from './candidates/types';
+import { borrowVideoSurface } from './media/borrowVideoSurface';
+import type { VideoPresentationMode } from './media/videoPresentation';
+import fixtureVideoUrl from './fixtures/video-orientation.mp4';
 
 type Candidate = 'babylon' | 'three';
 
 export function Component() {
     const canvas = useRef<HTMLCanvasElement>(null);
+    const fixtureVideo = useRef<HTMLVideoElement>(null);
     const active = useRef<ComparisonScene>();
     const [candidate, setCandidate] = useState<Candidate>('babylon');
     const [status, setStatus] = useState('Loading comparison scene…');
@@ -21,6 +26,7 @@ export function Component() {
     const [busy, setBusy] = useState(false);
     const [sample, setSample] = useState<ComparisonSample>();
     const [offset, setOffset] = useState(0);
+    const [mediaMode, setMediaMode] = useState<VideoPresentationMode>('media-layer');
     const catalogue = readCatalogueFixture({ offset, limit: 24 });
 
     useEffect(() => loading.hide(), []);
@@ -29,6 +35,7 @@ export function Component() {
         let cancelled = false;
         let instance: ComparisonScene | undefined;
         const target = canvas.current;
+        const fixture = fixtureVideo.current;
         setReady(false);
         setSample(undefined);
         setStatus('Loading comparison scene…');
@@ -45,7 +52,7 @@ export function Component() {
             }
             active.current = instance;
             setReady(true);
-            setStatus('Room and falling-remote fixture ready. Media and input qualification are not attached yet.');
+            setStatus('Room ready. Select a video path, then attach current playback or start the technical fixture.');
         };
         void start().catch(error => {
             console.error('XR comparison startup failed', error);
@@ -53,6 +60,7 @@ export function Component() {
         });
         return () => {
             cancelled = true;
+            fixture?.pause();
             active.current = undefined;
             if (instance) void instance.dispose().catch(() => undefined);
         };
@@ -83,6 +91,43 @@ export function Component() {
     }, []);
     const previous = useCallback(() => setOffset(value => Math.max(0, value - 24)), []);
     const next = useCallback(() => setOffset(value => Math.min(984, value + 24)), []);
+    const chooseLayers = useCallback(() => setMediaMode('media-layer'), []);
+    const chooseTexture = useCallback(() => setMediaMode('video-texture'), []);
+    const attachPlayback = useCallback(() => {
+        const instance = active.current;
+        if (!instance) return;
+        fixtureVideo.current?.pause();
+        const surface = borrowVideoSurface(playbackManager, () => {
+            setStatus('Jellyfin changed or stopped the video. Attach current playback again.');
+        });
+        if (!surface) {
+            setStatus('No local Jellyfin video is available. Start playback through the ordinary player, or use the labelled fixture.');
+            return;
+        }
+        instance.setVideo(surface, mediaMode);
+        setStatus('Attached Jellyfin’s existing video. Playback and progress remain owned by Jellyfin.');
+    }, [mediaMode]);
+    const playFixture = useCallback(() => {
+        const video = fixtureVideo.current;
+        const instance = active.current;
+        if (!video || !instance) return;
+        if (playbackManager.isPlaying()) {
+            setStatus('Stop ordinary playback before starting the technical fixture.');
+            return;
+        }
+        let current = true;
+        instance.setVideo({
+            video, isCurrent: () => current && fixtureVideo.current === video,
+            release: () => { current = false; }
+        }, mediaMode);
+        void video.play().then(() => setStatus('Silent technical video started. This is not a Jellyfin delivery-path test.'))
+            .catch(() => setStatus('The technical video could not start. Try Start technical video again.'));
+    }, [mediaMode]);
+    const detachVideo = useCallback(() => {
+        active.current?.setVideo(null, mediaMode);
+        fixtureVideo.current?.pause();
+        setStatus('Presentation detached. Jellyfin playback, if active, is unchanged.');
+    }, [mediaMode]);
 
     return (
         <Page id='xrComparisonPage' title='JellyXR technical comparison' isNowPlayingBarEnabled={false}>
@@ -103,6 +148,16 @@ export function Component() {
                     <Button onClick={exit} disabled={!sample?.immersive || busy}>Exit XR</Button>
                 </Stack>
                 <Typography role='status' component='p' gutterBottom sx={{ marginTop: 2 }}>{status}</Typography>
+                <Stack direction='row' spacing={2} useFlexGap flexWrap='wrap'>
+                    <Button onClick={chooseLayers} aria-pressed={mediaMode === 'media-layer'} variant={mediaMode === 'media-layer' ? 'contained' : 'outlined'} disabled={busy || !!sample?.immersive}>Media layer</Button>
+                    <Button onClick={chooseTexture} aria-pressed={mediaMode === 'video-texture'} variant={mediaMode === 'video-texture' ? 'contained' : 'outlined'} disabled={busy || !!sample?.immersive}>Video texture</Button>
+                    <Button onClick={attachPlayback} disabled={!ready || busy}>Attach current Jellyfin video</Button>
+                    <Button onClick={playFixture} disabled={!ready || busy}>Start technical video</Button>
+                    <Button onClick={detachVideo} disabled={!ready || busy}>Detach video</Button>
+                </Stack>
+                <Typography component='p' gutterBottom>{sample?.mediaStatus || 'No video attached.'}</Typography>
+                <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop playsInline preload='metadata'
+                    aria-label='Silent orientation fixture source' sx={{ width: '12rem', maxWidth: '100%' }} />
                 <Box component='canvas' key={candidate} ref={canvas} aria-label='Technical Observatory room preview'
                     sx={{ display: 'block', width: '100%', height: '55vh', backgroundColor: '#151B23' }} />
                 <Typography component='p' gutterBottom sx={{ marginTop: 2 }}>

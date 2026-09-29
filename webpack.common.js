@@ -359,6 +359,11 @@ const config = {
                 ]
             },
             {
+                test: /\.mp4$/i,
+                include: path.resolve(__dirname, 'src/apps/experimental/xr/fixtures'),
+                type: 'asset/resource'
+            },
+            {
                 test: /\.wasm$/i,
                 include: path.resolve(__dirname, 'node_modules/@babylonjs/havok'),
                 type: 'asset/resource'
