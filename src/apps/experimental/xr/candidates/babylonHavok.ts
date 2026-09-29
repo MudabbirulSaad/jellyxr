@@ -25,6 +25,8 @@ import { createBabylonVideoTexture } from '../media/babylonVideoTexture';
 import { createBabylonMediaUnderlay } from '../media/babylonMediaUnderlay';
 import { ComparisonInput } from '../input/comparisonInput';
 import { createBabylonControls } from '../input/babylonControls';
+import { createBabylonSceneQuery } from '../input/babylonSceneQuery';
+import { createBabylonPointing } from '../input/babylonPointing';
 import { bindDesktopPointer } from '../input/desktopPointer';
 import { movementAction, MovementSession } from '../input/movementSession';
 import { SessionRecovery } from '../input/sessionRecovery';
@@ -120,8 +122,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     }, physicalRemote?.grab, point => {
         if (!recovery.isSuspended()) movement.requestDestination(point);
-    });
+    }, createBabylonSceneQuery(scene));
     const controls = createBabylonControls(scene, input.state, input.layout, input.floor);
+    const pointing = createBabylonPointing(scene, input);
     const recovery = new SessionRecovery({
         cancelPending() {
             movement.cancel();
@@ -176,6 +179,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
                 forward: [-Math.sin(camera.rotation.y), 0, -Math.cos(camera.rotation.y)]
             });
         controls.update();
+        pointing.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
         if (recovery.isSuspended()) {
@@ -218,6 +222,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             unbindPointer();
             input.dispose();
             controls.dispose();
+            pointing.dispose();
             video.dispose();
             engine.stopRenderLoop();
             window.clearInterval(timer);

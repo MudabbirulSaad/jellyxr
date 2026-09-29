@@ -106,7 +106,7 @@ describe('floor destination proposals', () => {
         const frame = {
             getPose: vi.fn(() => ({ transform: { matrix } })),
             getJointPose: vi.fn(() => ({ transform: { position: { x: 0, y: 1.65, z: 0 } } })),
-            getViewerPose: vi.fn(() => null)
+            getViewerPose: vi.fn(() => ({ transform: { matrix: new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.65, 0, 1]), position: { x: 0, y: 1.65, z: 0 } } }))
         };
         const teleport = vi.fn();
         const input = new ComparisonInput(vi.fn(), undefined, teleport);

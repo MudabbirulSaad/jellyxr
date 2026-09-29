@@ -1,6 +1,7 @@
 import type { Point3 } from '../fixtures/roomFixture';
 import type { MovementAction } from './movementSession';
 import { rotateFloorPoint } from './movement';
+import { unitRay } from './sceneQuery';
 
 export type ControlAction = 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
 export interface ControlTarget {
@@ -44,29 +45,40 @@ export function controlLocalPoint(point: Point3, anchor: ControlAnchor): Point3 
     return rotateFloorPoint([point[0] - anchor.origin[0], point[1] - anchor.origin[1], point[2] - anchor.origin[2]], -anchor.yaw);
 }
 
-export function hitControl(worldRay: InputRay | null, worldNear?: Point3, anchor = INITIAL_CONTROL_ANCHOR, targets = CONTROL_TARGETS): ControlAction | null {
-    const ray = worldRay && { origin: controlLocalPoint(worldRay.origin, anchor), direction: rotateFloorPoint(worldRay.direction, -anchor.yaw) };
+export interface ControlHit { action: ControlAction; point: Point3; near: boolean }
+
+export function traceControl(worldRay: InputRay | null, worldNear?: Point3, anchor = INITIAL_CONTROL_ANCHOR, targets = CONTROL_TARGETS): ControlHit | null {
+    const normalized = unitRay(worldRay);
+    const ray = normalized && { origin: controlLocalPoint(normalized.origin, anchor), direction: rotateFloorPoint(normalized.direction, -anchor.yaw) };
     const near = worldNear && controlLocalPoint(worldNear, anchor);
+    const worldPoint = (local: Point3): Point3 => {
+        const rotated = rotateFloorPoint(local, anchor.yaw);
+        return [rotated[0] + anchor.origin[0], rotated[1] + anchor.origin[1], rotated[2] + anchor.origin[2]];
+    };
     if (near?.every(Number.isFinite)) {
         const hit = targets.find(target => near[2] >= target.position[2] && near[2] - target.position[2] <= 0.05
             && Math.abs(near[0] - target.position[0]) <= target.width / 2
             && Math.abs(near[1] - target.position[1]) <= target.height / 2);
-        if (hit) return hit.id;
+        if (hit) return { action: hit.id, point: worldPoint([near[0], near[1], hit.position[2]]), near: true };
     }
     if (!ray || !ray.origin.every(Number.isFinite) || !ray.direction.every(Number.isFinite)
         || ray.direction[2] >= -0.00001) return null;
     // Panels face +Z. No activation through the back or from an unbounded/gaze ray.
     let closest = 10;
-    let result: ControlAction | null = null;
+    let result: ControlHit | null = null;
     for (const target of targets) {
         const distance = (target.position[2] - ray.origin[2]) / ray.direction[2];
         if (distance < 0 || distance > closest) continue;
         const x = ray.origin[0] + distance * ray.direction[0];
         const y = ray.origin[1] + distance * ray.direction[1];
         if (Math.abs(x - target.position[0]) <= target.width / 2 && Math.abs(y - target.position[1]) <= target.height / 2) {
-            result = target.id;
+            result = { action: target.id, point: worldPoint([x, y, target.position[2]]), near: false };
             closest = distance;
         }
     }
     return result;
+}
+
+export function hitControl(worldRay: InputRay | null, worldNear?: Point3, anchor = INITIAL_CONTROL_ANCHOR, targets = CONTROL_TARGETS): ControlAction | null {
+    return traceControl(worldRay, worldNear, anchor, targets)?.action || null;
 }
