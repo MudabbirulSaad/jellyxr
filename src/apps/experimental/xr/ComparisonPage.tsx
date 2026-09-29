@@ -308,7 +308,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Button onClick={detachVideo} disabled={!ready || busy}>Detach video</Button>
                 </Stack>
                 <Typography component='p' gutterBottom>{sample?.mediaStatus || 'No video attached.'}</Typography>
-                <Typography component='p'>Video texture mode compares plain-text captions and borrowed renderer canvases. The PGS fixture tests bitmap attachment and capture; server-delivered bitmap tracks remain unqualified. Media-layer captions are not composed yet. Return to the ordinary player if captions are unavailable. Fonts, timing, placement and headset readability remain unqualified.</Typography>
+                <Typography component='p'>Both paths compare plain-text captions and borrowed renderer canvases. Media layer mode tests video beneath a masked projection; alpha and foreground occlusion still need Quest validation. The PGS fixture does not qualify server-delivered bitmap tracks. Return to the ordinary player if video or captions are unavailable. Fonts, timing, placement and headset readability remain unqualified.</Typography>
                 <Button onClick={chooseTextCaptions} aria-pressed={captionKind === 'text'}>Text fixture</Button>
                 <Button onClick={chooseAssCaptions} aria-pressed={captionKind === 'ass'}>ASS fixture</Button>
                 <Button onClick={choosePgsCaptions} aria-pressed={captionKind === 'pgs'}>PGS fixture</Button>

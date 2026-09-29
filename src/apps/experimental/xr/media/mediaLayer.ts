@@ -25,7 +25,9 @@ export function attachMediaLayer(
 
     const layer = createLayer(surface.video);
     try {
-        host.updateLayers([...layers, layer]);
+        // Composition order is back-to-front, without depth tests between layers.
+        // The projection owner supplies an alpha aperture and draws foreground UI/captions.
+        host.updateLayers([layer, ...layers]);
     } catch (error) {
         layer.destroy();
         throw error;
