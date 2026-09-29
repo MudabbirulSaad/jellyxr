@@ -14,6 +14,7 @@ import { borrowVideoSurface } from './media/borrowVideoSurface';
 import type { VideoPresentationMode } from './media/videoPresentation';
 import fixtureVideoUrl from './fixtures/video-orientation.mp4';
 import { installSubtitleFixture } from './fixtures/subtitleFixture';
+import { installAssFixture } from './fixtures/assFixture';
 import type { ChairQuality } from './assets/chairAssets';
 
 type Candidate = 'babylon' | 'three';
@@ -27,6 +28,9 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const fixtureVideo = useRef<HTMLVideoElement>(null);
     const fixtureSubtitles = useRef<ReturnType<typeof installSubtitleFixture>>(null);
+    const assFixture = useRef<Awaited<ReturnType<typeof installAssFixture>> | null>(null);
+    const [assCaptions, setAssCaptions] = useState(false);
+    const captionEnabled = useRef(true);
     const mediaOwner = useRef<'fixture' | 'jellyfin' | null>(null);
     const active = useRef<ComparisonScene>();
     const [candidate, setCandidate] = useState<Candidate>('babylon');
@@ -54,6 +58,29 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
             fixtureSubtitles.current = null;
         };
     }, []);
+
+    useEffect(() => {
+        if (!assCaptions || !fixtureVideo.current) return;
+        let cancelled = false;
+        let fixture: Awaited<ReturnType<typeof installAssFixture>> | undefined;
+        const failed = () => {
+            if (!cancelled) setStatus('ASS fixture could not load. Switch to Text fixture and retry.');
+        };
+        void installAssFixture(fixtureVideo.current, failed).then(value => {
+            fixture = value;
+            if (cancelled) {
+                value.dispose();
+            } else {
+                assFixture.current = value;
+                if (!captionEnabled.current) value.setEnabled(false);
+            }
+        }).catch(failed);
+        return () => {
+            cancelled = true;
+            assFixture.current = null;
+            fixture?.dispose();
+        };
+    }, [assCaptions]);
 
     useEffect(() => {
         let cancelled = false;
@@ -155,9 +182,24 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const chooseLayers = useCallback(() => setMediaMode('media-layer'), []);
     const chooseTexture = useCallback(() => setMediaMode('video-texture'), []);
     const toggleFixtureCaptions = useCallback(() => {
-        fixtureSubtitles.current?.setEnabled(!fixtureCaptions);
+        captionEnabled.current = !fixtureCaptions;
+        if (assCaptions) assFixture.current?.setEnabled(!fixtureCaptions);
+        else fixtureSubtitles.current?.setEnabled(!fixtureCaptions);
         setFixtureCaptions(!fixtureCaptions);
-    }, [fixtureCaptions]);
+    }, [fixtureCaptions, assCaptions]);
+    const chooseTextCaptions = useCallback(() => {
+        setAssCaptions(false);
+        setFixtureCaptions(true);
+        captionEnabled.current = true;
+        fixtureSubtitles.current?.setEnabled(true);
+    }, []);
+    const chooseAssCaptions = useCallback(() => {
+        fixtureSubtitles.current?.setEnabled(false);
+        assFixture.current?.setEnabled(true);
+        setFixtureCaptions(true);
+        captionEnabled.current = true;
+        setAssCaptions(true);
+    }, []);
     const attachPlayback = useCallback(() => {
         const instance = active.current;
         if (!instance) return;
@@ -185,6 +227,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
         let current = true;
         instance.setVideo({
             video, isCurrent: () => current && fixtureVideo.current === video,
+            readSubtitles: () => assFixture.current?.read(),
             release: () => { current = false; }
         }, mediaMode);
         mediaOwner.current = 'fixture';
@@ -231,10 +274,14 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Button onClick={detachVideo} disabled={!ready || busy}>Detach video</Button>
                 </Stack>
                 <Typography component='p' gutterBottom>{sample?.mediaStatus || 'No video attached.'}</Typography>
-                <Typography component='p'>Text captions use a plain-text panel in Video texture mode. ASS, bitmap and media-layer subtitles are not composed yet. Keep the ordinary player for those formats. Styling, placement preferences and headset readability remain qualification work.</Typography>
+                <Typography component='p'>Video texture mode compares plain-text captions and the existing ASS canvas. Bitmap and media-layer captions still need composition work. Keep the ordinary player for those paths. Fonts, timing, placement and headset readability remain unqualified.</Typography>
+                <Button onClick={chooseTextCaptions} aria-pressed={!assCaptions}>Text fixture</Button>
+                <Button onClick={chooseAssCaptions} aria-pressed={assCaptions}>ASS fixture</Button>
                 <Button onClick={toggleFixtureCaptions} aria-pressed={fixtureCaptions}>{fixtureCaptions ? 'Hide fixture captions' : 'Show fixture captions'}</Button>
-                <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop controls playsInline preload='metadata'
-                    aria-label='Silent orientation fixture source' sx={{ width: '12rem', maxWidth: '100%' }} />
+                <Box sx={{ width: '12rem', maxWidth: '100%', position: 'relative' }}>
+                    <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop controls playsInline preload='metadata'
+                        aria-label='Silent orientation fixture source' sx={{ width: '100%' }} />
+                </Box>
                 <Box component='canvas' key={`${candidate}-${chairQuality}`} ref={canvas} tabIndex={0} aria-label='Technical Observatory room preview'
                     sx={{ display: 'block', width: '100%', height: '55vh', backgroundColor: '#151B23' }} />
                 <Typography component='p'>{sample?.inputStatus || 'Spatial controls are preparing.'}</Typography>

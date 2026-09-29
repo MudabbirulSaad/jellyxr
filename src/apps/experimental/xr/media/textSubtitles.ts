@@ -101,7 +101,7 @@ export function wrapSubtitle(text: string, measure: (value: string) => number, w
 export const SUBTITLE_PANEL = { width: 4.8, height: 1.2, x: 0, y: 2.65, z: -6.39 };
 
 /** Repaints only changed cues. Canvas never receives HTML or private diagnostic text. */
-export function createSubtitleArtwork(surface: BorrowedVideoSurface, canvas: HTMLCanvasElement) {
+export function createSubtitleArtwork(surface: BorrowedVideoSurface, canvas: HTMLCanvasElement, readWarning?: () => string | undefined) {
     canvas.width = 1600;
     canvas.height = 400;
     const context = canvas.getContext('2d');
@@ -115,7 +115,8 @@ export function createSubtitleArtwork(surface: BorrowedVideoSurface, canvas: HTM
         update(): boolean {
             let frame: SubtitleFrame;
             try {
-                frame = reader.read();
+                const warning = readWarning?.();
+                frame = warning ? { text: '', status: warning, warning: true } : reader.read();
             } catch {
                 frame = { text: '', status: 'Subtitle reading failed. Use the ordinary player.', warning: true };
             }

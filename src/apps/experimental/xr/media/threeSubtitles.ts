@@ -1,11 +1,13 @@
 import { CanvasTexture, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, type Scene } from 'three';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
+import { createThreeCanvasSubtitles } from './threeCanvasSubtitles';
 import { createSubtitleArtwork, SUBTITLE_PANEL } from './textSubtitles';
 
 export function createThreeSubtitles(surface: BorrowedVideoSurface, scene: Scene) {
+    const rich = createThreeCanvasSubtitles(surface, scene);
     const canvas = document.createElement('canvas');
-    const artwork = createSubtitleArtwork(surface, canvas);
+    const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning);
     const texture = new CanvasTexture(canvas);
     texture.colorSpace = SRGBColorSpace;
     const material = new MeshBasicMaterial({ map: texture, toneMapped: false });
@@ -15,12 +17,14 @@ export function createThreeSubtitles(surface: BorrowedVideoSurface, scene: Scene
     scene.add(mesh);
     return {
         update() {
+            rich.update();
             if (!artwork.update()) return;
             mesh.visible = artwork.isVisible();
             if (mesh.visible) texture.needsUpdate = true;
         },
-        readStatus: artwork.readStatus,
+        readStatus: () => rich.isVisible() ? rich.readStatus() : artwork.readStatus(),
         dispose() {
+            rich.dispose();
             scene.remove(mesh);
             mesh.geometry.dispose();
             material.dispose();

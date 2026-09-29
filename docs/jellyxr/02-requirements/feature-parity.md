@@ -13,7 +13,7 @@ Status: source-informed inventory; limited M1 ordinary playback smoke evidence e
 | Title, seasons, episodes, media versions | Existing item/playback data | Spatial detail view | P0 | Missing-metadata fixture; AT-06 pending |
 | Play/pause, seek, chapters, queue, next episode | Playback manager/player | Controller- and hand-operated controls | P0 | AT-07/09 pending |
 | Direct play, direct stream/remux, transcode | Browser profile and server negotiation | Reuse negotiation; validate XR presentation | P0 | Codec/network/server policy; AT-08 pending |
-| Audio and subtitle selection | HTML video/HLS and subtitle renderers | Explicit immersive subtitle rendering path | P0 | Highest-risk media bridge; AT-10 pending |
+| Audio and subtitle selection | HTML video/HLS and subtitle renderers | Explicit immersive subtitle rendering path | P0 | PC text/ASS texture experiments recorded in [M2 evidence](../05-delivery/m2-experiments.md); bitmap/native-layer and actual Quest AT-10 remain open |
 | Cinema, screen placement, recenter | New capability | Add one environment and viewing controls | P0 | Renderer decision; AT-12 pending |
 | Reduced motion, text size, controller operation | Inherited UI patterns plus new XR needs | Adapt and test in headset | P0 | AT-13 pending |
 | Music and music videos | Inherited client capability | Ordinary mode first | Preserve in P0; XR deferred | Server fixture/codecs; AT-15 pending |

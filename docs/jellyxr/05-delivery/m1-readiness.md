@@ -98,7 +98,7 @@ During desktop navigation, a browser-control action unintentionally toggled the 
 | Remux/direct-stream and transcode cases | F-01 PC Playback Info reports HLS direct streaming with audio conversion | Pure remux, video transcoding and corresponding Quest paths remain unverified; AT-08 |
 | Prohibited-transcode and unavailable-source cases | Not prepared | Controlled permission/failure fixtures before AT-08/14; do not alter the owner's server policy merely to create a case |
 | Multiple audio tracks and chapters | Available in F-01 | Two audio choices and eleven chapters observed; switching during playback and chapter seeking untested; AT-09/10 |
-| Text, ASS and bitmap subtitles | SUBRIP available in F-01; ASS/bitmap not inventoried | Text selection observed, rendering/sync unverified; find or record missing ASS/bitmap cases; AT-10/EXP-02 |
+| Text, ASS and bitmap subtitles | SUBRIP available in F-01; actual-server ASS/bitmap not inventoried. An original technical ASS fixture now runs through installed libass in the M2 workbench | PC text/ASS presentation evidence is recorded in [M2](m2-experiments.md); actual-server ASS/bitmap and Quest synchronization remain unverified; AT-10/EXP-02 |
 | 1,000-item catalogue | Deterministic M2 fixture implemented and pagination tested | Actual-device incremental browsing/performance pending for EXP-03/AT-05/24; no fabricated catalogue added to the owner's library |
 | Interrupted network/server and expired session | Not exercised | Controlled recovery runs; AT-14 |
 
