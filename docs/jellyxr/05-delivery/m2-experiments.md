@@ -284,3 +284,22 @@ The browser review caught the initial compact pair falling below the forward vie
 | Local checks | TypeScript, full lint (98 inherited warnings), styles and all 246 tests in 30 files pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992 |
 
 UI/UX Pro Max's focus and dragging-alternative guidance informed retained focus, button alternatives and explicit recovery copy. Actual Quest trigger/pinch recall, input switching, near convergence, occlusion, arbitrary physical positions and comfort remain open. No private media was used. Floor destination selection and seamless native-origin recovery remain separate experiment work.
+
+
+## Deliberate floor selection increment — 2026-09-30
+
+Source revision: 32bf4c0fa1, based on xr 93d38995f7 (PR #15's control recall). This advances FR-030 / AT-26 and EXP-04; it is an equal-candidate movement experiment, not final locomotion or Quest qualification.
+
+Choose floor arms a proposal without moving the camera. A normalized, bounded straight ray must reach the fixture floor before a static room proxy, and the shared landing-footprint check must pass. A completed same-source selection confirms the destination; target drift beyond 15 cm, tracking/input loss, cancellation or interruption cannot queue later travel. The movement coordinator revalidates the destination and requires the existing owner to accept Pause before applying a new root. Height/yaw remain under the existing movement contract and Resume stays explicit.
+
+Both renderers show the same floor ring with directional/cross feedback and a clear/blocked status in the Cancel move control. During selection, only Cancel move, Return to seat and Exit XR remain in the control bank and hit list. This followed a browser finding that the full bank obscured the marker. The initial desktop proposal moved to 3.5 m ahead to fit the level preview; arrow-key quarter-metre adjustment, Enter and Escape support desktop testing. Neither those distances nor the small floor label are a headset readability/comfort result.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Geometry and state cases | Clear rays, non-normalized rays, furniture/wall/stand rejection, an otherwise-clear destination behind the library plinth, outside limits, invalid directions and rays starting in a proxy pass. Same-source completion, drift, cancellation, rejected Pause, keyboard operation and hidden-control exclusion pass |
+| Synthetic native input | Controller ray-pose loss and hand-joint loss cancel selection; an invalid floor proposal stays in selection mode without moving; completed selections emit one destination. These are unit events, not real headset gestures |
+| Babylon browser | Armed floor view and marker inspected. Escape left the technical video playing (paused=false, readyState 4). A valid adjusted destination changed the view and paused that source (paused=true, readyState 4); Return to seat and explicit Resume restored playback |
+| Three browser | Equivalent armed view inspected. Attempting an outside destination left the view and video playing; returning the proposal to clear floor and confirming moved the view and paused it. Return to seat and explicit Resume worked. The technical source was left paused afterward |
+| Local checks | Application TypeScript, full lint (98 inherited warnings), styles and all 253 tests in 31 files pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992. Checked floor-selection copy is absent from ordinary output. No build compatibility exemption was added |
+
+UI/UX Pro Max's existing focus, feedback and non-drag alternatives guidance informed the reduced control bank, explicit cancel/status and keyboard alternative. There is no continuous artificial walking, camera animation or new playback owner. No private media was used. Real controller/hand rays, comfort, physical tracking-space behaviour, pointing feedback, all-scene UI occlusion, navmesh/sloped floors and native-layer depth remain unqualified. The static comparison proxies are not a real-world safety boundary. G2 remains open.
