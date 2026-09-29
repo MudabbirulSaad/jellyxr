@@ -55,8 +55,8 @@ Local build/lint logs are outside Git under `%LOCALAPPDATA%\JellyXR`. The in-app
 
 ## Remaining experiments
 
-1. Attach the inherited active media surface through a narrow borrowed bridge; compare media layer and texture paths with explicit subtitle composition and lifecycle ownership.
-2. Add equal world-space target/control, controller/hand, grab/teleport/snap and tracking-loss fixtures. Prove all required operations on the actual Quest.
+1. Extend the implemented borrowed-video paths with explicit subtitle composition and complete native-layer/media qualification. PC video attachment is recorded below.
+2. Extend the shared control/grab/fixed-destination fixtures to complete locomotion and recovery; prove required operations with controllers and hands on the actual Quest.
 3. Calibrate lighting/text and add representative model/texture and incremental artwork cost; retain a plain control scene.
 4. Record direct/remux/transcode, audio, text/ASS/bitmap, seek/resume/interruption results, exact device/browser settings and repeated/sustained timing.
 5. Apply the [G2 selection rule](../06-decisions/technology-evaluation.md); no renderer is selected by these preparation passes.
@@ -147,7 +147,7 @@ Full local lint initially scanned the generated comparison bundles. The generate
 
 ## Physical remote increment — 2026-09-30
 
-Source revision: 42b56f1c99, based on xr dc18e92a06. Implements part of FR-031 / EXP-04; AT-27 remains open.
+Source revision: 42b56f1c99, based on xr dc18e92a06; merged in PR #8 at xr 1f286b0ad5. Implements part of FR-031 / EXP-04; AT-27 remains open.
 
 The shared fixture adds a small stand so the remote settles above the floor. A controller can grip it within 18 cm; a hand uses a deliberate near pinch, requiring both thumb-tip and index-tip poses. One source owns the grab, and button selection is suppressed while it is held. Source removal, pose loss, hidden/end events, movement and disposal release ownership immediately. Tracking restoration cannot restart a previous grab. Recall remains available through ordinary and spatial buttons.
 
@@ -166,3 +166,23 @@ Source inspection found that the previous Babylon recall call was ignored with t
 UI/UX Pro Max's dragging-alternatives guidance was reviewed again: recall and ordinary/spatial button operation remain independent of grabbing. Held state has a visual change plus an explicit diagnostic label. Quest near reach, pinch reliability, source switching with real hardware, no-jitter behaviour over long sessions, physics cost and final feedback latency still need device evidence.
 
 Implementation references: exact installed Havok/Babylon and Rapier sources, plus [Rapier rigid bodies](https://rapier.rs/docs/user_guides/javascript/rigid_bodies/), accessed 2026-09-30. The online guide currently describes a newer Rapier version; adapter calls were checked against the installed 0.20.0 declarations and exercised in the tests above.
+
+## Player-preserving overlay increment — 2026-09-30
+
+Source revision: df1846c073, based on xr 1f286b0ad5. The comparison route remains useful for synthetic fixtures. Actual media testing now uses **Open XR media test**, shown only in an experiment build while a local HTML video surface exists. It opens the same workbench in an overlay, leaving the ordinary video route mounted. Source inspection found that the inherited Page/view-hide lifecycle invokes stop-on-back for active video; navigating to a separate comparison route was therefore an unsuitable way to retain its surface.
+
+The overlay loads the workbench on demand. Closing it disposes presentation resources and restores focus without issuing Stop to Jellyfin. Keyboard/wheel/click propagation is contained so canvas navigation does not also invoke the ordinary player's shortcuts. Initial testing caught Enter being intercepted by those global handlers; the input boundary was corrected before the following checks.
+
+| Check | Actual observation / limit |
+| --- | --- |
+| Actual Jellyfin video | F-01's existing 3840 × 2160 decoded surface visibly appears in both Babylon and Three texture scenes; no media copy or separate server request is created by the bridge |
+| Owner commands | Babylon movement paused the active video at 28.37 s; five preceding arrow presses did not seek (before value 28.29 s). Explicit Resume made that same surface play again |
+| Candidate change and close | Jellyfin kept playing during candidate change. Closing the overlay left one non-muted playing video; the muted, paused technical source was removed with the workbench |
+| Ordinary seek | A later paused ordinary-player seek advanced currentTime from 158.832 to 188.832 s, with readyState 4 |
+| Reported delivery | Jellyfin Playback Info reported HLS direct streaming, HEVC video direct and AAC target audio from EAC3; reasons included unsupported audio codec and video range type. This is a server-conversion case, not a direct-play or HDR-output pass |
+| Cleanup | Leaving the ordinary video route stopped playback; DOM contained no video element afterward |
+| Local checks | TypeScript, full lint/styles and 219 tests pass; ordinary production/ES5 passes 982 files and experiment production/ES5 passes 991. Ordinary output contains none of the checked comparison route, launcher, remote-copy or catalogue markers |
+
+These PC observations do not qualify audible synchronization, subtitle composition, HDR colour, actual Quest layers or sustained timing. SUBRIP remained selected in ordinary playback, but no synchronized XR subtitle pass is claimed. Screenshots were inspected only during the test; private media, titles, identifiers and artwork are not stored in the repository.
+
+Cancelling the inherited audio-selection sheet subsequently raised `ActionSheet closed without resolving` in the development error overlay. That sheet code was unchanged by this increment. The test stream was stopped through browser Back. R-22 tracks reproducing and fixing cancellation before declaring complete ordinary-player regression; this is not hidden as a passed audio-switching scenario.

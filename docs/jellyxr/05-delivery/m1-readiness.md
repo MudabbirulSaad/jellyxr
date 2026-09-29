@@ -1,6 +1,6 @@
 # M1 readiness evidence
 
-Updated: 2026-09-29. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports successful library access and ordinary playback on Quest 3. Detailed playback checks, emulator version/profile verification and remote inspection remain pending. The owner reports the emulator is ready. M1 and G1 are not closed.
+Updated: 2026-09-30. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports successful library access and ordinary playback on Quest 3. The M2 follow-up records desktop seek and HLS delivery evidence below. Complete audio/subtitle/resume checks, emulator version/profile verification and remote inspection remain pending. The owner reports the emulator is ready. M1 and G1 are not closed.
 
 This report records observed results for W-02 preparation. It is not a device support announcement. The milestone branch starts at xr commit 84571b91b3362a4aaeaac81e6d9cec77ce89e3c6; application source and locked dependencies remain those of the pinned Jellyfin Web baseline.
 
@@ -55,6 +55,7 @@ The updated package passed local link/anchor, requirement coverage, work-depende
 | Library and title details | Basic subset passed | Movie/series library and Continue Watching rendered; an existing episode's details, audio/subtitle choices and chapters loaded |
 | Desktop video start and pause | Basic subset passed | F-01 rendered video; DOM media state reached 16.36 seconds, readyState 4, 3840 x 2160, then paused. This is not an audio-quality, HDR or sustained-performance result |
 | Desktop seek, subtitle rendering and resume | Incomplete | English audio and SUBRIP selected in title details. Synchronized subtitle rendering, seek and resume were not established by this run; player keyboard automation did not complete |
+| Desktop M2 follow-up, 2026-09-30 | Seek and borrowed-presentation subset passed | F-01 advanced by 30 seconds while paused, remained decoded, and played through both texture scenes. Playback Info reports HLS direct streaming with HEVC direct/AAC target audio. Pause/Resume within an active session passed; stored resume, audible switching and subtitle synchronization remain open. See [M2 observations](m2-experiments.md#player-preserving-overlay-increment--2026-09-30) |
 | Quest library access | Owner-reported success | Owner replied that the library loaded in Quest Browser after both USB mappings were installed; the agent did not remotely inspect the page |
 | Quest ordinary playback | Owner-reported basic pass | Owner confirms video plays at localhost:8080 on Quest 3 and appears fine. Actual-device report, not an emulator result or direct agent observation; fixture, delivery method and elapsed viewing time were not supplied |
 | Quest seek/subtitle/resume | Detailed results not recorded | General playback feedback does not identify each control result; confirm these separately before closing their scenario portions |
@@ -84,7 +85,7 @@ The automation inventory exposes a personal Brave profile and the Codex in-app b
 
 ## Fixture inventory
 
-The signed-in library and one episode's details were inspected through the inherited UI. F-01 is an anonymous episode fixture: about 48 minutes; UI reports 4K HEVC Dolby Vision Profile 8.1 (HDR10), two Dolby Digital+ 5.1 audio tracks, SUBRIP tracks and eleven chapter entries. Source container, actual delivery method and server FFmpeg version were not recorded. A 2160p decoded video surface does not prove direct play or HDR output. No private title, identifier, artwork or media is committed.
+The signed-in library and one episode's details were inspected through the inherited UI. F-01 is an anonymous episode fixture: about 48 minutes; UI reports 4K HEVC Dolby Vision Profile 8.1 (HDR10), two Dolby Digital+ 5.1 audio tracks, SUBRIP tracks and eleven chapter entries. The 2026-09-30 Playback Info follow-up reports MKV source and HLS direct streaming, HEVC video direct with AAC target audio; server FFmpeg version remains unrecorded. A 2160p decoded video surface does not prove direct play or HDR output. No private title, identifier, artwork or media is committed.
 
 During desktop navigation, a browser-control action unintentionally toggled the episode's watched flag. The flag was restored and the UI showed Mark played again before the playback test. That fixture's prior resume position is not a valid baseline for a resume assertion; later testing must establish a new known position.
 
@@ -94,11 +95,11 @@ During desktop navigation, a browser-control action unintentionally toggled the 
 | Restricted and administrative accounts | Not inventoried for this pass | Required later for AT-04/15; normal account alone does not cover these roles |
 | Movie and episode with resume state | Movie/episode Continue Watching entries visible; F-01 episode inspected | Record movie media properties and establish a known resume point; AT-05/06/07 |
 | Compatible direct-play media | Not inventoried | Negotiated delivery method; AT-08 |
-| Remux/direct-stream and transcode cases | Not inventoried | Actual negotiation and server conversion evidence; AT-08 |
+| Remux/direct-stream and transcode cases | F-01 PC Playback Info reports HLS direct streaming with audio conversion | Pure remux, video transcoding and corresponding Quest paths remain unverified; AT-08 |
 | Prohibited-transcode and unavailable-source cases | Not prepared | Controlled permission/failure fixtures before AT-08/14; do not alter the owner's server policy merely to create a case |
 | Multiple audio tracks and chapters | Available in F-01 | Two audio choices and eleven chapters observed; switching during playback and chapter seeking untested; AT-09/10 |
 | Text, ASS and bitmap subtitles | SUBRIP available in F-01; ASS/bitmap not inventoried | Text selection observed, rendering/sync unverified; find or record missing ASS/bitmap cases; AT-10/EXP-02 |
-| 1,000-item catalogue | Not prepared | Separate deterministic fixture for EXP-03/AT-05/24; no fabricated catalogue added to the owner's library |
+| 1,000-item catalogue | Deterministic M2 fixture implemented and pagination tested | Actual-device incremental browsing/performance pending for EXP-03/AT-05/24; no fabricated catalogue added to the owner's library |
 | Interrupted network/server and expired session | Not exercised | Controlled recovery runs; AT-14 |
 
 ## Remaining steps and gate disposition

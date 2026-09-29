@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { type PropsWithChildren, useCallback, useEffect, useRef, useState } from 'react';
 
 import Page from 'components/Page';
 import loading from 'components/loading/loading';
@@ -16,7 +16,12 @@ import fixtureVideoUrl from './fixtures/video-orientation.mp4';
 
 type Candidate = 'babylon' | 'three';
 
-export function Component() {
+function ComparisonFrame({ embedded, children }: PropsWithChildren<{ embedded: boolean }>) {
+    if (embedded) return <div>{children}</div>;
+    return <Page id='xrComparisonPage' title='JellyXR technical comparison' isNowPlayingBarEnabled={false}>{children}</Page>;
+}
+
+export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const fixtureVideo = useRef<HTMLVideoElement>(null);
     const mediaOwner = useRef<'fixture' | 'jellyfin' | null>(null);
@@ -30,7 +35,9 @@ export function Component() {
     const [mediaMode, setMediaMode] = useState<VideoPresentationMode>('media-layer');
     const catalogue = readCatalogueFixture({ offset, limit: 24 });
 
-    useEffect(() => loading.hide(), []);
+    useEffect(() => {
+        if (!embedded) loading.hide();
+    }, [embedded]);
 
     useEffect(() => {
         let cancelled = false;
@@ -163,7 +170,7 @@ export function Component() {
     }, [mediaMode]);
 
     return (
-        <Page id='xrComparisonPage' title='JellyXR technical comparison' isNowPlayingBarEnabled={false}>
+        <ComparisonFrame embedded={embedded}>
             <Box sx={{ padding: '5rem 2rem 2rem', color: '#F2F4F7', backgroundColor: '#0B0F14' }}>
                 <Typography variant='h4' component='h1'>Renderer and physics comparison</Typography>
                 <Typography component='p' gutterBottom>
@@ -208,6 +215,6 @@ export function Component() {
                 </Stack>
                 <ul>{catalogue.items.map(item => <li key={item.id}>{item.title}{item.artwork === 'missing' ? ' / Missing-artwork case' : ''}</li>)}</ul>
             </Box>
-        </Page>
+        </ComparisonFrame>
     );
 }

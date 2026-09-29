@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@mui/material/styles';
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import {
     RouterProvider,
     createHashRouter,
@@ -18,6 +18,8 @@ import BangRedirect from 'components/router/BangRedirect';
 import { createRouterHistory } from 'components/router/routerHistory';
 import appTheme from 'themes';
 import { ThemeStorageManager } from 'themes/themeStorageManager';
+
+const ExperimentalMediaComparison = __JELLYXR_EXPERIMENTS__ ? lazy(() => import('apps/experimental/xr/ComparisonOverlay')) : undefined;
 
 const router = createHashRouter([
     {
@@ -63,6 +65,11 @@ function RootAppLayout() {
             <AppHeader isHidden={layoutManager.modern || isNewLayoutPath} />
 
             <Outlet />
+            {ExperimentalMediaComparison && (
+                <Suspense fallback={null}>
+                    <ExperimentalMediaComparison />
+                </Suspense>
+            )}
         </ThemeProvider>
     );
 }
