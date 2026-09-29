@@ -20,7 +20,7 @@ The explicit `JELLYXR_EXPERIMENTS=1` build flag enables this route. Ordinary `se
 | Timing | Bounded 720-sample application-work window and nearest-rank p95; visible count and remote height | Excludes GPU/compositor/video decode; uncontrolled desktop observations are not Quest benchmarks |
 | XR entry | Deliberate request, local-floor space and optional hand/layer capability requests | Full input actions, media layers, subtitles and real-headset lifecycle qualification remain pending |
 
-The fixture UI uses actionable technical labels. Normal product routes never show synthetic film descriptions or fake library content. It does not start another media element or create progress reports.
+The fixture UI uses actionable technical labels. Normal product routes never show synthetic film descriptions or fake library content. It creates no competing Jellyfin player or progress reporter; a separate, silent calibration clip is opt-in and refuses to start while ordinary playback is active.
 
 ## Candidate versions and provenance
 
@@ -65,7 +65,7 @@ Related: [execution ledger](implementation-goal.md), [M1 evidence](m1-readiness.
 
 ## Borrowed media contract increment
 
-Source revision: 794d1b2610, based on xr 5efb2609aa. This increment adds the narrow `HtmlVideoPlayer.getVideoPresentationSurface()` accessor and experimental ownership helpers. Renderer attachment is still pending; the workbench does not yet play a Jellyfin video.
+Source revision: 794d1b2610, based on xr 5efb2609aa; merged in PR #4 at xr 6a108272fd. This increment adds the narrow `HtmlVideoPlayer.getVideoPresentationSurface()` accessor and experimental ownership helpers. Renderer attachment was pending at that revision and is extended below; actual Jellyfin video attachment is still unverified.
 
 The borrowing helper accepts only the current local HTML video player, retains the original element and listens for player change, stop, emptied, abort and error events. It invalidates once, removes its observers and never changes source, autoplay, looping, mute, position or playback. A per-frame identity check can detect replacement even when an event was missed. Releasing a borrow does not stop or unload the owner.
 
@@ -74,3 +74,29 @@ The media-layer helper accepts a feature-tested binding from the renderer adapte
 Source inspection of installed Babylon 9.27.1 `VideoTexture` found default autoplay/loop changes and disposal pause behaviour; even `independentVideoSource` still passes the element through CORS setup. A direct stock-helper attachment is therefore not accepted for Jellyfin's borrowed video. Investigate media layers first and a manually managed GPU texture upload that leaves the element untouched; record measured outcomes before choosing either.
 
 Validation: TypeScript passed; changed-file lint passed with four existing player warnings; all 181 tests in 16 files passed, including ten new ownership/layer-contract cases. Ordinary production and ES5 checks passed for 982 files with inherited size warnings. The getter is the only ordinary-player change; it has no effect until called. Actual player transitions, decoded frames, audio/subtitle integrity, real compositor behaviour and device timing remain untested by this increment.
+
+## Video presentation increment — 2026-09-30
+
+Source revision: 715330ab1c, based on xr 6a108272fd.
+
+Both candidate scenes now accept the borrowed local-player video or a labelled, silent calibration clip. The comparison page offers explicit **Media layer** and **Video texture** paths. Select the path before attaching. Layers wait for an immersive session; failure is reported without silently changing paths. Detach removes only presentation resources and releases observation. Jellyfin still owns source, transport, tracks and progress. No second Jellyfin video or progress reporter is created.
+
+The opt-in fixture is H.264, 640 × 360, 24 fps, eight seconds, with no audio/subtitles. Its source recipe, font provenance, licence and checksum are recorded in the [fixture inventory](../../../src/apps/experimental/xr/fixtures/README.md). The clip is excluded from the ordinary build alongside the comparison route.
+
+Exact-version source inspection found that Babylon's `VideoTexture` helper changes video CORS properties even with its independent-source option. The experiment instead owns a raw GPU texture, uses `Engine.updateVideoTexture`, and disposes only its plane/material/texture. Three's `VideoTexture` observes frames and cancels its own callback on disposal. Both paths fit the encoded aspect ratio inside the shared 6.4 × 3.6 m screen. The shared lifecycle replaces presentation resources when dimensions, session or reference space change.
+
+The native path invokes `XRMediaBinding.createQuadLayer` with the borrowed element. Babylon enables its optional projection-layer feature; Three uses its existing layers support. Attachment occurs in the renderer frame after the projection state applies. This experiment is the sole additional compositor-layer writer; production subtitle-layer coordination still needs an owner. Video currently follows the projection layer in composition order: scene-object occlusion and subtitle depth are **unqualified**, so this is not a production presentation decision.
+
+| Check | Observed result / limit |
+| --- | --- |
+| Desktop Babylon calibration | Video visibly plays; labels upright and unmirrored after correcting additive emissive colour and plane rotation |
+| Desktop Three calibration | Video visibly plays; labels upright and unmirrored |
+| Candidate change / detach | Fixture pauses on change/detach, presentation clears, new scene can attach again |
+| Media layer on PC without XR | Explicit waiting state; no texture fallback and no native-layer pass claimed |
+| No active Jellyfin video | Action reports an unavailable local surface; no invented playback state |
+| Lifecycle unit checks | Stream resize, stopped/replaced lease, session transition, allocation rejection, explicit retry, cleanup rejection and aspect preservation pass |
+| Local checks | Type check and 188 tests in 17 files pass; changed-code lint has no errors. Ordinary build plus ES5 check passes 982 files; experimental build plus ES5 check passes 989 files, with only the four inherited worker exclusions |
+
+Desktop observations are from the in-app browser without XR emulation. They do not qualify colour accuracy, HDR, Quest decoding, audio, subtitles, tracked depth or native layers. Attaching actual Jellyfin playback through ordinary navigation is still unverified. The existing development WebSocket Host/Origin rejection remains; HTTP assets load and manual reload was used without weakening host validation.
+
+Sources reviewed: installed Babylon 9.27.1 and Three 0.186.0 implementation; [Meta video guidance](https://developers.meta.com/horizon/documentation/web/browser-video/) and [Layers guidance](https://developers.meta.com/horizon/documentation/web/webxr-layers/), accessed 2026-09-30. Vendor recommendations are not JellyXR measurements. G2 remains open.
