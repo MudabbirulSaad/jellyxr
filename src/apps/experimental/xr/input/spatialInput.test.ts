@@ -7,7 +7,7 @@ import { ComparisonInput } from './comparisonInput';
 describe('visible control geometry', () => {
     it('hits each visible centre and rejects the gap, back face and nonfinite rays', () => {
         for (const target of CONTROL_TARGETS) {
-            expect(hitControl({ origin: [target.position[0], target.position[1], 0], direction: [0, 0, -1] })).toBe(target.id);
+            expect(hitControl({ origin: [target.position[0], target.position[1], target.position[2] + 1], direction: [0, 0, -1] })).toBe(target.id);
         }
         expect(hitControl({ origin: [0, 1.18, 0], direction: [0, 0, -1] })).toBeNull();
         expect(hitControl({ origin: [-0.3, 1.18, -2], direction: [0, 0, 1] })).toBeNull();

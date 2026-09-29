@@ -12,11 +12,13 @@ import { createThreeVideoTexture } from '../media/threeVideoTexture';
 import { ComparisonInput } from '../input/comparisonInput';
 import { createThreeControls } from '../input/threeControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
+import { movementAction, MovementSession } from '../input/movementSession';
+import { viewerWorldPosition } from '../input/movement';
 
 import { FrameSampler } from './frameSampler';
-import { FIXTURE_COLOURS, type ComparisonScene, type SampleListener } from './types';
+import { FIXTURE_COLOURS, type ComparisonPlaybackActions, type ComparisonScene, type SampleListener } from './types';
 
-export async function createComparison(canvas: HTMLCanvasElement, onSample: SampleListener): Promise<ComparisonScene> {
+export async function createComparison(canvas: HTMLCanvasElement, onSample: SampleListener, playback: ComparisonPlaybackActions): Promise<ComparisonScene> {
     await RAPIER.init();
     const renderer = new WebGLRenderer({ canvas, antialias: true });
     renderer.setPixelRatio(1);
@@ -71,7 +73,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         remoteBody?.setLinvel({ x: 0, y: 0, z: 0 }, true);
         remoteBody?.setAngvel({ x: 0, y: 0, z: 0 }, true);
     };
+    const movement = new MovementSession(playback.pauseForMovement);
     const input = new ComparisonInput(action => {
+        const move = movementAction(action);
+        if (move) movement.request(move);
+        if (action === 'resume-media') playback.resume();
         if (action === 'recall-remote') recallRemote();
         if (action === 'exit-xr') {
             const session = renderer.xr.getSession();
@@ -100,7 +106,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         camera.aspect = width / height;
         camera.updateProjectionMatrix();
     };
-    const visibility = () => clock.reset();
+    const visibility = () => {
+        clock.reset();
+        movement.cancel();
+        input.state.cancel();
+    };
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', visibility);
     resize();
@@ -110,6 +120,16 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             return;
         }
         const start = performance.now();
+        try {
+            const moved = movement.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), frame,
+                space => renderer.xr.setReferenceSpace(space), root => {
+                    camera.position.set(...viewerWorldPosition(root, [0, 1.65, 0]));
+                    camera.rotation.set(0, root.yaw, 0);
+                });
+            if (moved) input.state.cancel();
+        } catch {
+            input.report('Movement failed. Check playback before retrying or exit XR.');
+        }
         input.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), frame);
         controls.update();
         video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
@@ -152,6 +172,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async dispose() {
             if (disposed) return;
             disposed = true;
+            movement.dispose();
             unbindPointer();
             input.dispose();
             controls.dispose();

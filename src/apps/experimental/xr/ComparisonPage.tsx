@@ -19,6 +19,7 @@ type Candidate = 'babylon' | 'three';
 export function Component() {
     const canvas = useRef<HTMLCanvasElement>(null);
     const fixtureVideo = useRef<HTMLVideoElement>(null);
+    const mediaOwner = useRef<'fixture' | 'jellyfin' | null>(null);
     const active = useRef<ComparisonScene>();
     const [candidate, setCandidate] = useState<Candidate>('babylon');
     const [status, setStatus] = useState('Loading comparison scene…');
@@ -39,12 +40,39 @@ export function Component() {
         setReady(false);
         setSample(undefined);
         setStatus('Loading comparison scene…');
+        const onResumeError = () => setStatus('Resume failed. Try Start technical video again.');
         const start = async () => {
             const module = candidate === 'babylon' ?
                 await import('./candidates/babylonHavok') : await import('./candidates/threeRapier');
             if (cancelled || !target) return;
             instance = await module.createComparison(target, value => {
                 if (!cancelled) setSample(value);
+            }, {
+                pauseForMovement() {
+                    fixture?.pause();
+                    if (mediaOwner.current === 'jellyfin') {
+                        const player = playbackManager.getCurrentPlayer();
+                        if (player?.isLocalPlayer && player.id === 'htmlvideoplayer') {
+                            playbackManager.pause();
+                            if (!player.getVideoPresentationSurface()?.paused) throw new Error('Pause not confirmed.');
+                        }
+                    }
+                    setStatus('Video paused for movement. Select Resume video when ready.');
+                },
+                resume() {
+                    if (mediaOwner.current === 'fixture' && fixture) {
+                        setStatus('Resume requested for the technical video.');
+                        void fixture.play().catch(onResumeError);
+                    } else if (mediaOwner.current === 'jellyfin') {
+                        const player = playbackManager.getCurrentPlayer();
+                        if (player?.isLocalPlayer && player.id === 'htmlvideoplayer') {
+                            playbackManager.unpause();
+                            setStatus('Resume requested through Jellyfin’s playback owner.');
+                        }
+                    } else {
+                        setStatus('No video is attached. Attach playback or start the technical fixture first.');
+                    }
+                }
             });
             if (cancelled) {
                 await instance.dispose();
@@ -61,6 +89,7 @@ export function Component() {
         return () => {
             cancelled = true;
             fixture?.pause();
+            mediaOwner.current = null;
             active.current = undefined;
             if (instance) void instance.dispose().catch(() => undefined);
         };
@@ -98,6 +127,7 @@ export function Component() {
         if (!instance) return;
         fixtureVideo.current?.pause();
         const surface = borrowVideoSurface(playbackManager, () => {
+            mediaOwner.current = null;
             setStatus('Jellyfin changed or stopped the video. Attach current playback again.');
         });
         if (!surface) {
@@ -105,6 +135,7 @@ export function Component() {
             return;
         }
         instance.setVideo(surface, mediaMode);
+        mediaOwner.current = 'jellyfin';
         setStatus('Attached Jellyfin’s existing video. Playback and progress remain owned by Jellyfin.');
     }, [mediaMode]);
     const playFixture = useCallback(() => {
@@ -120,12 +151,14 @@ export function Component() {
             video, isCurrent: () => current && fixtureVideo.current === video,
             release: () => { current = false; }
         }, mediaMode);
+        mediaOwner.current = 'fixture';
         void video.play().then(() => setStatus('Silent technical video started. This is not a Jellyfin delivery-path test.'))
             .catch(() => setStatus('The technical video could not start. Try Start technical video again.'));
     }, [mediaMode]);
     const detachVideo = useCallback(() => {
         active.current?.setVideo(null, mediaMode);
         fixtureVideo.current?.pause();
+        mediaOwner.current = null;
         setStatus('Presentation detached. Jellyfin playback, if active, is unchanged.');
     }, [mediaMode]);
 
@@ -161,7 +194,7 @@ export function Component() {
                 <Box component='canvas' key={candidate} ref={canvas} tabIndex={0} aria-label='Technical Observatory room preview'
                     sx={{ display: 'block', width: '100%', height: '55vh', backgroundColor: '#151B23' }} />
                 <Typography component='p'>{sample?.inputStatus || 'Spatial controls are preparing.'}</Typography>
-                <Typography component='p'>The four controls in the room use world-space hit testing. On PC, click a target or focus the canvas, use arrow keys and press Enter. In XR, point and deliberately trigger or pinch. Looking alone does nothing. Hands, depth and comfort still need Quest validation.</Typography>
+                <Typography component='p'>Room controls use world-space hit testing. On PC, click a target or focus the canvas, use arrow keys and press Enter. In XR, point and deliberately trigger or pinch. Movement pauses video and requires Resume. Looking alone does nothing. Hands, depth and comfort still need Quest validation.</Typography>
                 <Typography component='p' gutterBottom sx={{ marginTop: 2 }}>
                     {sample ? `${sample.frames} frames; recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms; remote height ${sample.remoteHeight.toFixed(3)} m.` : 'Frame observations will appear after the scene starts.'}
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.

@@ -18,6 +18,11 @@ export interface ComparisonScene {
     dispose(): Promise<void>;
 }
 
+export interface ComparisonPlaybackActions {
+    pauseForMovement(): void;
+    resume(): void;
+}
+
 export type SampleListener = (sample: ComparisonSample) => void;
 
 export const FIXTURE_COLOURS = {

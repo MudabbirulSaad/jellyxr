@@ -25,12 +25,14 @@ import { createBabylonVideoTexture } from '../media/babylonVideoTexture';
 import { ComparisonInput } from '../input/comparisonInput';
 import { createBabylonControls } from '../input/babylonControls';
 import { bindDesktopPointer } from '../input/desktopPointer';
+import { movementAction, MovementSession } from '../input/movementSession';
+import { viewerWorldPosition } from '../input/movement';
 import '@babylonjs/core/Culling/ray';
 
 import { FrameSampler } from './frameSampler';
-import { FIXTURE_COLOURS, type ComparisonScene, type SampleListener } from './types';
+import { FIXTURE_COLOURS, type ComparisonPlaybackActions, type ComparisonScene, type SampleListener } from './types';
 
-export async function createComparison(canvas: HTMLCanvasElement, onSample: SampleListener): Promise<ComparisonScene> {
+export async function createComparison(canvas: HTMLCanvasElement, onSample: SampleListener, playback: ComparisonPlaybackActions): Promise<ComparisonScene> {
     const havok = await HavokPhysics({ locateFile: () => havokWasm });
     const engine = new Engine(canvas, true, { adaptToDeviceRatio: false });
     const scene = new Scene(engine);
@@ -92,7 +94,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         remote.body.setLinearVelocity(Vector3.Zero());
         remote.body.setAngularVelocity(Vector3.Zero());
     };
+    const movement = new MovementSession(playback.pauseForMovement);
     const input = new ComparisonInput(action => {
+        const move = movementAction(action);
+        if (move) movement.request(move);
+        if (action === 'resume-media') playback.resume();
         if (action === 'recall-remote') recallRemote();
         if (action === 'exit-xr') {
             if (xr?.sessionManager.inXRSession) void xr.exitXRAsync().catch(() => input.report('Exit failed. Use headset system exit.'));
@@ -106,7 +112,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     });
     let disposed = false;
     const resize = () => engine.resize();
-    const visibility = () => clock.reset();
+    const visibility = () => {
+        clock.reset();
+        movement.cancel();
+        input.state.cancel();
+    };
     window.addEventListener('resize', resize);
     document.addEventListener('visibilitychange', visibility);
     resize();
@@ -117,6 +127,20 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             return;
         }
         const start = performance.now();
+        try {
+            const moved = movement.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
+                xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null,
+                xr?.sessionManager.inXRSession ? xr.sessionManager.currentFrame || undefined : undefined,
+                space => {
+                    if (xr) xr.sessionManager.referenceSpace = space;
+                }, root => {
+                    camera.position.set(...viewerWorldPosition(root, [0, 1.65, 0]));
+                    camera.rotation.set(0, root.yaw, 0);
+                });
+            if (moved) input.state.cancel();
+        } catch {
+            input.report('Movement failed. Check playback before retrying or exit XR.');
+        }
         input.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.currentFrame || undefined : undefined);
@@ -147,6 +171,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         async dispose() {
             if (disposed) return;
             disposed = true;
+            movement.dispose();
             unbindPointer();
             input.dispose();
             controls.dispose();
