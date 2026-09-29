@@ -8,6 +8,7 @@ export interface ComparisonSample {
     immersive: boolean;
     mediaStatus: string;
     inputStatus: string;
+    assetStatus: string;
 }
 
 export interface ComparisonScene {

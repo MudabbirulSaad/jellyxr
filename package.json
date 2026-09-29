@@ -11,6 +11,7 @@
     "@babel/preset-react": "7.29.7",
     "@babylonjs/core": "9.27.1",
     "@babylonjs/havok": "1.3.14",
+    "@babylonjs/loaders": "9.27.1",
     "@dimforge/rapier3d-compat": "0.20.0",
     "@eslint-community/eslint-plugin-eslint-comments": "4.7.2",
     "@eslint/js": "9.39.5",
@@ -163,6 +164,7 @@
     "Firefox ESR"
   ],
   "scripts": {
+    "assets:observatory": "node scripts/jellyxr/buildObservatoryAssets.ts",
     "start": "npm run serve",
     "serve": "webpack serve --config webpack.dev.js",
     "serve:xr-experiments": "cross-env JELLYXR_EXPERIMENTS=1 webpack serve --config webpack.dev.js",

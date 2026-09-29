@@ -185,6 +185,14 @@ export default tseslint.config(
         }
     },
 
+    // Offline Node 24 asset authoring is not shipped to inherited browser targets.
+    {
+        files: [ 'scripts/jellyxr/*.ts' ],
+        rules: {
+            'compat/compat': 'off'
+        }
+    },
+
     // Config files are commonjs by default
     {
         files: [ '**/*.{cjs,js}' ],
