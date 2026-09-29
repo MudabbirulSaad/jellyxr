@@ -65,3 +65,9 @@ Handle server unreachable, unsupported server version, unauthorized user, denied
 EXP-01/02 resolve private video-element access, layer/HLS interoperability, subtitle transfer and progress continuity. EXP-05 resolves separately served client networking. The exact supported server range is recorded only after the SDK minimum and test fixtures are identified.
 
 Sources: [S02](../references/glossary-sources.md#s02), [S05](../references/glossary-sources.md#s05), [S12](../references/glossary-sources.md#s12), [S13](../references/glossary-sources.md#s13).
+
+## M2 experimental presentation seam
+
+The [M2 evidence](../05-delivery/m2-experiments.md#borrowed-media-contract-increment) records a narrow getter added to the existing HTML video player. It exposes the active element for borrowed frame presentation only. The playback manager still owns play/pause/seek, queue, track negotiation and progress. Experimental leases invalidate on owner/source changes and dispose only their observers; compositor attachments dispose only their own layers.
+
+These helpers are contract-tested preparation. They are not yet wired to the renderer comparison, and no subtitle or actual-device transition pass follows from their unit tests. Do not use a renderer helper that changes the borrowed video's CORS, source, autoplay, mute, loop or lifecycle without a reviewed adapter and evidence.
