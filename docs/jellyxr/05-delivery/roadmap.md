@@ -9,7 +9,7 @@ This is the authoritative work sequence. Requirements remain in the [functional]
 | Milestone | Work | Demonstration / exit | Current state |
 | --- | --- | --- | --- |
 | M0 Planning baseline | W-01 | Linked BRDs, requirements, blueprints and this roadmap; documentation checks; planning branch integrated into `xr` | Complete; merge 84571b91b3 |
-| M1 Development and qualification readiness | W-02 preparation | Reproducible upstream build, test server/media inventory, desktop emulation procedure and identified Quest access; G1 decisions recorded | In progress: checks passed; desktop video start and Quest USB setup observed; owner reports Quest library access. Complete playback, emulator and remote-inspection evidence pending |
+| M1 Development and qualification readiness | W-02 preparation | Reproducible upstream build, test server/media inventory, desktop emulation procedure and identified Quest access; G1 decisions recorded | In progress: checks passed; desktop video start and Quest USB setup observed; owner reports Quest library access and ordinary playback. Detailed control/fixture, emulator and remote-inspection evidence pending |
 | M2 Prove the difficult media path | W-02 experiments | One film with subtitles, seeking, ordinary/XR transitions and real Quest measurements; G2 technology record | Not started |
 | M3 Connect, browse and watch in ordinary mode | W-03, W-04, W-05 | Existing account connects to its server; movie/episode discovery, negotiated playback, tracks and progress work | Not started |
 | M4 Complete the spatial journey | W-06 | Connect → authenticate → browse → inspect → enter cinema → watch → return, using controllers and a simple environment | Not started |
@@ -157,7 +157,7 @@ Use an evidence record containing environment, fixture, steps, expected/actual b
 
 ## Current M1 completion work
 
-Finish the pending steps in the [M1 evidence report](m1-readiness.md): complete playback/fixture inventory, separate emulator-profile verification, manual remote inspection and ordinary Quest playback. The build baseline, signed-in desktop access and authorised USB setup are recorded. Once G1 is recorded, the first M2 XR experiment is one correctly played and subtitled film with reliable entry/exit; the engine decision follows that evidence.
+Finish the pending steps in the [M1 evidence report](m1-readiness.md): detailed playback/fixture inventory, separate emulator-profile verification and manual remote inspection. The build baseline, signed-in desktop access, authorised USB setup and owner-reported ordinary Quest playback are recorded. Once G1 is recorded, the first M2 XR experiment is one correctly played and subtitled film with reliable entry/exit; the engine decision follows that evidence.
 
 ## Release and update operations
 

@@ -1,6 +1,6 @@
 # Test and validation strategy
 
-Status: M1 unit/build checks passed; signed-in desktop video start, Quest USB setup and owner-reported Quest library access recorded. No complete application/device acceptance scenario below has passed. Updated: 2026-09-29. See [M1 readiness evidence](m1-readiness.md).
+Status: M1 unit/build checks passed; signed-in desktop video start, Quest USB setup and owner-reported Quest library access/basic playback recorded. No complete application/device acceptance scenario below has passed. Updated: 2026-09-29. See [M1 readiness evidence](m1-readiness.md).
 
 ## Environments and fixtures
 

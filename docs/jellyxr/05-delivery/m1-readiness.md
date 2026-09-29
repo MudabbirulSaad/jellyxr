@@ -1,6 +1,6 @@
 # M1 readiness evidence
 
-Updated: 2026-09-29. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports the Quest library loaded. Complete playback checks, emulator setup and remote inspection remain pending. M1 and G1 are not closed.
+Updated: 2026-09-29. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports successful library access and ordinary playback on Quest 3. Detailed playback checks, emulator setup and remote inspection remain pending. M1 and G1 are not closed.
 
 This report records observed results for W-02 preparation. It is not a device support announcement. The milestone branch starts at xr commit 84571b91b3362a4aaeaac81e6d9cec77ce89e3c6; application source and locked dependencies remain those of the pinned Jellyfin Web baseline.
 
@@ -56,7 +56,8 @@ The updated package passed local link/anchor, requirement coverage, work-depende
 | Desktop video start and pause | Basic subset passed | F-01 rendered video; DOM media state reached 16.36 seconds, readyState 4, 3840 x 2160, then paused. This is not an audio-quality, HDR or sustained-performance result |
 | Desktop seek, subtitle rendering and resume | Incomplete | English audio and SUBRIP selected in title details. Synchronized subtitle rendering, seek and resume were not established by this run; player keyboard automation did not complete |
 | Quest library access | Owner-reported success | Owner replied that the library loaded in Quest Browser after both USB mappings were installed; the agent did not remotely inspect the page |
-| Quest title/playback/seek/subtitle/resume | Pending owner run | Instructions supplied for the ordinary Quest Browser player; no playback pass inferred from library access |
+| Quest ordinary playback | Owner-reported basic pass | Owner confirms video plays at localhost:8080 on Quest 3 and appears fine. Actual-device report, not an emulator result or direct agent observation; fixture, delivery method and elapsed viewing time were not supplied |
+| Quest seek/subtitle/resume | Detailed results not recorded | General playback feedback does not identify each control result; confirm these separately before closing their scenario portions |
 
 The in-app browser smoke check is an initial development observation. Its exact embedded Chromium version was not captured, so it does not qualify a named desktop browser configuration under NFR-010. Full AT-03/05/06/07/08/09/10 acceptance scenarios remain unpassed.
 
@@ -79,7 +80,7 @@ The automation inventory exposes a personal Brave profile and the Codex in-app b
 | Client and server port forwarding | Complete for this connection | Both reverse mappings listed; owner reports Quest library loads |
 | Quest OS/Browser inventory | Package/build identifiers recorded | About UI release labels remain to be confirmed; do not substitute Android 14 for a Horizon OS release number |
 | Remote inspection | Pending manual action | Desktop Chrome Inspect must open the Quest client; automated internal-page navigation was blocked |
-| Ordinary Quest browsing/playback | Library reported; playback pending | Record title/playback observations and media properties separately |
+| Ordinary Quest browsing/playback | Library and basic playback reported successful | Detailed control results and media properties remain to be recorded |
 
 ## Fixture inventory
 
@@ -104,7 +105,7 @@ During desktop navigation, a browser-control action unintentionally toggled the 
 
 1. Complete the desktop ordinary playback, seek, subtitle and resume checks using a newly established resume point; finish the media/delivery inventory without exporting personal titles/artwork.
 2. Complete the separate emulator-profile installation and record version/profile evidence.
-3. Keep the authorised Quest 3 connection and [two-port development workflow](development-testing-workflow.md#quest-3-usb-development-setup) active. Confirm About versions, manually open remote inspection, and finish the ordinary title/playback/seek/subtitle/resume journey on the headset.
+3. Keep the authorised Quest 3 connection and [two-port development workflow](development-testing-workflow.md#quest-3-usb-development-setup) active. Basic playback is owner-confirmed; record seek, subtitle and resume results plus anonymous fixture properties. Confirm About versions and manually open remote inspection.
 4. Review missing fixture cases and record the resulting G1 disposition. M2 immersive experiments and measurements remain separate work.
 
 The visual selection and target decisions are settled; environment and media evidence is still outstanding. Keep the M1 pull request in draft while required readiness checks are missing. Future evidence must update this report, roadmap and risks together rather than changing pending cells to passed by assumption.
