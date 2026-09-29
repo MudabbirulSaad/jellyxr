@@ -1,3 +1,5 @@
+import chairCollision from '../assets/observatory/observatory-chair-collision.json';
+
 export type Point3 = readonly [number, number, number];
 
 export interface FixtureBox {
@@ -11,16 +13,11 @@ export interface FixtureBox {
 export const FIXTURE_REMOTE: Point3 = [0.35, 1, -1.2];
 export const REMOTE_SIZE: Point3 = [0.08, 0.035, 0.19];
 
-const seat = (id: string, x: number, z: number): FixtureBox[] => [
-    {
-        id: `${id}-base`, size: [0.72, 0.45, 0.72], position: [x, 0.225, z],
-        material: 'surface', collision: 'static'
-    },
-    {
-        id: `${id}-back`, size: [0.72, 0.9, 0.12], position: [x, 0.9, z + 0.3],
-        material: 'surface', collision: 'static'
-    }
-];
+const seat = (id: string, x: number, z: number): FixtureBox[] => chairCollision.boxes.map(box => ({
+    id: `${id}-${box.id}`, size: box.size as unknown as Point3,
+    position: [x + box.position[0], box.position[1], z + box.position[2]],
+    material: 'surface', collision: 'static'
+}));
 
 /** Original comparison geometry, in metres: right-handed, +Y up, forward -Z. */
 export const ROOM_FIXTURE: readonly FixtureBox[] = [

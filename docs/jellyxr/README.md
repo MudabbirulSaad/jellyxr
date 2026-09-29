@@ -31,6 +31,7 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 | Architecture | [System blueprint](04-architecture/system-blueprint.md) | Logical proposal; engine deferred |
 | Architecture | [Jellyfin integration contract](04-architecture/jellyfin-integration.md) | Source-informed; integration tests pending |
 | Architecture | [Deployment and security](04-architecture/deployment-security.md) | Reference topology; device validation pending |
+| Architecture | [Observatory asset pipeline](04-architecture/asset-pipeline.md) | Original GLB variants and collision resources; production material/device qualification pending |
 | Delivery | [Active implementation goal](05-delivery/implementation-goal.md) | Active through M6; device gates remain open |
 | Delivery | [Roadmap and work breakdown](05-delivery/roadmap.md) | M1 merged; closure and M2 preparation active |
 | Delivery | [Test and validation strategy](05-delivery/test-strategy.md) | Unit/build baseline passed; application acceptance scenarios remain incomplete |

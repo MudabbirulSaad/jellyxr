@@ -1,0 +1,50 @@
+{
+  "id": "observatory-chair",
+  "status": "M2 representative asset; not final M5 qualification",
+  "author": "JellyXR project; procedural geometry authored with Codex assistance",
+  "licence": "GPL-2.0-or-later",
+  "licenceFile": "../../../../../../LICENSE",
+  "source": "../../../../../../scripts/jellyxr/buildObservatoryAssets.ts",
+  "externalAssets": [],
+  "authoringDependency": "three 0.186.0 (MIT)",
+  "coordinates": "right-handed, +Y up, forward -Z",
+  "units": "metres",
+  "materialCount": 5,
+  "textureCount": 0,
+  "collision": "observatory-chair-collision.json",
+  "variants": [
+    {
+      "variant": "detailed",
+      "file": "observatory-chair-detailed.glb",
+      "bytes": 1271456,
+      "triangles": 13192,
+      "primitives": 5,
+      "dimensionsMetres": [
+        0.8960000276565552,
+        1.352553843855858,
+        0.7799999713897705
+      ],
+      "sha256": "e8946dac9ee718ca6e20184e28b931e8819a9dbbd0899ec7e7ac9d2add26b962"
+    },
+    {
+      "variant": "reduced",
+      "file": "observatory-chair-reduced.glb",
+      "bytes": 245384,
+      "triangles": 2504,
+      "primitives": 5,
+      "dimensionsMetres": [
+        0.8960000276565552,
+        1.352553843855858,
+        0.7799999713897705
+      ],
+      "sha256": "f2d025bc31606c90219fc0e16711ada59cfc2fccff1fe48ba3abb79b4a2c4b83"
+    }
+  ],
+  "outstanding": [
+    "Authored normal/roughness textures",
+    "Texture compression",
+    "Baked lighting/reflections",
+    "Quest visual/comfort review",
+    "Measured loading and draw-call budgets"
+  ]
+}

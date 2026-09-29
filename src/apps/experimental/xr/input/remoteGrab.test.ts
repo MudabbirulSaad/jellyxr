@@ -12,7 +12,8 @@ describe('bounded physical remote fixture', () => {
         const wall = constrainRemote([0, 1, 0], [20, 1, 0], half);
         expect(wall[0]).toBeCloseTo(5.859);
         const seat = constrainRemote([1.25, 0.3, 0], [1.25, 0.3, 3], half);
-        expect(seat[2]).toBeCloseTo(1.044);
+        // Authored chair proxy starts at z=1.08; the remote half-depth and skin stop it earlier.
+        expect(seat[2]).toBeCloseTo(0.984);
         const floor = constrainRemote([0, 1, 0], [0, -1, 0], half);
         expect(floor[1]).toBeCloseTo(0.0185);
     });

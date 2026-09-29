@@ -196,6 +196,7 @@ const config = {
                 include: [
                     path.resolve(__dirname, 'node_modules/@babylonjs/core'),
                     path.resolve(__dirname, 'node_modules/@babylonjs/havok'),
+                    path.resolve(__dirname, 'node_modules/@babylonjs/loaders'),
                     path.resolve(__dirname, 'node_modules/@dimforge/rapier3d-compat'),
                     path.resolve(__dirname, 'node_modules/three'),
                     path.resolve(__dirname, 'node_modules/@jellyfin/libass-wasm'),
@@ -359,8 +360,8 @@ const config = {
                 ]
             },
             {
-                test: /\.mp4$/i,
-                include: path.resolve(__dirname, 'src/apps/experimental/xr/fixtures'),
+                test: /\.(mp4|glb)$/i,
+                include: path.resolve(__dirname, 'src/apps/experimental/xr'),
                 type: 'asset/resource'
             },
             {

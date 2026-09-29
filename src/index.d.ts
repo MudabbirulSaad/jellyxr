@@ -8,6 +8,11 @@ declare module '*.mp4' {
     export default value;
 }
 
+declare module '*.glb' {
+    const value: string;
+    export default value;
+}
+
 declare module '*.png' {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const value: any;

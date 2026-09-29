@@ -215,3 +215,20 @@ Both texture candidates draw the same opaque Noto Sans caption panel at a stable
 UI/UX Pro Max's verified contrast guidance informed opaque backing and light text. Its mobile pixel minima were not treated as XR angular-size evidence. Quest readability, timing against audio, fonts/languages, server track changes, subtitle offsets, rich formats, user placement/size preferences and native-layer composition all remain open. Private dialogue and media screenshots were inspected transiently, not saved in the repository or diagnostics.
 
 Sources inspected 2026-09-30: the inherited HTML player; [MDN active cues](https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/activeCues) and [cue fragments](https://developer.mozilla.org/en-US/docs/Web/API/VTTCue/getCueAsHTML). Original fixture provenance is in the [fixture inventory](../../../src/apps/experimental/xr/fixtures/README.md#text-subtitle-fixture).
+
+## Original GLB asset increment — 2026-09-30
+
+Source revision: e115770cf5, based on xr f0e37f7f75 (PR #11's subtitle comparison). The [asset pipeline](../04-architecture/asset-pipeline.md) records the reproducible source, licence, variants and outstanding production work. This advances EXP-03/04 and FR-015/031 without selecting a renderer or closing a performance gate.
+
+Both candidates now load the same original chair GLBs into the existing room. Detailed/reduced choices preserve overall dimensions and materials; two separate collision boxes replace the old seat proxy dimensions. Geometry outside collision bounds would fail the asset test. The swept-remote test was adjusted to the deliberately wider new seat footprint; the collision algorithm did not change.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Reproducibility and provenance | Repeated generation produced identical detailed/reduced GLB hashes. Source recipe and manifest are committed; no external model/texture/artwork was imported |
+| File validity | Khronos Validator 2.0.0-dev.3.10: zero errors/warnings for both files; five informational unused-UV notices each |
+| Real loader tests | Three GLTFLoader and Babylon NullEngine/glTF loader parse both assets. Hashes, byte counts, triangles, materials, dimensions and collision enclosure pass |
+| Browser appearance | Detailed chairs visibly render in Babylon and Three. The reduced Three variant visibly retains the shape with coarser bevels. This is not a Quest visual/comfort pass |
+| Comparison limitations discovered | Babylon currently shows control backs that Three culls; room lighting also differs. Normalize these before comparative visual scoring. No ranking is inferred from uncontrolled loading labels |
+| Checks | Application and authoring TypeScript, full lint (98 inherited warnings), styles and 230 tests pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992. Chair GLBs and checked model-control markers are absent from ordinary output |
+
+The first experiment ES5 check failed on the new Babylon loader chunk. Adding that exact package to the existing Babel transpilation list resolved it; no application compatibility check or XR source directory was exempted. The separate Node authoring script has its own typecheck and a Node-only lint compatibility setting. Texture detail/compression, baked lighting/reflections, room-scale asset loading and actual-device budgets remain pending.
