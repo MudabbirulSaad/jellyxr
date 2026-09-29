@@ -22,19 +22,19 @@ The first release must feel complete along this journey before expanding environ
 
 Use believable proportions, deliberate material response, stable lighting, consistent depth and restrained movement. Movie artwork provides much of the changing colour. The environment supports the film, and controls remain readable against both bright and dark frames.
 
-Explore Cinema Observatory, Orbital Archive and Living Light in the [visual direction document](../03-experience/visual-direction.md). None is selected. The product owner will choose the direction after reviewing the same browsing, detail and playback states for each.
+Explore Cinema Observatory, Orbital Archive and Living Light in the [visual direction document](../03-experience/visual-direction.md). Cinema Observatory is selected under D-12; the other two are retained as comparison references only.
 
 Dynamic screen lighting, passthrough occlusion, reflections and more complex materials are candidates for measured experiments. The first environment must remain visually coherent when those optional effects are disabled.
 
 ## Comfort and interaction
 
-Controllers are the first-release input baseline. Screen position, size, distance and tilt must be recoverable through visible controls, including a one-action recenter. Avoid forced virtual camera movement. Large targets and explicit activation are more important than dense controls.
+Controllers and hands are both required for the first release, including near interaction, pointing, selection, grabbing and movement. Screen position, size, distance and tilt must be recoverable through visible controls, including a one-action recenter. Avoid forced virtual camera movement. Large targets and explicit activation are more important than dense controls.
 
-Hand interaction follows a separate feasibility and usability gate. Looking at an item alone must not start playback. Reduced-motion behaviour must preserve readable final states.
+Optional room exploration uses physical movement, deliberate valid-floor teleportation and 30-degree snap turning; every core task remains seated-accessible. A change of viewing position pauses playback until explicit Resume. Constrained physics applies to the remote, selected artwork and panels; architecture and screen stay stable. Both input methods must pass the feasibility and usability gates. Looking at an item alone must not start playback. Reduced-motion behaviour must preserve readable final states.
 
 ## Expansion boundaries
 
-Hand input, passthrough, stereo/180/360 media and reactive lighting are P1 candidates. Shared rooms, offline downloads and Vision Pro qualification are P2. Existing ordinary-mode features retain their own parity obligations.
+Passthrough, stereo/180/360 media and reactive lighting are P1 candidates. Shared rooms, offline downloads and Vision Pro qualification are P2. Existing ordinary-mode features retain their own parity obligations.
 
 The browser mediates access to Quest capabilities. Device support, display quality and sustained performance must be measured on identified hardware. The plan does not promise native API parity, HDR, unrestricted sensor access or a particular maximum video resolution.
 

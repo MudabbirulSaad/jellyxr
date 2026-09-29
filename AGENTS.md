@@ -2,7 +2,7 @@
 
 ## Current phase
 
-The authorised phase is M1 development and Quest 3 readiness: reproduce the inherited build, connect the existing test configuration, prepare development-only emulation and headset debugging, define Cinema Observatory, and add checks for xr. The product owner is MudabbirulSaad. Renderer selection and immersive playback experiments belong to M2; M1 does not authorise replacing the inherited stack or media player.
+The authorised phase is implementation through M6 under the [active execution goal](docs/jellyxr/05-delivery/implementation-goal.md). M1 is merged; outstanding readiness evidence stays open. Update requirements before implementing the explorable Cinema Observatory with mandatory controllers and hands. Compare renderer/physics candidates at M2/G2 before production integration. The product owner is MudabbirulSaad. Preserve the inherited stack, accounts and playback owner.
 
 Start with [the documentation index](docs/jellyxr/README.md), then the [decision register](docs/jellyxr/06-decisions/decision-register.md) and requirements relevant to the task.
 
@@ -20,6 +20,8 @@ Start with [the documentation index](docs/jellyxr/README.md), then the [decision
 - Use UI/UX Pro Max for applicable guidance. Cinema Observatory is the selected direction; new copy must describe real actions and states. Do not add filler text, fabricated statistics, invented testimonials or decorative controls without behaviour.
 - Keep credentials, server tokens, private endpoints and personal media out of committed examples and diagnostics.
 - Preserve upstream source layout and keep future XR integration changes narrow enough to review during upstream updates.
+- Use focused milestone branches and PRs targeting xr. Run required local checks and inspect their results; the owner now authorises merging without waiting for GitHub Actions. Keep pending device evidence and release gates open. Continue independent preparation while user/device evidence is pending, but leave dependent gates open.
+- The goal ends at qualified M6 packaging. Do not publish a public release or deploy production automatically. No benchmark, compatibility or hand-input pass may be inferred from emulation.
 
 ## Validation
 

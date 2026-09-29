@@ -45,13 +45,21 @@ Error wording names the action the user can take. Preserve title/library state o
 
 ## Interaction contract
 
-Controller pointing highlights a target; explicit activation selects it. Back unwinds the current view before leaving XR. Recenter is always reachable from the control surface and ordinary recovery UI. Screen manipulation has explicit controls in addition to any later drag gesture.
+Controller rays/near input and hand pointing/pinch highlight targets; explicit activation selects them. Scene geometry determines hit testing and occlusion. Switching input methods preserves logical focus without duplicate activation, and loss cancels pending activation or grabbing. Back unwinds the current view before leaving XR. Recenter is always reachable from the control surface and ordinary recovery UI. Screen manipulation has explicit controls in addition to any later drag gesture.
 
 The control surface appears on explicit input and hides after inactivity only when no menu/seek operation is active. Exact hide timing is a G1 usability setting. Repeated activation while a command is pending must not create duplicate sessions.
 
-The user can browse in XR and start a film, or begin ordinary playback and enter XR. Both routes share title identity, chosen tracks and playback ownership. The proposed interruption policy pauses on focus loss and requires explicit resume after return; it must be validated against browser events.
+The user can browse in XR and start a film, or begin ordinary playback and enter XR. Both routes share title identity, chosen tracks and playback ownership. The accepted interruption policy pauses on focus loss and requires explicit resume after return; it must be validated against browser events.
 
-## Accessibility and comfort
+## Movement and object recovery
+
+The library and seating area occupy one connected room. World-space shelves and controls have consistent scale and stable anchors; leaning changes their perspective and approaching changes apparent scale. A summoned panel settles in the forward workspace. It does not remain glued to the viewer's head. Search uses a scene-rendered keyboard with labelled Back, Cancel and Clear actions.
+
+Physical tracking remains runtime-owned. A deliberate teleport gesture/action previews a valid destination before confirmation; unavailable, obstructed and out-of-room locations are rejected visibly. Snap turn moves by 30 degrees only on explicit input. Hands and controllers both expose movement and Return to seat, including button alternatives. Changing viewing position pauses an active film and shows “Resume”; closing the movement controls alone never resumes it.
+
+The remote, selected artwork and panels may be grabbed within safe constraints. Losing input cancels the grab without launching an object. “Recall remote” restores the remote to a reachable anchor; “Reset panel” restores panel placement. Screen adjustments always have labelled buttons. Neither a misplaced object nor the viewer's room position may hide Back, Recenter or Reset permanently. Do not require a person to walk across their physical room to reach a library or control.
+
+## Accessible presentation
 
 Provide readable text with a stable backing, visible focus and labels. Avoid text sizes defined only in CSS pixels for the headset; evaluate apparent angular size at supported viewing distances. Test subtitle readability on moving bright frames.
 
@@ -59,6 +67,6 @@ Respect reduced motion in both browser and XR settings. Make essential paths pos
 
 ## Review protocol
 
-Compare each visual direction using the same home, title and paused-film tasks. Include a large-library case, a long title, a missing poster, subtitles, a restricted user and network interruption. Product review chooses a direction at G1; headset interaction review follows at G2.
+Review the selected Cinema Observatory using the same home, title and paused-film tasks. Include a large-library case, a long title, a missing poster, subtitles, a restricted user and network interruption. D-12 records the visual choice; headset interaction review follows at G2.
 
-Requirements: [FR-005 through FR-022](../02-requirements/functional-requirements.md), [NFR-003](../02-requirements/nonfunctional-requirements.md#nfr-003). Behaviour ownership: [system blueprint](../04-architecture/system-blueprint.md).
+Requirements: [FR-005 through FR-023 and FR-030/031](../02-requirements/functional-requirements.md), [NFR-003](../02-requirements/nonfunctional-requirements.md#nfr-003). Behaviour ownership: [system blueprint](../04-architecture/system-blueprint.md).

@@ -11,7 +11,7 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 3. Follow the experience and system blueprints for proposed behaviour.
 4. Review risks and technology experiments before selecting additional technologies.
 5. Use traceability to connect every first-release requirement to implementation work and validation.
-6. Follow the [implementation roadmap](05-delivery/roadmap.md), [PC/Quest testing workflow](05-delivery/development-testing-workflow.md) and [M1 evidence](05-delivery/m1-readiness.md). M1 is authorised; Cinema Observatory, Quest 3 and initial targets are confirmed. Remaining G1 environment/fixture evidence and all G2 technology choices are open.
+6. Follow the [implementation roadmap](05-delivery/roadmap.md), [PC/Quest testing workflow](05-delivery/development-testing-workflow.md) and [M1 evidence](05-delivery/m1-readiness.md). The [M6 execution goal](05-delivery/implementation-goal.md) is active; Cinema Observatory, Quest 3, hands/controllers, exploration and initial targets are confirmed. Remaining G1 environment/fixture evidence and all G2 technology choices are open.
 
 ## Document register
 
@@ -20,7 +20,7 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 | Business | [Product BRD](01-business/product-brd.md) | Intent and initial targets confirmed; measurement pending |
 | Business | [Jellyfin foundation BRD](01-business/jellyfin-foundation-brd.md) | Foundation confirmed |
 | Business | [XR experience BRD](01-business/xr-experience-brd.md) | Scope confirmed; Cinema Observatory selected |
-| Requirements | [Functional requirements](02-requirements/functional-requirements.md) | Proposed acceptance baseline |
+| Requirements | [Functional requirements](02-requirements/functional-requirements.md) | Accepted v1 scope; implementation pending |
 | Requirements | [Nonfunctional requirements](02-requirements/nonfunctional-requirements.md) | Initial targets accepted; measurement pending |
 | Requirements | [Feature parity matrix](02-requirements/feature-parity.md) | Source-informed; device validation pending |
 | Requirements | [Traceability](02-requirements/traceability.md) | Complete planning mapping |
@@ -31,7 +31,8 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 | Architecture | [System blueprint](04-architecture/system-blueprint.md) | Logical proposal; engine deferred |
 | Architecture | [Jellyfin integration contract](04-architecture/jellyfin-integration.md) | Source-informed; integration tests pending |
 | Architecture | [Deployment and security](04-architecture/deployment-security.md) | Reference topology; device validation pending |
-| Delivery | [Roadmap and work breakdown](05-delivery/roadmap.md) | M0 complete; M1 readiness in progress; immersive implementation not started |
+| Delivery | [Active implementation goal](05-delivery/implementation-goal.md) | Active through M6; device gates remain open |
+| Delivery | [Roadmap and work breakdown](05-delivery/roadmap.md) | M1 merged; closure and M2 preparation active |
 | Delivery | [Test and validation strategy](05-delivery/test-strategy.md) | Unit/build baseline passed; application acceptance scenarios remain incomplete |
 | Delivery | [PC and Quest development testing](05-delivery/development-testing-workflow.md) | Build, signed-in desktop and Quest USB setup exercised; complete playback, emulator and remote inspection pending |
 | Delivery | [M1 readiness evidence](05-delivery/m1-readiness.md) | Actual build results, fixture inventory and outstanding actions |

@@ -39,3 +39,11 @@ Re-run link/anchor and coverage checks whenever identifiers or filenames change.
 At M0, no application build, runtime regression, Jellyfin connection, headset usability test or performance benchmark had been executed. The [test strategy](test-strategy.md) and M1 report now track subsequent evidence. Diagram syntax validation does not establish runtime architecture feasibility or in-headset visual quality.
 
 At the M0 checkpoint, Quest hardware, server range, final visual direction and additional XR technologies were scheduled decisions. M1 resolves some of those choices in the decision register; this historical record does not certify a release.
+
+## M6 scope update validation
+
+Date: 2026-09-29. Branch: milestone/m1-closure, based on xr f82e5c10c2. This slice updates approved scope and actual readiness observations; it does not close G1 or select an XR engine.
+
+The package contains 25 documents plus root README/AGENTS, 31 functional and ten nonfunctional definitions. All 25 P0 functional and ten P0 nonfunctional requirements map to work and acceptance scenarios; six extension requirements remain separate. All six business goals, 11 work packages and 17 dependency edges passed coverage/cycle checks. All six Mermaid diagrams parsed with Mermaid 11.12.0. Local Markdown links/anchors, table widths, fences, unique IDs and whitespace passed. The scenario set now contains 27 definitions, with hands, movement and physics required for v1.
+
+Review checked the approved renderer-comparison rule, mandatory hands, scene geometry, seated access, physics recovery, asset provenance, real copy and autonomous merge policy. Application source/dependencies and installed skill content remain unchanged in this slice, so inherited application tests were not repeated for prose. USB reconnect/forwarding and owner-reported emulator readiness are recorded without inferring detailed playback or device passes.

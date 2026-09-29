@@ -23,11 +23,11 @@ These are accepted initial success criteria under D-10, not market statistics or
 
 ## Value and scope
 
-The first release provides ordinary browser access, spatial movie/series discovery and immersive playback. It combines dependable Jellyfin behaviour with adjustable screens, readable subtitles, controller interaction and one high-quality cinema.
+The first release provides ordinary browser access, spatial movie/series discovery and immersive playback. It combines dependable Jellyfin behaviour with adjustable screens, readable subtitles, controller and hand interaction, recoverable physical objects and one explorable Cinema Observatory. The connected library and seating areas use genuine world-space geometry while every core task remains available seated.
 
 Self-hosting is the reference operating model. The client may be served alongside Jellyfin or separately with a reachable configured endpoint. There is no new JellyXR subscription, account service, replacement media catalogue or server transcoder in this scope.
 
-The long-term product may add hand interaction, passthrough, stereo/immersive media, richer environments, shared viewing and Vision Pro. Downloads and browser storage are research items. Existing music, Live TV and other client capabilities remain represented in ordinary-mode parity rather than being silently dropped.
+The long-term product may add passthrough, stereo/immersive media, richer environments, shared viewing and Vision Pro. Downloads and browser storage are research items. Existing music, Live TV and other client capabilities remain represented in ordinary-mode parity rather than being silently dropped.
 
 ## Constraints and tradeoffs
 
