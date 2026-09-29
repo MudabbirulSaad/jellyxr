@@ -402,3 +402,20 @@ An aimed second controller now takes priority over an idle first controller. Nea
 | Local checks | TypeScript, full lint (98 inherited warnings), styles and 285 tests in 39 files pass. Ordinary production/ES5 passes 984 files; experiment production/ES5 passes 994. Selected input markers occur only in experimental chunks. No dependency version or compatibility exclusion changed |
 
 Before G2, run both candidates on Quest with each hand/controller and while switching inputs. Check the endpoint against visible geometry in both eyes, put a chair/remote between the source or head and a control, move an occluder during a held press, interrupt tracking, and recover while seated. Measure hit-query cost with the detailed model, moving-head sightline accuracy, marker visibility over bright video and the accepted input/frame budgets. The current query uses scene triangles and refreshes matrices; no acceleration or sustained cost is claimed. UI/UX Pro Max's verified Focus States / Focus Not Obscured guidance supports visible feedback and keeping focus distinct from activation; XR sizing and occlusion reasoning remain separately qualified.
+
+## Subtitle creation cancellation increment — 2026-09-30
+
+Source revision: d2e9d32ef3, based on xr d117722d99 (PR #21). This advances FR-011/018, AT-10/14 and EXP-02 through the inherited player. It does not replace a renderer or change dependency versions.
+
+The player now invalidates canvas-renderer requests before destruction. ASS import, configuration and fallback-font continuations check request generation and playback-options identity. PGS/VobSub imports, callbacks and queued resizing check the same boundary, with instance checks on resize. Load completion/failure settles the request's own token, so a stale callback cannot finish a replacement's loading state. ASS promise failures are contained; an active error reaches the player owner, and cancellation suppresses obsolete or already queued errors.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Reproduction | Four tests against the actual inherited player methods failed before the change: cancelled PGS/VobSub imports still constructed an instance, and old loaded callbacks resized a replacement |
+| Guarded lifecycle | Ten tests now pass with mocked renderer/network/timing boundaries. They cover both bitmap codecs, replacement load tokens, scheduled resize, source identity changes, ASS cancellation at import/configuration/font stages, stale/current errors, rejection and a queued error cancelled before dispatch |
+| Ownership | Tests exercise existing JavaScript lifecycle methods through a typed test boundary; production visibility is unchanged. The current ASS error is reported against the HTML player, correcting the previous callback `this` ambiguity |
+| Local checks | TypeScript, full lint (98 inherited warnings), styles and 295 tests in 40 files pass. Ordinary production/ES5 passes 984 files and experiment production/ES5 passes 994. Selected test-only labels are absent from both builds; no compatibility exclusion changed |
+
+No authenticated ASS/bitmap delivery or new browser/headset playback result was obtained in this slice. Mocked lifecycle tests do not establish parser, GPU, font, synchronization or device support. The technical ASS/PGS fixtures use separate renderer construction and cannot stand in for this player regression.
+
+Installed libbitsub 1.11.0 source inspection found a separate concern: `init()` awaits WASM and then creates a canvas/loads subtitles without an intervening disposed check, while GPU setup has additional asynchronous continuations. This patch prevents a cancelled import from constructing a renderer; it does not claim to stop work already running inside one. Reproduce and resolve that resource lifecycle before accepting rapid close/reopen or track switching. Plain-text/custom-DOM fetch continuations and secondary-track interactions also need separate request-identity qualification. The prior PGS replacement blank observation remains unresolved; no causal link to the newly reproduced player bugs is asserted.
