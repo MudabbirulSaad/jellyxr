@@ -103,7 +103,7 @@ Sources reviewed: installed Babylon 9.27.1 and Three 0.186.0 implementation; [Me
 
 ## Spatial input increment — 2026-09-30
 
-Source revision: 1a23681e9f, based on xr f9323ff789.
+Source revision: 1a23681e9f, based on xr f9323ff789; merged in PR #6 at xr d5d590d571.
 
 Both candidates render the same four opaque, labelled controls as world-space planes: Select fixture, Reset count, Recall remote and Exit XR. Their visible dimensions and analytic ray/near hit bounds come from one fixture. Buttons sit at a fixed room anchor and do not follow the head. Target dimensions, font size, reach and depth still require headset validation. These are technical controls, not the production library or playback tray.
 
@@ -123,3 +123,24 @@ Desktop controls use the same target geometry. Canvas keyboard access supports a
 The normal client remains unchanged. This prepares FR-021/023 and EXP-04; it does not close AT-17/26/27 or G2. Actual hands/controllers, occlusion beyond this unobstructed fixture, seated/reclining reach, input latency and physical movement remain pending.
 
 Primary references: [WebXR primary-action events](https://immersive-web.github.io/webxr/#events), [Meta hand input](https://developers.meta.com/horizon/documentation/web/webxr-hands/), accessed 2026-09-30. Source documentation describes available APIs; only the observations above are claimed as tested.
+
+## Deliberate movement increment — 2026-09-30
+
+Source revision: 82a5e40afa, based on xr d5d590d571. Implements part of FR-030 / EXP-04; AT-26 remains open.
+
+Both candidates now expose Turn left 30°, Turn right 30°, Library position, Return to seat and Resume video in addition to the four earlier controls. Identical controls are anchored at the seat and library destinations. This duplication supports the fixed-destination experiment; summoned controls and recovery after arbitrary orientation remain unfinished.
+
+Teleporting moves the viewer's floor projection to a validated destination while preserving tracked height and yaw. Snap turning rotates around the tracked viewer's position, avoiding lateral head translation. The native path offsets the reference space instead of moving the room. Commands are consumed once in a valid animation frame and discarded on session/visibility or tracking loss, so restoring tracking cannot execute an old teleport. There is no continuous movement, camera bob or automatic travel.
+
+Movement first pauses the attached media owner. The labelled fixture uses its own video; a borrowed Jellyfin surface uses the existing playback manager and checks pause before moving. Resume is explicit. This is a transport command through the existing owner, not a second progress reporter. Actual Jellyfin command delivery remains unverified.
+
+| Check | Observed result / limit |
+| --- | --- |
+| Desktop Babylon and Three | Keyboard actions visibly turn the room perspective, move to the library and return to the seat |
+| Playback safety | The fixture reports paused after movement and playing after explicit Resume in both candidates; inspected the visible source video's paused state |
+| Unit checks | Eight new cases cover retained height/yaw, obstacle/boundary rejection, exact snap angle with no head-position drift, inverse native transform, pause-before-move, pause failure and discarded stale commands |
+| Local checks | TypeScript, full lint (98 inherited warnings, no errors), styles and 208 tests in 21 files pass; ordinary build/ES5 passes 982 files and comparison build/ES5 passes 990 files with inherited exclusions only |
+
+No headset movement is claimed as tested. Native reference-space offsets/reset events, media-layer alignment through movement, arbitrary valid-floor selection, all-angle recovery, tracked-space boundaries, hands/controllers and comfort remain G2 work. PC previews test the desktop camera adapter, not the XR compositor. The additional XRRigidTransform compatibility suppression is limited to a feature-guarded call in the optional experiment; ordinary browser requirements are unchanged.
+
+Full local lint initially scanned the generated comparison bundles. The generated `.jellyxr-experiments` directory is now excluded alongside `dist`; all experiment source remains linted. The corrected full run passed. Documentation checks found 371 valid relative links and no requirement/traceability errors.
