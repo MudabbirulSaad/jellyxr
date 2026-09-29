@@ -16,6 +16,7 @@ export interface ComparisonScene {
     enterXR(): Promise<void>;
     exitXR(): Promise<void>;
     recallRemote(): void;
+    summonControls(): void;
     setVideo(surface: BorrowedVideoSurface | null, mode: VideoPresentationMode): void;
     dispose(): Promise<void>;
 }

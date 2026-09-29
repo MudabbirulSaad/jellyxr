@@ -266,3 +266,21 @@ A native reference-space reset cancels stale actions, pauses and closes the imme
 | Local checks | TypeScript, full lint (98 inherited warnings), styles and 239 tests in 29 files pass. Ordinary production/ES5 passes 982 files and experiment production/ES5 passes 992 |
 
 Actual Quest system overlays, headset removal, native resets and session exit remain untested. The ordinary-page hide path is covered by unit events, not a claimed browser visibility test. Full recovery controls after arbitrary turns, floor selection and seamless tracking-origin compensation remain in EXP-04/G2. Platform references reviewed 2026-09-30: [reference-space reset](https://developer.mozilla.org/en-US/docs/Web/API/XRReferenceSpace/reset_event), [reset transforms](https://developer.mozilla.org/en-US/docs/Web/API/XRReferenceSpaceEvent/transform) and [XR visibility](https://developer.mozilla.org/en-US/docs/Web/API/XRSession/visibilityState).
+
+
+## Stable control recall increment — 2026-09-30
+
+Source revision: 395b24a42b, based on xr 7d73026268 (PR #14's interruption recovery). This advances FR-014/018/030 and AT-17/26 without closing Quest input or comfort qualification.
+
+A single control bank replaces the duplicated fixed banks. Completed empty-space trigger/pinch or desktop click requests a fresh, level placement in front of the viewer; Home and Bring controls here provide alternatives. A nearby hand grab retains priority. The bank remains world-anchored after placement, and deliberate movement recalls it. Rendered geometry and hit regions use the same transform. A bounded collision/view check offers only Return to seat and Exit XR where the full bank cannot fit; hidden actions leave both hit testing and keyboard navigation. Missing or unsuitable poses consume the request without applying a stale transform later.
+
+The browser review caught the initial compact pair falling below the forward view near the rear wall. Moving it around eye level and checking complete rectangles against the desktop preview bounds corrected that case. This geometric check does not establish headset convergence, reach or readability.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Placement and hit tests | Twelve snap orientations at both fixture destinations pass collision/view bounds; front, back and near hits agree with rotated geometry. Invalid/missing poses and cancelled requests retain the previous anchor |
+| Activation and focus | Seven new cases cover explicit recall, stable anchors, keyboard focus/visible-action navigation and synthetic controller/hand event sequences with tracking loss. They do not represent real device input |
+| PC browser | Both candidates complete six snap turns, library-position movement, compact recovery display and return to the full bank. Three's browser button and Home alternative were also exercised. Canvas pointer delivery through the automation surface remains unverified; pointer behaviour has unit evidence only |
+| Local checks | TypeScript, full lint (98 inherited warnings), styles and all 246 tests in 30 files pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992 |
+
+UI/UX Pro Max's focus and dragging-alternative guidance informed retained focus, button alternatives and explicit recovery copy. Actual Quest trigger/pinch recall, input switching, near convergence, occlusion, arbitrary physical positions and comfort remain open. No private media was used. Floor destination selection and seamless native-origin recovery remain separate experiment work.

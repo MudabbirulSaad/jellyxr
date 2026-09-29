@@ -94,7 +94,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             else input.report('No immersive session is active.');
         }
     }, physicalRemote?.grab);
-    const controls = createThreeControls(scene, input.state);
+    const controls = createThreeControls(scene, input.state, input.layout);
     const raycaster = new Raycaster();
     const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
         raycaster.setFromCamera(new Vector2(x * 2 - 1, 1 - y * 2), camera);
@@ -146,11 +146,14 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
                     camera.position.set(...viewerWorldPosition(root, [0, 1.65, 0]));
                     camera.rotation.set(0, root.yaw, 0);
                 });
-            if (moved) input.cancel();
+            if (moved) input.summonControls();
         } catch {
             input.report('Movement failed. Check playback before retrying or exit XR.');
         }
-        input.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), frame);
+        input.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), frame, {
+            position: [camera.position.x, camera.position.y, camera.position.z],
+            forward: [-Math.sin(camera.rotation.y), 0, -Math.cos(camera.rotation.y)]
+        });
         controls.update();
         video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
         if (recovery.isSuspended()) {
@@ -197,6 +200,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             await renderer.xr.getSession()?.end();
         },
         recallRemote,
+        summonControls: () => input.summonControls(),
         async dispose() {
             if (disposed) return;
             disposed = true;
