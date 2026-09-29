@@ -4,6 +4,10 @@ Status: source-informed proposed reuse contract. Updated: 2026-09-29.
 
 No new server endpoints are introduced. Existing SDK request/response types and server policies are authoritative. Names below are inspected integration points, not a replacement API specification.
 
+## Pending subtitle creation
+
+The inherited player remains the renderer owner. Destroying or replacing a custom canvas subtitle invalidates pending ASS/PGS/VobSub creation before disposal. Every import/configuration/font continuation and scheduled resize must confirm that its request still owns the slot. Late callbacks from an older renderer cannot resize a replacement, clear its presentation, finish the replacement's loading token or report an error against its playback. A request generation and playback-options identity guard creation; bitmap renderer identity additionally guards resize work. Stale work may settle only its own loading token. This boundary does not claim that disposal cancels work already running inside third-party renderers; their asynchronous initialization and GPU cleanup need separate qualification.
+
 ## Existing interfaces
 
 | Capability | Evidence / proposed use | Required behaviour |
