@@ -1,6 +1,8 @@
 # Visual and spatial direction
 
-Status: three proposals; no final direction, fonts, palette or engine selected. Updated: 2026-09-29.
+Status: Cinema Observatory selected for the first release; M1 reference type/palette specified, XR engine and device validation pending. Updated: 2026-09-29.
+
+Use the [Cinema Observatory specification](cinema-observatory.md) for the selected direction, composition, tokens, interaction states and exact copy. The alternatives below record the earlier comparison; they are not competing implementation instructions.
 
 ## Shared principles
 
@@ -18,12 +20,12 @@ The installed [UI/UX Pro Max skill](../../../.agents/skills/ui-ux-pro-max/SKILL.
 | Orbital Archive | A shallow curved arrangement of collections around a stable centre | Curved architectural screen framing with restrained metallic detail | Selected collection unfolds while the viewer remains stationary | Peripheral content can increase scanning effort; limit navigation depth |
 | Living Light | Opaque readable content planes within softly lit surroundings | Soft materials and controlled colour influenced by the selected film | Environment settles into a quiet palette as playback begins | Dynamic colour can distract and consume resources; static fallback must look complete |
 
-These are alternative overall directions, not three launch environments. The product owner chooses one at G1. Keep the others as reference alternatives rather than mixing every motif.
+The product owner selected Cinema Observatory in the approved M1 plan. Orbital Archive and Living Light remain reference alternatives, not extra launch environments. Do not mix their motifs into the selected direction without a recorded decision.
 
 ## Material, type and light guidelines
 
-- Define a small semantic palette: background, surface, foreground, muted text, focus, action and error. Choose values only after contrast review.
-- Use legible type with clear hierarchy and a tested language/fallback strategy. Inherited Noto Sans is a compatibility baseline, not a final branding decision.
+- Use the reference semantic palette and measured opaque colour pairs in the selected specification; recheck contrast after compositing or material changes.
+- Retain inherited Noto Sans initially with its language fallbacks. Spatial text scale still requires actual-device review.
 - Keep film and subtitle luminance readable; UI/environment brightness controls must not accidentally alter film colour grading.
 - Use precomputed lighting and carefully selected dynamic contributions as candidate methods. Reflection, shadow and texture costs are measured in EXP-03.
 - Keep poster aspect ratios intact and provide neutral missing-art states.

@@ -1,6 +1,6 @@
 # Documentation validation record
 
-Date: 2026-09-29. Scope: the JellyXR planning package including the implementation roadmap and PC/Quest workflow, root introduction and project guidance. This records documentation checks only.
+Date: 2026-09-29. Scope: the M0 JellyXR planning package including the implementation roadmap and PC/Quest workflow, root introduction and project guidance. This is the historical documentation-only validation record before M1. Later build/setup observations are recorded in [M1 readiness evidence](m1-readiness.md).
 
 ## Repository evidence
 
@@ -36,6 +36,6 @@ Re-run link/anchor and coverage checks whenever identifiers or filenames change.
 
 ## Explicit limits
 
-No application build, runtime regression, Jellyfin connection, headset usability test or performance benchmark was executed. All application acceptance scenarios in the [test strategy](test-strategy.md) remain NOT RUN. Diagram syntax validation does not establish runtime architecture feasibility or in-headset visual quality.
+At M0, no application build, runtime regression, Jellyfin connection, headset usability test or performance benchmark had been executed. The [test strategy](test-strategy.md) and M1 report now track subsequent evidence. Diagram syntax validation does not establish runtime architecture feasibility or in-headset visual quality.
 
-Exact Quest hardware, server range, final visual direction and additional XR technologies remain scheduled decisions. The package is ready for product review and the G1/G2 work; it does not certify a release.
+At the M0 checkpoint, Quest hardware, server range, final visual direction and additional XR technologies were scheduled decisions. M1 resolves some of those choices in the decision register; this historical record does not certify a release.

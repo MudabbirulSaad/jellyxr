@@ -1,15 +1,15 @@
 # Roadmap and work breakdown
 
-Status: implementation roadmap prepared for review; application work has not started. Updated: 2026-09-29. Accountable product owner: MudabbirulSaad.
+Status: M0 complete; M1 readiness in progress; immersive application work has not started. Updated: 2026-09-29. Accountable product owner: MudabbirulSaad.
 
-This is the authoritative work sequence. Requirements remain in the [functional](../02-requirements/functional-requirements.md) and [nonfunctional](../02-requirements/nonfunctional-requirements.md) documents; [traceability](../02-requirements/traceability.md) connects them to work and tests. The current delivery is documentation integrated into `xr`. Starting the future implementation phase, accepting product targets and selecting technologies are distinct decisions.
+This is the authoritative work sequence. Requirements remain in the [functional](../02-requirements/functional-requirements.md) and [nonfunctional](../02-requirements/nonfunctional-requirements.md) documents; [traceability](../02-requirements/traceability.md) connects them to work and tests. M1 readiness is now authorised; its [evidence report](m1-readiness.md) separates completed setup from outstanding checks. Initial targets and Cinema Observatory are accepted; choosing XR technologies remains an M2/G2 decision.
 
 ## Milestones and demonstrable outcomes
 
 | Milestone | Work | Demonstration / exit | Current state |
 | --- | --- | --- | --- |
-| M0 Planning baseline | W-01 | Linked BRDs, requirements, blueprints and this roadmap; documentation checks; planning branch integrated into `xr` | Documentation prepared; integration verified in Git history |
-| M1 Development and qualification readiness | W-02 preparation | Reproducible upstream build, test server/media inventory, desktop emulation procedure and identified Quest access; G1 decisions recorded | Not started |
+| M0 Planning baseline | W-01 | Linked BRDs, requirements, blueprints and this roadmap; documentation checks; planning branch integrated into `xr` | Complete; merge 84571b91b3 |
+| M1 Development and qualification readiness | W-02 preparation | Reproducible upstream build, test server/media inventory, desktop emulation procedure and identified Quest access; G1 decisions recorded | In progress: checks passed; desktop video start and Quest USB setup observed; owner reports Quest library access and ordinary playback. Detailed control/fixture, emulator and remote-inspection evidence pending |
 | M2 Prove the difficult media path | W-02 experiments | One film with subtitles, seeking, ordinary/XR transitions and real Quest measurements; G2 technology record | Not started |
 | M3 Connect, browse and watch in ordinary mode | W-03, W-04, W-05 | Existing account connects to its server; movie/episode discovery, negotiated playback, tracks and progress work | Not started |
 | M4 Complete the spatial journey | W-06 | Connect → authenticate → browse → inspect → enter cinema → watch → return, using controllers and a simple environment | Not started |
@@ -30,7 +30,7 @@ Dates and effort estimates follow the M1 resource inventory and M2 experiments. 
 | G4 Release qualification | All P0 FR/NFR evidence reviewed or requirements formally revised; parity audit, proposed 120-minute qualification run, deployment/rollback instructions complete | Validation lead and product owner |
 | G5 Expansion | Separate acceptance decisions for P1/P2 work | Product owner |
 
-G1/G2 remain open. G3 proves integration; G4 additionally proves the complete support matrix and sustained quality. Roles describe responsibilities, not an assumed team; the product owner assigns them at M1. A gate record identifies the decision maker, date, build, evidence, unresolved issues and the permitted next work.
+G1/G2 remain open. G1 product choices are recorded (Quest 3, Cinema Observatory and initial NFR targets); device build/package identifiers and USB access are now recorded, while About labels, complete media and readiness evidence remain incomplete. G3 proves integration; G4 additionally proves the complete support matrix and sustained quality. Roles describe responsibilities, not an assumed team. A gate record identifies the decision maker, date, build, evidence, unresolved issues and the permitted next work.
 
 ## Dependency map
 
@@ -155,9 +155,9 @@ Start future feature branches from `xr`; keep changes small enough to demonstrat
 
 Use an evidence record containing environment, fixture, steps, expected/actual behaviour, result, limitations and redacted captures. Label each run ordinary desktop, emulated XR or actual Quest. [Test strategy](test-strategy.md) owns the acceptance procedure; [development testing workflow](development-testing-workflow.md) owns the day-to-day execution approach. A package is complete when its assigned scenario portions have evidence; the overall scenario stays incomplete until all assigned packages/environments are covered. Thus W-04/W-05 ordinary exits can unblock W-06 without falsely claiming XR portions passed.
 
-## Next implementation work after document review
+## Current M1 completion work
 
-Begin with W-02 preparation: reproduce the inherited build, inventory server/media fixtures and Quest access, then resolve G1. The first XR experiment is one correctly played and subtitled film with reliable entry/exit. The engine decision follows that evidence. This sequencing avoids committing the visual system to a media path that has not been proven.
+Finish the pending steps in the [M1 evidence report](m1-readiness.md): detailed playback/fixture inventory, separate emulator-profile verification and manual remote inspection. The build baseline, signed-in desktop access, authorised USB setup and owner-reported ordinary Quest playback are recorded. Once G1 is recorded, the first M2 XR experiment is one correctly played and subtitled film with reliable entry/exit; the engine decision follows that evidence.
 
 ## Release and update operations
 

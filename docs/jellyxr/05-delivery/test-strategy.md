@@ -1,10 +1,10 @@
 # Test and validation strategy
 
-Status: test design only; all application/device scenarios below are NOT RUN. Updated: 2026-09-29.
+Status: M1 unit/build checks passed; signed-in desktop video start, Quest USB setup and owner-reported Quest library access/basic playback recorded. No complete application/device acceptance scenario below has passed. Updated: 2026-09-29. See [M1 readiness evidence](m1-readiness.md).
 
 ## Environments and fixtures
 
-At G1 identify the actual Quest model, OS/browser versions, available controllers, Jellyfin server version and SDK minimum. Test ordinary browser behaviour on named supported desktop/mobile browsers as well as Quest Browser. Vision Pro is a later platform gate.
+Quest 3 and Jellyfin 10.11.4 are the initial configuration; locked SDK 1.0.0 declares minimum server 10.10.0. G1 has Android build/Browser package identifiers; About UI labels and complete fixture evidence remain pending. Test ordinary behaviour on named desktop/mobile browsers as well as Quest Browser. Vision Pro is a later platform gate.
 
 Use an ordinary user, a restricted user and an administrator on a test server. Prepare permissioned movie/series media with known resume positions, alternate editions, multiple audio tracks, chapters and text/ASS/bitmap subtitles. Include a compatible direct-play file, remux/direct-stream case, forced transcode case, prohibited-transcode case and malformed/unavailable source. Record codec/profile, container, resolution, frame rate, bitrate, audio and subtitle properties.
 
@@ -64,7 +64,7 @@ Application timing, video dropped frames and compositor metrics are separate mea
 
 G4 requires every P0 FR/NFR scenario to be executed on the agreed matrix, with no unresolved critical playback, identity, access or comfort regression. Any accepted limitation changes the requirements and public support claim explicitly. Future-only AT-17 through AT-23 do not block v1 unless their feature is promoted.
 
-Proposed BG-02 usability measure: five representative viewers perform connect/resume and browse/play tasks, with at least four completing without assistance. Report task completion, intervention and discomfort observations; do not claim statistical significance or medical safety.
+Accepted initial BG-02 usability measure: five representative viewers perform connect/resume and browse/play tasks, with at least four completing without assistance. Report task completion, intervention and discomfort observations; do not claim statistical significance or medical safety.
 
 ## Documentation-phase checks
 

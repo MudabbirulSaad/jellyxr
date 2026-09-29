@@ -2,7 +2,7 @@
 
 A self-hosted Jellyfin Web fork planning spatial library browsing and immersive cinema for Meta Quest, with Apple Vision Pro as a future target. JellyXR uses an existing Jellyfin server and account.
 
-Start with the [JellyXR development documentation](docs/jellyxr/README.md). The current phase is requirements, experience and architecture planning; additional XR technologies have not been selected or implemented.
+Start with the [JellyXR development documentation](docs/jellyxr/README.md) and [M1 readiness evidence](docs/jellyxr/05-delivery/m1-readiness.md). Current work establishes the inherited build, Quest 3 testing workflow and Cinema Observatory specification; additional XR technologies have not been selected or implemented.
 
 Baseline: Jellyfin Web v12.1, commit `fae41f33eb7cd636a9ef68984adb82bb247a6e1b`. The upstream introduction and contribution information follow.
 

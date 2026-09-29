@@ -1,6 +1,6 @@
 # Upstream assessment
 
-Status: source inspected on 2026-09-29; no build, server connection or headset test executed.
+Status: pinned source inspected on 2026-09-29. Subsequent M1 build and connection observations are recorded in the [readiness evidence](../05-delivery/m1-readiness.md); authenticated playback and headset qualification remain pending.
 
 ## Provenance
 
@@ -55,7 +55,7 @@ The source has modern, legacy, dashboard and wizard applications. The modern UI 
 
 The HTML player owns its media element privately. EXP-01 must determine whether a narrow lifecycle-safe accessor/adapter or another player integration is required. EXP-02 must prove subtitles appear and stay synchronized on the chosen presentation path. No WebXR integration is claimed by this audit.
 
-The exact SDK minimum server version was not resolved through an installed dependency in this phase. Resolve it from the pinned SDK artifact at G1; qualify a named server matrix at G2. The web-client tag must not be used as a server-version requirement.
+M1 installed the locked SDK 1.0.0 artifact and inspected lib/versions.js: MINIMUM_VERSION is 10.10.0 and API_VERSION is 13.0.0. The existing local server reports 10.11.4. These constants and public reachability do not demonstrate complete runtime compatibility; qualify the named configuration at G2. The web-client tag must not be used as a server-version requirement.
 
 ## Update strategy
 

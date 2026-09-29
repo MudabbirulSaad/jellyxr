@@ -1,6 +1,6 @@
 # JellyXR development documentation
 
-Status: documentation baseline and implementation roadmap prepared for review, 2026-09-29. Owner: MudabbirulSaad.
+Status: M1 readiness in progress; inherited build verified, remaining runtime/tooling evidence pending, 2026-09-29. Owner: MudabbirulSaad.
 
 JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive cinema for Meta Quest. It uses an existing Jellyfin endpoint and account. Vision Pro is a future platform. This package prepares implementation and the next technology decision; it does not claim that XR functionality is implemented or tested.
 
@@ -11,28 +11,30 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 3. Follow the experience and system blueprints for proposed behaviour.
 4. Review risks and technology experiments before selecting additional technologies.
 5. Use traceability to connect every first-release requirement to implementation work and validation.
-6. Follow the [implementation roadmap](05-delivery/roadmap.md) for milestones M0-M7 and the [PC/Quest testing workflow](05-delivery/development-testing-workflow.md) for development and qualification. Start future implementation with W-02 readiness after documentation review; G1/G2 decisions remain open.
+6. Follow the [implementation roadmap](05-delivery/roadmap.md), [PC/Quest testing workflow](05-delivery/development-testing-workflow.md) and [M1 evidence](05-delivery/m1-readiness.md). M1 is authorised; Cinema Observatory, Quest 3 and initial targets are confirmed. Remaining G1 environment/fixture evidence and all G2 technology choices are open.
 
 ## Document register
 
 | Area | Document | Status |
 | --- | --- | --- |
-| Business | [Product BRD](01-business/product-brd.md) | Intent confirmed; success targets proposed |
+| Business | [Product BRD](01-business/product-brd.md) | Intent and initial targets confirmed; measurement pending |
 | Business | [Jellyfin foundation BRD](01-business/jellyfin-foundation-brd.md) | Foundation confirmed |
-| Business | [XR experience BRD](01-business/xr-experience-brd.md) | Scope confirmed; visual direction proposed |
+| Business | [XR experience BRD](01-business/xr-experience-brd.md) | Scope confirmed; Cinema Observatory selected |
 | Requirements | [Functional requirements](02-requirements/functional-requirements.md) | Proposed acceptance baseline |
-| Requirements | [Nonfunctional requirements](02-requirements/nonfunctional-requirements.md) | Proposed targets; measurement pending |
+| Requirements | [Nonfunctional requirements](02-requirements/nonfunctional-requirements.md) | Initial targets accepted; measurement pending |
 | Requirements | [Feature parity matrix](02-requirements/feature-parity.md) | Source-informed; device validation pending |
 | Requirements | [Traceability](02-requirements/traceability.md) | Complete planning mapping |
 | Experience | [Experience blueprint](03-experience/experience-blueprint.md) | Proposed interaction behaviour |
-| Experience | [Visual and spatial direction](03-experience/visual-direction.md) | Alternatives; selection deferred |
+| Experience | [Visual and spatial direction](03-experience/visual-direction.md) | Cinema Observatory selected; alternatives retained as references |
+| Experience | [Cinema Observatory specification](03-experience/cinema-observatory.md) | Composition, reference tokens and copy defined; spatial validation pending |
 | Architecture | [Upstream assessment](04-architecture/upstream-assessment.md) | Pinned source inspected |
 | Architecture | [System blueprint](04-architecture/system-blueprint.md) | Logical proposal; engine deferred |
 | Architecture | [Jellyfin integration contract](04-architecture/jellyfin-integration.md) | Source-informed; integration tests pending |
 | Architecture | [Deployment and security](04-architecture/deployment-security.md) | Reference topology; device validation pending |
-| Delivery | [Roadmap and work breakdown](05-delivery/roadmap.md) | Ordered implementation steps, dependencies and gates; application work not started |
-| Delivery | [Test and validation strategy](05-delivery/test-strategy.md) | Scenarios specified; execution pending |
-| Delivery | [PC and Quest development testing](05-delivery/development-testing-workflow.md) | Proposed workflow; tools and hardware setup pending |
+| Delivery | [Roadmap and work breakdown](05-delivery/roadmap.md) | M0 complete; M1 readiness in progress; immersive implementation not started |
+| Delivery | [Test and validation strategy](05-delivery/test-strategy.md) | Unit/build baseline passed; application acceptance scenarios remain incomplete |
+| Delivery | [PC and Quest development testing](05-delivery/development-testing-workflow.md) | Build, signed-in desktop and Quest USB setup exercised; complete playback, emulator and remote inspection pending |
+| Delivery | [M1 readiness evidence](05-delivery/m1-readiness.md) | Actual build results, fixture inventory and outstanding actions |
 | Delivery | [Risks and open questions](05-delivery/risks.md) | Active decision backlog |
 | Decisions | [Decision register](06-decisions/decision-register.md) | Confirmed, proposed and deferred entries |
 | Decisions | [Technology evaluation brief](06-decisions/technology-evaluation.md) | Criteria and experiments; no winner selected |
@@ -43,7 +45,7 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 
 P0 is required for the first library-and-cinema release. P1 is a proposed subsequent extension. P2 is a future investigation. Ordinary-mode preservation is independent of whether an XR adaptation is scheduled.
 
-A source-inspected capability is not a tested compatibility claim. All numeric quality targets are proposals until accepted at gate G1 and measured at G2/G4. The [decision register](06-decisions/decision-register.md) is authoritative about what has been agreed.
+A source-inspected capability is not a tested compatibility claim. Initial numeric quality targets are accepted under D-10; device measurements remain pending at G2/G4. The [decision register](06-decisions/decision-register.md) is authoritative about what has been agreed.
 
 ## Repository baseline
 

@@ -1,6 +1,6 @@
 # Product BRD
 
-Status: intent confirmed; detailed acceptance and targets proposed. Owner: product owner. Updated: 2026-09-29.
+Status: intent and initial qualification targets confirmed; measured acceptance pending. Owner: product owner. Updated: 2026-09-29.
 
 ## Problem and audience
 
@@ -13,13 +13,13 @@ Primary users are people watching their own Jellyfin movies and series while sea
 | ID | Outcome | Success evidence |
 | --- | --- | --- |
 | BG-01 | Make an existing Jellyfin library usable without another account or media migration | Existing-account connection, restricted-user and progress scenarios pass |
-| BG-02 | Make choosing and resuming a film straightforward in a headset | Proposed usability target: at least 4 of 5 representative users resume a title without assistance |
-| BG-03 | Deliver convincing, comfortable cinema viewing | One cohesive environment; proposed 120-minute stability run and structured comfort review |
+| BG-02 | Make choosing and resuming a film straightforward in a headset | Accepted initial usability target: at least 4 of 5 representative users resume a title without assistance |
+| BG-03 | Deliver convincing, comfortable cinema viewing | Cinema Observatory; accepted 120-minute stability target and structured comfort review |
 | BG-04 | Make self-hosting and endpoint configuration understandable | Domain, trusted-IP and base-path scenarios documented and reproduced |
 | BG-05 | Preserve the value of Jellyfin's existing client | Every inherited feature is classified; ordinary-mode regressions recorded before release |
 | BG-06 | Keep the product maintainable and extensible | Upstream provenance and changes remain traceable; future-platform boundaries documented |
 
-These success measures are acceptance proposals, not market statistics or measured results. Traceability is maintained [centrally](../02-requirements/traceability.md).
+These are accepted initial success criteria under D-10, not market statistics or measured results. Traceability is maintained [centrally](../02-requirements/traceability.md).
 
 ## Value and scope
 
