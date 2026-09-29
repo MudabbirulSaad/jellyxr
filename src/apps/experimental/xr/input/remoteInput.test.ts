@@ -14,6 +14,7 @@ function fixture(hand: boolean) {
     const position = { x: 0, y: 1, z: -1 };
     const matrix = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, -1, 1]);
     const frame = {
+        getViewerPose: vi.fn(() => ({ transform: { matrix: new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.65, 0, 1]), position: { x: 0, y: 1.65, z: 0 } } })),
         getPose: vi.fn(() => ({ transform: { position, matrix } })),
         getJointPose: vi.fn(() => ({ transform: { position } }))
     };

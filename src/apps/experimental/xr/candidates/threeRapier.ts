@@ -13,6 +13,8 @@ import { createThreeVideoTexture } from '../media/threeVideoTexture';
 import { createThreeMediaUnderlay } from '../media/threeMediaUnderlay';
 import { ComparisonInput } from '../input/comparisonInput';
 import { createThreeControls } from '../input/threeControls';
+import { createThreeSceneQuery } from '../input/threeSceneQuery';
+import { createThreePointing } from '../input/threePointing';
 import { bindDesktopPointer } from '../input/desktopPointer';
 import { movementAction, MovementSession } from '../input/movementSession';
 import { SessionRecovery } from '../input/sessionRecovery';
@@ -96,8 +98,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     }, physicalRemote?.grab, point => {
         if (!recovery.isSuspended()) movement.requestDestination(point);
-    });
+    }, createThreeSceneQuery(scene));
     const controls = createThreeControls(scene, input.state, input.layout, input.floor);
+    const pointing = createThreePointing(scene, input);
     const raycaster = new Raycaster();
     const unbindPointer = bindDesktopPointer(canvas, input, (x, y) => {
         raycaster.setFromCamera(new Vector2(x * 2 - 1, 1 - y * 2), camera);
@@ -159,6 +162,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             forward: [-Math.sin(camera.rotation.y), 0, -Math.cos(camera.rotation.y)]
         });
         controls.update();
+        pointing.update();
         video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
         if (recovery.isSuspended()) {
             clock.reset();
@@ -213,6 +217,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             unbindPointer();
             input.dispose();
             controls.dispose();
+            pointing.dispose();
             video.dispose();
             renderer.setAnimationLoop(null);
             window.clearInterval(timer);

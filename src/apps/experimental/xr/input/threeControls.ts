@@ -19,6 +19,7 @@ export function createThreeControls(scene: Scene, activation: ActivationState, l
         texture.colorSpace = SRGBColorSpace;
         const material = new MeshBasicMaterial({ map: texture, toneMapped: false });
         const mesh = new Mesh(new PlaneGeometry(target.width, target.height), material);
+        mesh.userData.jellyxrControl = true;
         mesh.position.set(...target.position);
         root.add(mesh);
         return { target, canvas, texture, material, mesh, state: 'idle' };

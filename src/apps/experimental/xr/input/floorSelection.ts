@@ -3,6 +3,7 @@ import { ROOM_FIXTURE, isFixtureDestinationClear, type Point3 } from '../fixture
 import type { InputRay } from './controlTargets';
 import type { ControlViewerPose } from './controlLayout';
 import { rotateFloorPoint } from './movement';
+import type { SceneSurfaceQuery } from './sceneQuery';
 
 export interface FloorAim { point: Point3 | null; valid: boolean }
 
@@ -29,7 +30,7 @@ function boxDistance(ray: InputRay, centre: Point3, size: Point3): number | null
 }
 
 /** Straight-ray fixture selection: an occluded floor is never a valid destination. */
-export function aimFloor(input: InputRay | null): FloorAim {
+export function aimFloor(input: InputRay | null, query?: SceneSurfaceQuery): FloorAim {
     if (!input || !input.origin.every(Number.isFinite) || !input.direction.every(Number.isFinite)) return { point: null, valid: false };
     const length = Math.hypot(...input.direction);
     if (length < 0.00001) return { point: null, valid: false };
@@ -39,7 +40,8 @@ export function aimFloor(input: InputRay | null): FloorAim {
     if (distance > 10) return { point: null, valid: false };
     const point: Point3 = [input.origin[0] + direction[0] * distance, 0, input.origin[2] + direction[2] * distance];
     const ray = { origin: input.origin, direction };
-    const occluded = ROOM_FIXTURE.some(box => {
+    const surface = query?.(ray, distance);
+    const occluded = (surface !== null && surface !== undefined && surface < distance - 0.002) || ROOM_FIXTURE.some(box => {
         if (box.collision !== 'static' || box.id === 'floor') return false;
         const hit = boxDistance(ray, box.position, box.size);
         return hit !== null && hit < distance - 0.001;
@@ -53,6 +55,8 @@ export class FloorSelection {
     private aim: FloorAim = { point: null, valid: false };
     private held: { source: string; point: Point3 } | null = null;
 
+    constructor(private readonly query?: SceneSurfaceQuery) {}
+
     arm(): void {
         this.cancel();
         this.active = true;
@@ -61,7 +65,7 @@ export class FloorSelection {
     read(): FloorAim { return this.aim; }
     observe(ray: InputRay | null): void {
         if (!this.active) return;
-        this.aim = aimFloor(ray);
+        this.aim = aimFloor(ray, this.query);
         if (this.held && (!this.aim.valid || !this.aim.point || this.drift(this.held.point, this.aim.point) > 0.15)) this.held = null;
     }
     begin(source: string): void {

@@ -26,6 +26,7 @@ export function createBabylonControls(scene: Scene, activation: ActivationState,
         material.emissiveTexture = texture;
         material.backFaceCulling = true;
         const mesh = createBabylonPanel(target.id, target.width, target.height, scene);
+        mesh.metadata = { jellyxrControl: true };
         mesh.position.set(...target.position);
         mesh.parent = root;
         mesh.material = material;

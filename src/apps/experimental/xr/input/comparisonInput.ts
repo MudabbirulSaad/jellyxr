@@ -1,17 +1,27 @@
 import type { Point3 } from '../fixtures/roomFixture';
 
-import { FloorSelection } from './floorSelection';
+import { aimFloor, FloorSelection } from './floorSelection';
 
 import { ActivationState } from './activationState';
-import { hitControl, type ControlAction, type InputRay } from './controlTargets';
+import type { ControlAction, InputRay } from './controlTargets';
 import type { RemoteGrab } from './remoteGrab';
 import { ControlLayout, type ControlViewerPose } from './controlLayout';
+import { inspectPointing, type PointingAim } from './pointingAim';
+import type { SceneSurfaceQuery } from './sceneQuery';
+
+function pointingRank(aim: PointingAim | null): number {
+    if (!aim?.action) return 0;
+    if (aim.action === 'summon-controls') return 1;
+    return aim.near ? 4 : 3;
+}
 
 /** Uses one native select event stream for controller trigger and hand pinch; never gaze. */
 export class ComparisonInput {
     readonly state = new ActivationState();
     readonly layout = new ControlLayout();
-    readonly floor = new FloorSelection();
+    readonly floor: FloorSelection;
+    private pointing: (PointingAim & { source: string }) | null = null;
+    private trackedViewer: { position: Point3; sampledAt: number } | null = null;
     private desktopViewer: ControlViewerPose | undefined;
     private session: XRSession | null = null;
     private space: XRReferenceSpace | null = null;
@@ -23,36 +33,51 @@ export class ComparisonInput {
 
     constructor(
         private readonly onAction: (action: ControlAction) => void, private readonly grab?: RemoteGrab,
-        private readonly onTeleport: (point: Point3) => void = () => undefined
-    ) {}
+        private readonly onTeleport: (point: Point3) => void = () => undefined,
+        private readonly sceneQuery: SceneSurfaceQuery = () => null
+    ) {
+        this.floor = new FloorSelection(sceneQuery);
+    }
 
     summonControls(): void {
         this.cancel();
         this.layout.request();
     }
 
-    private resolveTarget(ray: InputRay | null, near?: Point3): ControlAction | null {
-        if (!ray || !ray.origin.every(Number.isFinite) || !ray.direction.every(Number.isFinite)
-            || Math.hypot(...ray.direction) < 0.00001) return null;
-        const control = hitControl(ray, near, this.layout.read(), this.layout.targets(this.floor.isActive()));
+    private aimRay(ray: InputRay | null, near?: Point3, viewer?: Point3): PointingAim | null {
+        const aim = inspectPointing(ray, near, viewer, this.layout.read(), this.layout.targets(this.floor.isActive()), this.sceneQuery);
+        if (!aim || aim.blocked) return aim;
         if (this.floor.isActive()) {
-            this.floor.observe(control ? null : ray);
-            return control || (this.floor.read().valid ? 'confirm-floor' : null);
+            if (aim.action !== 'summon-controls') return aim;
+            const floor = aimFloor(ray, this.sceneQuery);
+            return { ...aim, action: floor.valid ? 'confirm-floor' : null, blocked: !floor.valid,
+                point: floor.valid && floor.point ? floor.point : aim.point };
         }
-        return control || 'summon-controls';
+        return aim;
     }
 
-    private updateLayout(frame?: XRFrame, desktopViewer?: ControlViewerPose): void {
-        if (!this.layout.isPending()) return;
-        let viewer = desktopViewer;
-        if (this.session) {
-            const pose = this.space && this.session.visibilityState === 'visible' && frame?.getViewerPose?.(this.space);
-            viewer = undefined;
-            if (pose) {
-                const { position: p, matrix: m } = pose.transform;
-                viewer = { position: [p.x, p.y, p.z], forward: [-m[8], -m[9], -m[10]] };
-            }
+    private applyAim(aim: PointingAim | null, source: string): ControlAction | null {
+        this.pointing = aim ? { ...aim, source } : null;
+        if (this.floor.isActive()) this.floor.observe(aim?.action === 'confirm-floor' ? aim.ray : null);
+        return aim?.action || null;
+    }
+
+    private sampleViewer(frame?: XRFrame): ControlViewerPose | undefined {
+        this.trackedViewer = null;
+        if (!this.space || this.session?.visibilityState !== 'visible') return;
+        const pose = frame?.getViewerPose?.(this.space);
+        if (!pose) return;
+        const { position: p, matrix: m } = pose.transform;
+        const position: Point3 = [p.x, p.y, p.z];
+        const forward: Point3 = [-m[8], -m[9], -m[10]];
+        if (position.every(Number.isFinite) && forward.every(Number.isFinite)) {
+            this.trackedViewer = { position, sampledAt: performance.now() };
+            return { position, forward };
         }
+    }
+
+    private updateLayout(viewer?: ControlViewerPose): void {
+        if (!this.layout.isPending()) return;
         const result = this.layout.update(viewer);
         if (result === 'placed') this.report('Controls placed here. They remain anchored until recalled.');
         if (result === 'recovery') this.report('Only recovery controls fit here. Return to seat for the full controls, or exit XR.');
@@ -87,30 +112,33 @@ export class ComparisonInput {
         return id;
     }
 
-    private target(frame: XRFrame, source: XRInputSource): ControlAction | null {
+    private aim(frame: XRFrame, source: XRInputSource): PointingAim | null {
         if (!this.space || source.targetRayMode !== 'tracked-pointer') return null;
         const owner = this.state.read().source;
         if (owner && owner !== this.id(source)) return null;
         const pose = frame.getPose(source.targetRaySpace, this.space);
-        if (!pose) {
-            this.floor.cancel();
-            return null;
-        }
+        // Input-event frames forbid getViewerPose(). Use only the last active animation sample.
+        const viewer = this.trackedViewer;
+        if (!pose || !viewer || performance.now() - viewer.sampledAt > 100) return null;
         let near: Point3 | undefined;
         if (source.hand) {
             const joint = source.hand.get('index-finger-tip');
             const tip = joint && frame.getJointPose?.(joint, this.space);
             // A stale emulated hand ray cannot keep an activation alive after joint loss.
-            if (!tip) {
-                this.floor.cancel();
-                return null;
-            }
+            if (!tip) return null;
             const { x, y, z } = tip.transform.position;
             near = [x, y, z];
+            if (!near.every(Number.isFinite)) return null;
         }
         const m = pose.transform.matrix;
-        return this.resolveTarget({ origin: [m[12], m[13], m[14]], direction: [-m[8], -m[9], -m[10]] },
-            near || [m[12], m[13], m[14]]);
+        return this.aimRay({ origin: [m[12], m[13], m[14]], direction: [-m[8], -m[9], -m[10]] },
+            near || [m[12], m[13], m[14]], viewer.position);
+    }
+
+    private target(frame: XRFrame, source: XRInputSource): ControlAction | null {
+        const owner = this.state.read().source;
+        if (owner && owner !== this.id(source)) return null;
+        return this.applyAim(this.aim(frame, source), this.id(source));
     }
 
     private start = (event: XRInputSourceEvent) => {
@@ -137,6 +165,7 @@ export class ComparisonInput {
         if (this.session?.visibilityState !== 'visible' || this.state.read().source) return false;
         const began = this.grab?.begin(this.id(event.inputSource), this.anchor(event.frame, event.inputSource)) || false;
         if (began) {
+            this.pointing = null;
             this.state.cancel();
             this.floor.cancel();
         }
@@ -149,6 +178,8 @@ export class ComparisonInput {
         if (!event.inputSource.hand) this.grab?.release(this.id(event.inputSource));
     };
     cancel = (): void => {
+        this.pointing = null;
+        this.trackedViewer = null;
         this.state.cancel();
         this.grab?.release();
         this.layout.cancel();
@@ -157,6 +188,7 @@ export class ComparisonInput {
     private changed = (event: XRInputSourcesChangeEvent) => {
         if (event.removed.length) this.floor.cancel();
         for (const source of event.removed) {
+            if (this.pointing?.source === this.id(source)) this.pointing = null;
             this.state.cancel(this.id(source));
             this.grab?.release(this.id(source));
             this.ids.delete(source);
@@ -198,31 +230,38 @@ export class ComparisonInput {
             this.layout.request();
         }
         this.space = space;
-        this.updateLayout(frame, desktopViewer);
+        this.updateLayout(session ? this.sampleViewer(frame) : desktopViewer);
         if (!session || !frame || session.visibilityState !== 'visible') {
             if (session) this.cancel();
             return;
         }
         const grabOwner = this.grab?.source();
         if (grabOwner) {
+            this.pointing = null;
             const source = Array.from(session.inputSources).find(value => this.id(value) === grabOwner);
             this.grab?.update(grabOwner, source ? this.anchor(frame, source) : null);
             this.state.cancel();
             return;
         }
+        this.updatePointing(session, frame);
+    }
+
+    private updatePointing(session: XRSession, frame: XRFrame): void {
         const owner = this.state.read().source;
-        let observed = false;
+        let chosen: { id: string; aim: PointingAim | null; rank: number } | undefined;
         for (const source of session.inputSources) {
             const id = this.id(source);
             if (owner && owner !== id) continue;
-            const target = this.target(frame, source);
-            if (owner || target || (this.floor.isActive() && source.targetRayMode === 'tracked-pointer')) {
-                this.state.observe(id, target);
-                observed = true;
-                break;
-            }
+            const aim = this.aim(frame, source);
+            const rank = pointingRank(aim);
+            if (owner || (aim && (!chosen || rank > chosen.rank))) chosen = { id, aim, rank };
+            if (owner) break;
         }
-        if (!observed) {
+        if (chosen) {
+            this.state.observe(chosen.id, this.applyAim(chosen.aim, chosen.id));
+            if (!chosen.aim) this.floor.cancel();
+        } else {
+            this.pointing = null;
             this.state.cancel();
             this.floor.cancel();
         }
@@ -231,7 +270,7 @@ export class ComparisonInput {
     /** Desktop ray uses the same world-space hit bounds and explicit down/up policy. */
     pointer(phase: 'move' | 'down' | 'up' | 'cancel', ray: InputRay | null): void {
         if (this.session) return;
-        const target = this.resolveTarget(ray);
+        const target = this.applyAim(this.aimRay(ray, undefined, this.desktopViewer?.position), 'desktop');
         this.lastPointer = `${phase}: ${target || 'no target'}`;
         if (phase === 'move') this.state.observe('desktop', target);
         if (phase === 'down') {
@@ -244,6 +283,7 @@ export class ComparisonInput {
 
     key(phase: 'down' | 'up', key: string): void {
         if (this.session) return;
+        this.pointing = null;
         const focus = this.state.read().focus;
         const targets = this.layout.targets(this.floor.isActive());
         if (key === 'Home' && phase === 'down') this.perform('summon-controls');
@@ -287,6 +327,11 @@ export class ComparisonInput {
 
     readStatus(): string {
         return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. ${this.floor.status()}`;
+    }
+
+    readPointing(): (PointingAim & { pressed: boolean }) | null {
+        const pressed = this.state.read().pressed;
+        return this.pointing ? { ...this.pointing, pressed: !!pressed && pressed === this.pointing.action } : null;
     }
 
     report(message: string): void {

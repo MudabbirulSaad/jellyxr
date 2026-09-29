@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { ActivationState } from './activationState';
 import { CONTROL_TARGETS, hitControl } from './controlTargets';
 import { ComparisonInput } from './comparisonInput';
+import type { SceneSurfaceQuery } from './sceneQuery';
 
 describe('visible control geometry', () => {
     it('hits each visible centre and rejects the gap, back face and nonfinite rays', () => {
@@ -54,7 +55,7 @@ describe('deliberate activation', () => {
     });
 });
 
-function fixture() {
+function fixture(query?: SceneSurfaceQuery) {
     const session = Object.assign(new EventTarget(), {
         visibilityState: 'visible', inputSources: [] as XRInputSource[]
     });
@@ -62,15 +63,19 @@ function fixture() {
     const source = { targetRayMode: 'tracked-pointer', targetRaySpace: {} } as XRInputSource;
     const matrix = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, -0.3, 1.18, 0, 1]);
     const frame = {
+        getViewerPose: vi.fn(() => ({ transform: { matrix: new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1.65, 0, 1]), position: { x: 0, y: 1.65, z: 0 } } })),
         getPose: vi.fn(() => ({ transform: { matrix } })),
         getJointPose: vi.fn(() => ({ transform: { position: { x: -0.3, y: 1.18, z: -1.38 } } }))
     };
     session.inputSources = [source];
     const action = vi.fn();
-    const input = new ComparisonInput(action);
+    const input = new ComparisonInput(action, undefined, undefined, query);
     const update = () => input.update(session as unknown as XRSession, space, frame as unknown as XRFrame);
+    const eventFrame = { ...frame, getViewerPose: vi.fn(() => {
+        throw new Error('getViewerPose is forbidden on input-event frames');
+    }) };
     const event = (name: string, inputSource = source) => {
-        session.dispatchEvent(Object.assign(new Event(name), { inputSource, frame }));
+        session.dispatchEvent(Object.assign(new Event(name), { inputSource, frame: eventFrame }));
     };
     update();
     return { input, action, session, source, frame, update, event };
@@ -147,5 +152,83 @@ describe('native controller and hand event adapter', () => {
         update();
         expect(input.state.read().hover).toBeNull();
         input.dispose();
+    });
+
+    it('prioritizes an aimed second controller over an empty first ray, then keeps the pressed owner', () => {
+        const f = fixture();
+        const idle = { targetRayMode: 'tracked-pointer', targetRaySpace: {} } as XRInputSource;
+        const hit = f.frame.getPose();
+        const empty = new Float32Array(hit.transform.matrix);
+        empty[12] = 3;
+        f.frame.getPose.mockImplementation((space?: XRSpace) => space === idle.targetRaySpace ? { transform: { matrix: empty } } : hit);
+        f.session.inputSources.unshift(idle);
+        f.update();
+        expect(f.input.readPointing()?.action).toBe('select-fixture');
+        expect(f.input.state.read().hover).toBe('select-fixture');
+        f.event('selectstart');
+        expect(f.input.readPointing()?.pressed).toBe(true);
+        f.event('selectstart', idle);
+        f.event('select', idle);
+        expect(f.action).not.toHaveBeenCalled();
+        expect(f.input.readPointing()?.pressed).toBe(true);
+        f.event('select');
+        expect(f.action).toHaveBeenCalledExactlyOnceWith('select-fixture');
+        f.input.dispose();
+    });
+
+    it('cancels a held selection when geometry blocks it, and does not commit after clearance returns', () => {
+        let blocked = false;
+        const f = fixture(() => blocked ? 0.4 : null);
+        f.event('selectstart');
+        blocked = true;
+        f.update();
+        expect(f.input.readPointing()).toMatchObject({ blocked: true, pressed: false, action: null });
+        expect(f.input.state.read().focus).toBe('select-fixture');
+        blocked = false;
+        f.event('select');
+        expect(f.action).not.toHaveBeenCalled();
+        f.event('selectstart');
+        f.event('select');
+        expect(f.action).toHaveBeenCalledExactlyOnceWith('select-fixture');
+        f.input.dispose();
+    });
+
+    it('prefers a tracked near hand contact over another controller ray', () => {
+        const f = fixture();
+        const hand = { targetRayMode: 'tracked-pointer', targetRaySpace: {}, hand: new Map([['index-finger-tip', {}]]) } as XRInputSource;
+        f.session.inputSources.push(hand);
+        f.update();
+        expect(f.input.readPointing()).toMatchObject({ action: 'select-fixture', near: true });
+        f.input.dispose();
+    });
+
+    it('rejects an event when no recent animation-frame head sample exists', () => {
+        const f = fixture();
+        f.event('selectstart');
+        const now = vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 101);
+        try {
+            f.event('select');
+            expect(f.action).not.toHaveBeenCalled();
+            expect(f.input.readPointing()).toBeNull();
+        } finally {
+            now.mockRestore();
+            f.input.dispose();
+        }
+    });
+
+    it.each(['viewer', 'source', 'removed', 'hidden', 'ended'])('removes stale pointing on %s loss while retaining logical focus', loss => {
+        const f = fixture();
+        f.event('selectstart');
+        if (loss === 'viewer') f.frame.getViewerPose.mockReturnValueOnce(null as never);
+        if (loss === 'source') f.frame.getPose.mockReturnValueOnce(null as never);
+        if (loss === 'viewer' || loss === 'source') f.update();
+        if (loss === 'removed') f.session.dispatchEvent(Object.assign(new Event('inputsourceschange'), { removed: [f.source] }));
+        if (loss === 'hidden') f.session.dispatchEvent(new Event('visibilitychange'));
+        if (loss === 'ended') f.session.dispatchEvent(new Event('end'));
+        expect(f.input.readPointing()).toBeNull();
+        expect(f.input.state.read().focus).toBe('select-fixture');
+        f.event('select');
+        expect(f.action).not.toHaveBeenCalled();
+        f.input.dispose();
     });
 });
