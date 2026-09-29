@@ -6,7 +6,6 @@ import { Scene } from '@babylonjs/core/scene';
 import { UniversalCamera } from '@babylonjs/core/Cameras/universalCamera';
 import { Matrix, Vector3 } from '@babylonjs/core/Maths/math.vector';
 import { Color3, Color4 } from '@babylonjs/core/Maths/math.color';
-import { HemisphericLight } from '@babylonjs/core/Lights/hemisphericLight';
 import { DirectionalLight } from '@babylonjs/core/Lights/directionalLight';
 import { CreateBox } from '@babylonjs/core/Meshes/Builders/boxBuilder';
 import { PBRMaterial } from '@babylonjs/core/Materials/PBR/pbrMaterial';
@@ -19,6 +18,7 @@ import '@babylonjs/core/Physics/joinedPhysicsEngineComponent';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
 import { ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
 import { createBabylonVideoTexture } from '../media/babylonVideoTexture';
@@ -37,7 +37,7 @@ import { FIXTURE_COLOURS, type ComparisonPlaybackActions, type ComparisonScene, 
 
 export async function createComparison(canvas: HTMLCanvasElement, onSample: SampleListener, playback: ComparisonPlaybackActions, quality: ChairQuality): Promise<ComparisonScene> {
     const havok = await HavokPhysics({ locateFile: () => havokWasm });
-    const engine = new Engine(canvas, true, { adaptToDeviceRatio: false });
+    const engine = new Engine(canvas, true, { adaptToDeviceRatio: false, useExactSrgbConversions: true });
     const scene = new Scene(engine);
     scene.useRightHandedSystem = true;
     scene.clearColor = Color4.FromHexString(`${FIXTURE_COLOURS.graphite}FF`);
@@ -46,12 +46,15 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     camera.minZ = 0.05;
     camera.maxZ = 50;
     camera.fov = 70 * Math.PI / 180;
-    const ambient = new HemisphericLight('ambient', new Vector3(0, 1, 0), scene);
-    ambient.intensity = 1;
-    ambient.groundColor = Color3.White();
-    const light = new DirectionalLight('warm-key', new Vector3(0, -1, 0), scene);
-    light.diffuse = Color3.FromHexString('#FFECD1');
-    light.intensity = 2;
+    scene.imageProcessingConfiguration.toneMappingEnabled = false;
+    scene.imageProcessingConfiguration.exposure = 1;
+    scene.imageProcessingConfiguration.contrast = 1;
+    for (const fixture of COMPARISON_LIGHTS) {
+        const direction = new Vector3(...fixture.towardSource).normalize().negate();
+        const light = new DirectionalLight(fixture.id, direction, scene);
+        light.diffuse = Color3.FromHexString(fixture.colour).toLinearSpace(true);
+        light.intensity = fixture.intensity;
+    }
 
     const plugin = new HavokPlugin(true, havok);
     scene.enablePhysics(new Vector3(0, -9.81, 0), plugin);
@@ -62,10 +65,10 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         const mesh = CreateBox(box.id, { width: box.size[0], height: box.size[1], depth: box.size[2] }, scene);
         mesh.position.set(...box.position);
         const material = new PBRMaterial(`${box.id}-material`, scene);
-        material.albedoColor = Color3.FromHexString(FIXTURE_COLOURS[box.material]).toLinearSpace();
+        material.albedoColor = Color3.FromHexString(FIXTURE_COLOURS[box.material]).toLinearSpace(true);
         material.roughness = 0.8;
         material.metallic = box.material === 'metal' ? 0.5 : 0;
-        if (box.material === 'warm') material.emissiveColor = Color3.FromHexString(FIXTURE_COLOURS.warm).toLinearSpace().scale(0.5);
+        if (box.material === 'warm') material.emissiveColor = Color3.FromHexString(FIXTURE_COLOURS.warm).toLinearSpace(true).scale(0.5);
         mesh.material = material;
         if (box.collision === 'none') continue;
         const aggregate = new PhysicsAggregate(mesh, PhysicsShapeType.BOX, {

@@ -23,6 +23,8 @@ The installed [UI/UX Pro Max skill](../../../.agents/skills/ui-ux-pro-max/SKILL.
 
 Use baked/static lighting as the reference for the later experiment. Reflections, shadows and any dynamic contributions need measured justification. Reactive film-colour lighting is a separate FR-026 extension. A black-box/plain-scene control remains available for M2 comparisons.
 
+For the M2 comparison, use the same four static directional lights, linear light colours, exposure and un-tonemapped sRGB output in both renderers. This bounded fill rig makes every room-facing surface visible without relying on different ambient/hemisphere shader models; it is a technical reference, not production baked lighting or proof of pixel-identical PBR. Video and control artwork remain unlit. Compare brightness and colour on the same device before scoring visual quality.
+
 ## Reference tokens
 
 These values define the design specification. They are not new application CSS variables until the implementation package adopts them.
@@ -108,6 +110,8 @@ Do not hide focused controls while a viewer is interacting with them. Do not att
 For ordinary reference compositions, start control feedback within the accepted 100 ms budget, with approximately 180 ms for panel appearance, favouring opacity rather than layout movement. These are initial design timings, not required runtime dependencies. Reduced motion presents the final readable state without parallax, scene travel or scroll-jacking. Essential feedback remains immediate and visible.
 
 Focus and selection use shape/outline plus text context, not colour alone. Controller targeting must provide explicit feedback before activation; hover alone never performs an action. Tracking loss cancels an incomplete gesture and leaves a recoverable state. Input focus rules must be tested again in the chosen spatial UI implementation.
+
+Comparison panels face the same +Z direction as their hit regions. Their backs do not display mirrored actionable labels; the front keeps the original artwork orientation. Apply the same facing rule to the flat video and subtitle surfaces. Access from a different viewing orientation still needs the planned summon/recovery controls; hiding a back face is not a complete seated-navigation solution.
 
 ## Content and asset discipline
 

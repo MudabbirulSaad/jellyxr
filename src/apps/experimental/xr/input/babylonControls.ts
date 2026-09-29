@@ -1,8 +1,8 @@
-/* eslint new-cap: ["error", { "capIsNewExceptions": ["CreatePlane"] }] */
 import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
-import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder';
 import type { Scene } from '@babylonjs/core/scene';
+
+import { createBabylonPanel } from '../candidates/babylonPanel';
 
 import { CONTROL_TARGETS } from './controlTargets';
 import { controlVisualState, drawControl } from './controlArtwork';
@@ -19,8 +19,8 @@ export function createBabylonControls(scene: Scene, activation: ActivationState)
         const material = new StandardMaterial(target.id, scene);
         material.disableLighting = true;
         material.emissiveTexture = texture;
-        material.backFaceCulling = false;
-        const mesh = CreatePlane(target.id, { width: target.width, height: target.height }, scene);
+        material.backFaceCulling = true;
+        const mesh = createBabylonPanel(target.id, target.width, target.height, scene);
         mesh.position.set(...target.position);
         mesh.material = material;
         return { target, canvas, texture, material, mesh, state: 'idle' };

@@ -1,8 +1,8 @@
-/* eslint new-cap: ["error", { "capIsNewExceptions": ["CreatePlane"] }] */
 import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
-import { CreatePlane } from '@babylonjs/core/Meshes/Builders/planeBuilder';
 import type { Scene } from '@babylonjs/core/scene';
+
+import { createBabylonPanel } from '../candidates/babylonPanel';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { createSubtitleArtwork, SUBTITLE_PANEL } from './textSubtitles';
@@ -14,8 +14,8 @@ export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Sce
     const material = new StandardMaterial('borrowed-subtitles', scene);
     material.disableLighting = true;
     material.emissiveTexture = texture;
-    material.backFaceCulling = false;
-    const mesh = CreatePlane('borrowed-subtitles', SUBTITLE_PANEL, scene);
+    material.backFaceCulling = true;
+    const mesh = createBabylonPanel('borrowed-subtitles', SUBTITLE_PANEL.width, SUBTITLE_PANEL.height, scene);
     mesh.position.set(SUBTITLE_PANEL.x, SUBTITLE_PANEL.y, SUBTITLE_PANEL.z);
     mesh.material = material;
     mesh.setEnabled(false);
