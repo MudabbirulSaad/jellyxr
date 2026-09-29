@@ -63,7 +63,8 @@ const config = {
             __PACKAGE_JSON_NAME__: JSON.stringify(packageJson.name),
             __PACKAGE_JSON_VERSION__: JSON.stringify(packageJson.version),
             __USE_SYSTEM_FONTS__: !!JSON.parse(process.env.USE_SYSTEM_FONTS || '0'),
-            __WEBPACK_SERVE__: !!JSON.parse(process.env.WEBPACK_SERVE || '0')
+            __WEBPACK_SERVE__: !!JSON.parse(process.env.WEBPACK_SERVE || '0'),
+            __JELLYXR_EXPERIMENTS__: process.env.JELLYXR_EXPERIMENTS === '1'
         }),
         new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
@@ -132,7 +133,7 @@ const config = {
             }
             return '[name].[hash][ext][query]';
         },
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, process.env.JELLYXR_EXPERIMENTS === '1' ? '.jellyxr-experiments' : 'dist'),
         publicPath: ''
     },
     optimization: {
@@ -193,6 +194,10 @@ const config = {
             {
                 test: /\.(js|jsx|mjs)$/,
                 include: [
+                    path.resolve(__dirname, 'node_modules/@babylonjs/core'),
+                    path.resolve(__dirname, 'node_modules/@babylonjs/havok'),
+                    path.resolve(__dirname, 'node_modules/@dimforge/rapier3d-compat'),
+                    path.resolve(__dirname, 'node_modules/three'),
                     path.resolve(__dirname, 'node_modules/@jellyfin/libass-wasm'),
                     path.resolve(__dirname, 'node_modules/@jellyfin/sdk'),
                     path.resolve(__dirname, 'node_modules/@mui/base'),
@@ -352,6 +357,11 @@ const config = {
                         ]
                     }
                 ]
+            },
+            {
+                test: /\.wasm$/i,
+                include: path.resolve(__dirname, 'node_modules/@babylonjs/havok'),
+                type: 'asset/resource'
             },
             {
                 test: /\.(ico|png|jpg|gif|svg)$/i,

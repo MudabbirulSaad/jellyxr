@@ -23,6 +23,10 @@ const router = createHashRouter([
     {
         element: <RootAppLayout />,
         children: [
+            ...(__JELLYXR_EXPERIMENTS__ ? [{
+                path: '/xr-experiments',
+                lazy: () => import('apps/experimental/xr/ComparisonPage')
+            }] : []),
             ...(layoutManager.modern ? MODERN_APP_ROUTES : LEGACY_APP_ROUTES),
             ...DASHBOARD_APP_ROUTES,
             ...WIZARD_APP_ROUTES,
