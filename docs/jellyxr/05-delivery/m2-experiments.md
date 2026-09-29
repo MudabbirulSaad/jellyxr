@@ -303,3 +303,24 @@ Both renderers show the same floor ring with directional/cross feedback and a cl
 | Local checks | Application TypeScript, full lint (98 inherited warnings), styles and all 253 tests in 31 files pass. Ordinary production/ES5 passes 982 files; experiment production/ES5 passes 992. Checked floor-selection copy is absent from ordinary output. No build compatibility exemption was added |
 
 UI/UX Pro Max's existing focus, feedback and non-drag alternatives guidance informed the reduced control bank, explicit cancel/status and keyboard alternative. There is no continuous artificial walking, camera animation or new playback owner. No private media was used. Real controller/hand rays, comfort, physical tracking-space behaviour, pointing feedback, all-scene UI occlusion, navmesh/sloped floors and native-layer depth remain unqualified. The static comparison proxies are not a real-world safety boundary. G2 remains open.
+
+
+## ASS canvas comparison increment — 2026-09-30
+
+Source revision: 421b73ff09, based on xr b0a9086eea (PR #16). This advances FR-011 / AT-10 and EXP-02. Both texture candidates copy the active libass canvas onto a transparent plane fitted to the video rectangle. Real Jellyfin tracks retain their existing renderer, fonts, timing, offsets and selection owner. The experiment never fetches another real track or disposes the owner's canvas.
+
+The installed libass-wasm 4.2.4 render-ahead draw/clear state provides a revision for unchanged-frame suppression. Unknown modes copy each frame. Canvas replacement, size changes, seeking, track-off and invalidation clear or refresh the owned copy. Excessive dimensions, aspect mismatch and origin-access failure show an ordinary-player recovery message without exporting pixels or exception details. The inherited player gains a read-only presentation getter extension; its rendering lifecycle is unchanged.
+
+The original ASS fixture runs through the actual installed libass worker on the existing silent technical clip. It includes top-left positioning, bold/italic text, warm colour, moving text, karaoke colour changes and deliberate gaps. It requests bundled Noto Sans; exact font matching remains unqualified. The fixture owns and disposes its isolated renderer. It never changes the owner's library or server tracks.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Babylon PC texture | Positioned two-line text at 0.96 s, blank interval at 2.56 s, moving text near 4.73 s and italic/karaoke frame near 6.4 s inspected. Hide/Show restores captions while the video remains paused |
+| Three PC texture | Same positioned text and blank interval inspected. Moving text changes horizontal position at 3.52 and 4.48 s. Hide/Show restores the paused caption; switching to Text fixture removes the ASS canvas and restores the plain-text panel |
+| Fixture lifecycle | Re-selecting ASS after Hide initially required an explicit renderer enable; fixed and browser-retested. Detach and switching to Text leave zero libass canvases and the technical source paused. These are selected lifecycle checks, not a sustained leak test |
+| Unit cases | Four cases exercise the exact-version getter, unchanged/changed revisions, gaps, seek/invalidation, replacement/size changes, unknown revisions, track-off, bounded allocation, layout and redacted origin failure. Owner canvas and playback state remain unchanged |
+| Local checks | TypeScript, full lint (98 inherited warnings), styles and all 257 tests in 32 files pass. Ordinary production/ES5 passes 983 files; experiment production/ES5 passes 993. Checked ASS fixture/scene markers are absent from ordinary output; no dependency or compatibility exemption changed |
+
+These are ordinary PC browser observations using original technical content. No private media, authenticated ASS delivery, actual headset, native layer, burn-in fallback, precise sync tolerance or sustained cost was tested in this slice. Dev-server hot reload continues to report the previously documented rejected origin; manual reload was used without weakening that check. Transient browser screenshots were inspected, not committed as private/media evidence.
+
+UI/UX Pro Max's pause/caption and error-recovery guidance supports explicit controls and visible fallback. Authored subtitle styling is retained by borrowing pixels instead of reconstructing ASS as plain text. Installed libbitsub 1.11.0 can choose a GPU canvas without a preserved drawing buffer, so bitmap capture still needs its own timed-copy experiment. Native-layer composition, secondary-track overlap, user caption placement and actual Quest readability remain G2 work. Primary libass reference reviewed 2026-09-30: [JavascriptSubtitlesOctopus](https://github.com/jellyfin/JavascriptSubtitlesOctopus); revision behaviour was checked against the installed 4.2.4 source.
