@@ -1,6 +1,7 @@
 import type { Point3 } from '../fixtures/roomFixture';
+import type { MovementAction } from './movementSession';
 
-export type ControlAction = 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr';
+export type ControlAction = 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | MovementAction;
 export interface ControlTarget {
     id: ControlAction;
     label: string;
@@ -11,11 +12,21 @@ export interface ControlTarget {
 export interface InputRay { origin: Point3; direction: Point3 }
 
 /** Shared visible geometry and hit bounds; these metre values are not comfort-qualified. */
-export const CONTROL_TARGETS: readonly ControlTarget[] = [
+const SEATED_CONTROLS: readonly ControlTarget[] = [
     { id: 'select-fixture', label: 'Select fixture', position: [-0.3, 1.18, -1.4], width: 0.52, height: 0.22 },
     { id: 'reset-count', label: 'Reset count', position: [0.3, 1.18, -1.4], width: 0.52, height: 0.22 },
     { id: 'recall-remote', label: 'Recall remote', position: [-0.3, 0.92, -1.4], width: 0.52, height: 0.22 },
-    { id: 'exit-xr', label: 'Exit XR', position: [0.3, 0.92, -1.4], width: 0.52, height: 0.22 }
+    { id: 'exit-xr', label: 'Exit XR', position: [0.3, 0.92, -1.4], width: 0.52, height: 0.22 },
+    { id: 'turn-left', label: 'Turn left 30°', position: [-0.9, 1.18, -1.4], width: 0.52, height: 0.22 },
+    { id: 'turn-right', label: 'Turn right 30°', position: [0.9, 1.18, -1.4], width: 0.52, height: 0.22 },
+    { id: 'library-position', label: 'Library position', position: [-0.9, 0.92, -1.4], width: 0.52, height: 0.22 },
+    { id: 'return-seat', label: 'Return to seat', position: [0.9, 0.92, -1.4], width: 0.52, height: 0.22 },
+    { id: 'resume-media', label: 'Resume video', position: [0, 1.46, -1.4], width: 0.52, height: 0.22 }
+];
+
+export const CONTROL_TARGETS: readonly ControlTarget[] = [
+    ...SEATED_CONTROLS,
+    ...SEATED_CONTROLS.map(target => ({ ...target, position: [target.position[0], target.position[1], 4.8] as Point3 }))
 ];
 
 export function hitControl(ray: InputRay | null, near?: Point3): ControlAction | null {
