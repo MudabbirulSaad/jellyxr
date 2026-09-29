@@ -2,6 +2,7 @@ import { Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, VideoTexture, t
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { fitVideoScreen, type VideoPresentationResource } from './videoPresentation';
+import { createThreeSubtitles } from './threeSubtitles';
 
 export function createThreeVideoTexture(surface: BorrowedVideoSurface, scene: Scene): VideoPresentationResource {
     const dimensions = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight);
@@ -12,9 +13,15 @@ export function createThreeVideoTexture(surface: BorrowedVideoSurface, scene: Sc
     const mesh = new Mesh(new PlaneGeometry(dimensions.width, dimensions.height), material);
     mesh.position.set(0, 2, -6.47);
     scene.add(mesh);
+    const subtitles = createThreeSubtitles(surface, scene);
     return {
-        update() { /* Three's renderer updates the borrowed video texture. */ },
+        update() {
+            // Three's renderer updates the borrowed video texture.
+            subtitles.update();
+        },
+        readSubtitleStatus: subtitles.readStatus,
         dispose() {
+            subtitles.dispose();
             scene.remove(mesh);
             mesh.geometry.dispose();
             material.dispose();

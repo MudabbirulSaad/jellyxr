@@ -1,9 +1,15 @@
 import Events from 'utils/events';
 
+export interface BorrowedSubtitleSurface {
+    readonly textElements: readonly (HTMLElement | null | undefined)[];
+    readonly unsupportedRenderer: 'ASS' | 'bitmap' | null;
+}
+
 export interface VideoPresentationPlayer {
     id: string;
     isLocalPlayer?: boolean;
     getVideoPresentationSurface?(): HTMLVideoElement | null;
+    getSubtitlePresentationSurface?(): BorrowedSubtitleSurface;
 }
 
 export interface VideoPresentationOwner {
@@ -15,6 +21,7 @@ export type VideoInvalidationReason = 'playback-stopped' | 'player-changed' | 'm
 export interface BorrowedVideoSurface {
     /** Read frames only. Never set source, tracks, muted, autoplay or currentTime here. */
     readonly video: HTMLVideoElement;
+    readSubtitles?(): BorrowedSubtitleSurface | undefined;
     isCurrent(): boolean;
     /** Releases observation only; never pauses, unloads or removes the owner's video. */
     release(): void;
@@ -58,6 +65,7 @@ export function borrowVideoSurface(
 
     return {
         video,
+        readSubtitles: () => current ? player.getSubtitlePresentationSurface?.() : undefined,
         isCurrent() {
             if (current && (owner.getCurrentPlayer() !== player || player.getVideoPresentationSurface?.() !== video)) {
                 invalidate('media-replaced');

@@ -17,3 +17,9 @@ ffmpeg -hide_banner -f lavfi -i 'testsrc2=size=640x360:rate=24:duration=8' -vf "
 ```
 
 Room geometry is authored in `roomFixture.ts`; catalogue records are generated in `catalogueFixture.ts`. Neither uses account or media data. The initial boxes are comparison geometry, not the finished Cinema Observatory models.
+
+## Text subtitle fixture
+
+`subtitleFixture.ts` adds three original, clearly labelled native WebVTT cues to the calibration video in the opt-in workbench. Cue intervals are 0.25–2.25, 3–5 and 5.75–7.75 seconds. The gaps test clearing; two-line text tests layout. Use the native video controls to pause/seek, and Hide/Show fixture captions to test track-off without changing any Jellyfin selection. Cue timing is browser-owned. Cleanup disables and removes only these fixture cues.
+
+This TypeScript source is distributed under the repository's GPL-2.0-or-later licence. It contains no film dialogue, external subtitle download or account data. It qualifies neither server subtitle delivery nor ASS/bitmap composition. The video file itself remains unchanged and has no embedded subtitle stream.

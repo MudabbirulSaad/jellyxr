@@ -13,6 +13,7 @@ import type { ComparisonSample, ComparisonScene } from './candidates/types';
 import { borrowVideoSurface } from './media/borrowVideoSurface';
 import type { VideoPresentationMode } from './media/videoPresentation';
 import fixtureVideoUrl from './fixtures/video-orientation.mp4';
+import { installSubtitleFixture } from './fixtures/subtitleFixture';
 
 type Candidate = 'babylon' | 'three';
 
@@ -24,6 +25,7 @@ function ComparisonFrame({ embedded, children }: PropsWithChildren<{ embedded: b
 export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const canvas = useRef<HTMLCanvasElement>(null);
     const fixtureVideo = useRef<HTMLVideoElement>(null);
+    const fixtureSubtitles = useRef<ReturnType<typeof installSubtitleFixture>>(null);
     const mediaOwner = useRef<'fixture' | 'jellyfin' | null>(null);
     const active = useRef<ComparisonScene>();
     const [candidate, setCandidate] = useState<Candidate>('babylon');
@@ -33,11 +35,23 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const [sample, setSample] = useState<ComparisonSample>();
     const [offset, setOffset] = useState(0);
     const [mediaMode, setMediaMode] = useState<VideoPresentationMode>('media-layer');
+    const [fixtureCaptions, setFixtureCaptions] = useState(true);
     const catalogue = readCatalogueFixture({ offset, limit: 24 });
 
     useEffect(() => {
         if (!embedded) loading.hide();
     }, [embedded]);
+
+    useEffect(() => {
+        const video = fixtureVideo.current;
+        if (!video) return;
+        const subtitles = installSubtitleFixture(video);
+        fixtureSubtitles.current = subtitles;
+        return () => {
+            subtitles?.dispose();
+            fixtureSubtitles.current = null;
+        };
+    }, []);
 
     useEffect(() => {
         let cancelled = false;
@@ -129,6 +143,10 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const next = useCallback(() => setOffset(value => Math.min(984, value + 24)), []);
     const chooseLayers = useCallback(() => setMediaMode('media-layer'), []);
     const chooseTexture = useCallback(() => setMediaMode('video-texture'), []);
+    const toggleFixtureCaptions = useCallback(() => {
+        fixtureSubtitles.current?.setEnabled(!fixtureCaptions);
+        setFixtureCaptions(!fixtureCaptions);
+    }, [fixtureCaptions]);
     const attachPlayback = useCallback(() => {
         const instance = active.current;
         if (!instance) return;
@@ -196,7 +214,9 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Button onClick={detachVideo} disabled={!ready || busy}>Detach video</Button>
                 </Stack>
                 <Typography component='p' gutterBottom>{sample?.mediaStatus || 'No video attached.'}</Typography>
-                <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop playsInline preload='metadata'
+                <Typography component='p'>Text captions use a plain-text panel in Video texture mode. ASS, bitmap and media-layer subtitles are not composed yet. Keep the ordinary player for those formats. Styling, placement preferences and headset readability remain qualification work.</Typography>
+                <Button onClick={toggleFixtureCaptions} aria-pressed={fixtureCaptions}>{fixtureCaptions ? 'Hide fixture captions' : 'Show fixture captions'}</Button>
+                <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop controls playsInline preload='metadata'
                     aria-label='Silent orientation fixture source' sx={{ width: '12rem', maxWidth: '100%' }} />
                 <Box component='canvas' key={candidate} ref={canvas} tabIndex={0} aria-label='Technical Observatory room preview'
                     sx={{ display: 'block', width: '100%', height: '55vh', backgroundColor: '#151B23' }} />

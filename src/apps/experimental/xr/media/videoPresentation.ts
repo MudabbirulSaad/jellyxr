@@ -4,6 +4,7 @@ export type VideoPresentationMode = 'media-layer' | 'video-texture';
 
 export interface VideoPresentationResource {
     update(): void;
+    readSubtitleStatus?(): string;
     dispose(): void;
 }
 
@@ -80,8 +81,8 @@ export class VideoPresentation {
             }
             this.resource.update();
             this.status = this.mode === 'media-layer' ?
-                'Media layer attached. Subtitle and depth qualification remain open.' :
-                'Video texture attached. Subtitle and colour qualification remain open.';
+                'Media layer attached. Separate subtitles are not composed in this path yet; use the ordinary player for captions.' :
+                `Video texture attached. ${this.resource.readSubtitleStatus?.() || 'Subtitle and colour qualification remain open.'}`;
         } catch {
             this.clearResource();
             this.failed = true;

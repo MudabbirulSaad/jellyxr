@@ -947,6 +947,17 @@ export class HtmlVideoPlayer {
         return this.#mediaElement || null;
     }
 
+    /** Borrow presentation only; selection, timing and renderer lifetime remain player-owned. */
+    getSubtitlePresentationSurface() {
+        let unsupportedRenderer = null;
+        if (this.#currentBitmapSubRenderer) unsupportedRenderer = 'bitmap';
+        if (this.#currentAssRenderer) unsupportedRenderer = 'ASS';
+        return {
+            textElements: [this.#videoSubtitlesElem, this.#videoSecondarySubtitlesElem],
+            unsupportedRenderer
+        };
+    }
+
     stop(destroyPlayer) {
         const elem = this.#mediaElement;
         const src = this.#currentSrc;
