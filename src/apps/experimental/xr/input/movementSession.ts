@@ -21,12 +21,16 @@ export class MovementSession {
     private root: ViewerRoot = INITIAL_VIEWER_ROOT;
     private session: XRSession | null = null;
     private baseSpace: XRReferenceSpace | null = null;
-    private pending: MovementAction | null = null;
+    private pending: MovementAction | Point3 | null = null;
 
     constructor(private readonly pauseForMovement: () => void) {}
 
     request(action: MovementAction): void {
         this.pending = action;
+    }
+
+    requestDestination(point: Point3): void {
+        this.pending = [point[0], point[1], point[2]];
     }
 
     update(
@@ -74,7 +78,8 @@ export class MovementSession {
         });
     }
 
-    private plan(action: MovementAction, tracked: Point3): ViewerRoot | null {
+    private plan(action: MovementAction | Point3, tracked: Point3): ViewerRoot | null {
+        if (typeof action !== 'string') return teleportViewer(this.root, tracked, action);
         if (action === 'turn-left') return snapViewer(this.root, tracked, 1);
         if (action === 'turn-right') return snapViewer(this.root, tracked, -1);
         return teleportViewer(this.root, tracked, action === 'return-seat' ? FIXTURE_SEAT : FIXTURE_LIBRARY);

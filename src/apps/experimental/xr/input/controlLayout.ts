@@ -1,6 +1,6 @@
 import { ROOM_FIXTURE, type Point3 } from '../fixtures/roomFixture';
 
-import { CONTROL_TARGETS, INITIAL_CONTROL_ANCHOR, RECOVERY_TARGETS, controlLocalPoint, type ControlAnchor, type ControlTarget } from './controlTargets';
+import { CONTROL_TARGETS, FLOOR_TARGETS, INITIAL_CONTROL_ANCHOR, RECOVERY_TARGETS, controlLocalPoint, type ControlAnchor, type ControlTarget } from './controlTargets';
 import { rotateFloorPoint, viewerWorldPosition } from './movement';
 
 export interface ControlViewerPose { position: Point3; forward: Point3 }
@@ -40,7 +40,9 @@ export class ControlLayout {
     private pending = false;
 
     read(): ControlAnchor { return this.anchor; }
-    targets(): readonly ControlTarget[] { return this.visibleTargets; }
+    targets(floorMode = false): readonly ControlTarget[] {
+        return floorMode && this.visibleTargets === CONTROL_TARGETS ? FLOOR_TARGETS : this.visibleTargets;
+    }
     isPending(): boolean { return this.pending; }
     request(): void { this.pending = true; }
     cancel(): void { this.pending = false; }

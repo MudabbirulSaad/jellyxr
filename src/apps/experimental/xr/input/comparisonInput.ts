@@ -1,5 +1,7 @@
 import type { Point3 } from '../fixtures/roomFixture';
 
+import { FloorSelection } from './floorSelection';
+
 import { ActivationState } from './activationState';
 import { hitControl, type ControlAction, type InputRay } from './controlTargets';
 import type { RemoteGrab } from './remoteGrab';
@@ -9,6 +11,8 @@ import { ControlLayout, type ControlViewerPose } from './controlLayout';
 export class ComparisonInput {
     readonly state = new ActivationState();
     readonly layout = new ControlLayout();
+    readonly floor = new FloorSelection();
+    private desktopViewer: ControlViewerPose | undefined;
     private session: XRSession | null = null;
     private space: XRReferenceSpace | null = null;
     private ids = new Map<XRInputSource, string>();
@@ -17,7 +21,10 @@ export class ComparisonInput {
     private lastAction = 'No spatial action yet.';
     private lastPointer = 'No desktop pointer event.';
 
-    constructor(private readonly onAction: (action: ControlAction) => void, private readonly grab?: RemoteGrab) {}
+    constructor(
+        private readonly onAction: (action: ControlAction) => void, private readonly grab?: RemoteGrab,
+        private readonly onTeleport: (point: Point3) => void = () => undefined
+    ) {}
 
     summonControls(): void {
         this.cancel();
@@ -27,7 +34,12 @@ export class ComparisonInput {
     private resolveTarget(ray: InputRay | null, near?: Point3): ControlAction | null {
         if (!ray || !ray.origin.every(Number.isFinite) || !ray.direction.every(Number.isFinite)
             || Math.hypot(...ray.direction) < 0.00001) return null;
-        return hitControl(ray, near, this.layout.read(), this.layout.targets()) || 'summon-controls';
+        const control = hitControl(ray, near, this.layout.read(), this.layout.targets(this.floor.isActive()));
+        if (this.floor.isActive()) {
+            this.floor.observe(control ? null : ray);
+            return control || (this.floor.read().valid ? 'confirm-floor' : null);
+        }
+        return control || 'summon-controls';
     }
 
     private updateLayout(frame?: XRFrame, desktopViewer?: ControlViewerPose): void {
@@ -45,8 +57,8 @@ export class ComparisonInput {
         if (result === 'placed') this.report('Controls placed here. They remain anchored until recalled.');
         if (result === 'recovery') this.report('Only recovery controls fit here. Return to seat for the full controls, or exit XR.');
         if (result === 'unavailable') this.report('Controls could not be placed safely. Face open room space and try again, or use the headset system exit.');
-        if (!this.layout.targets().some(target => target.id === this.state.read().focus)) {
-            this.state.observe('layout', this.layout.targets()[0].id);
+        if (!this.layout.targets(this.floor.isActive()).some(target => target.id === this.state.read().focus)) {
+            this.state.observe('layout', this.layout.targets(this.floor.isActive())[0].id);
         }
     }
 
@@ -77,14 +89,22 @@ export class ComparisonInput {
 
     private target(frame: XRFrame, source: XRInputSource): ControlAction | null {
         if (!this.space || source.targetRayMode !== 'tracked-pointer') return null;
+        const owner = this.state.read().source;
+        if (owner && owner !== this.id(source)) return null;
         const pose = frame.getPose(source.targetRaySpace, this.space);
-        if (!pose) return null;
+        if (!pose) {
+            this.floor.cancel();
+            return null;
+        }
         let near: Point3 | undefined;
         if (source.hand) {
             const joint = source.hand.get('index-finger-tip');
             const tip = joint && frame.getJointPose?.(joint, this.space);
             // A stale emulated hand ray cannot keep an activation alive after joint loss.
-            if (!tip) return null;
+            if (!tip) {
+                this.floor.cancel();
+                return null;
+            }
             const { x, y, z } = tip.transform.position;
             near = [x, y, z];
         }
@@ -97,22 +117,29 @@ export class ComparisonInput {
         if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
         const target = this.target(event.frame, event.inputSource);
         if (event.inputSource.hand && target === 'summon-controls' && this.beginGrab(event)) return;
-        this.state.begin(this.id(event.inputSource), target);
+        const id = this.id(event.inputSource);
+        this.state.begin(id, target);
+        if (target === 'confirm-floor' && this.state.read().source === id) this.floor.begin(id);
     };
 
     private select = (event: XRInputSourceEvent) => {
         if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
-        this.perform(this.state.commit(this.id(event.inputSource), this.target(event.frame, event.inputSource)));
+        const id = this.id(event.inputSource);
+        this.perform(this.state.commit(id, this.target(event.frame, event.inputSource)), id);
     };
 
     private end = (event: XRInputSourceEvent) => {
         this.state.cancel(this.id(event.inputSource));
+        this.floor.release(this.id(event.inputSource));
         if (event.inputSource.hand) this.grab?.release(this.id(event.inputSource));
     };
     private beginGrab = (event: XRInputSourceEvent): boolean => {
         if (this.session?.visibilityState !== 'visible' || this.state.read().source) return false;
         const began = this.grab?.begin(this.id(event.inputSource), this.anchor(event.frame, event.inputSource)) || false;
-        if (began) this.state.cancel();
+        if (began) {
+            this.state.cancel();
+            this.floor.cancel();
+        }
         return began;
     };
     private squeeze = (event: XRInputSourceEvent) => {
@@ -125,8 +152,10 @@ export class ComparisonInput {
         this.state.cancel();
         this.grab?.release();
         this.layout.cancel();
+        this.floor.cancel();
     };
     private changed = (event: XRInputSourcesChangeEvent) => {
+        if (event.removed.length) this.floor.cancel();
         for (const source of event.removed) {
             this.state.cancel(this.id(source));
             this.grab?.release(this.id(source));
@@ -134,8 +163,18 @@ export class ComparisonInput {
         }
     };
 
-    private perform(action: ControlAction | null): void {
+    private perform(action: ControlAction | null, source = 'keyboard'): void {
         if (!action) return;
+        if (action === 'choose-floor') {
+            this.cancel();
+            this.floor.arm();
+            if (!this.session && this.desktopViewer) this.floor.keyboard(this.desktopViewer, 0, 0);
+        }
+        if (action === 'cancel-floor') this.floor.cancel();
+        if (action === 'confirm-floor') {
+            const destination = this.floor.commit(source);
+            if (destination) this.onTeleport(destination);
+        }
         if (action === 'select-fixture') this.selectionCount++;
         if (action === 'reset-count') this.selectionCount = 0;
         if (action === 'summon-controls') this.summonControls();
@@ -144,6 +183,7 @@ export class ComparisonInput {
     }
 
     update(session: XRSession | null, space: XRReferenceSpace | null, frame?: XRFrame, desktopViewer?: ControlViewerPose): void {
+        this.desktopViewer = desktopViewer;
         if (session !== this.session) {
             this.unbind();
             this.session = session;
@@ -176,13 +216,16 @@ export class ComparisonInput {
             const id = this.id(source);
             if (owner && owner !== id) continue;
             const target = this.target(frame, source);
-            if (owner || target) {
+            if (owner || target || (this.floor.isActive() && source.targetRayMode === 'tracked-pointer')) {
                 this.state.observe(id, target);
                 observed = true;
                 break;
             }
         }
-        if (!observed) this.state.cancel();
+        if (!observed) {
+            this.state.cancel();
+            this.floor.cancel();
+        }
     }
 
     /** Desktop ray uses the same world-space hit bounds and explicit down/up policy. */
@@ -191,17 +234,24 @@ export class ComparisonInput {
         const target = this.resolveTarget(ray);
         this.lastPointer = `${phase}: ${target || 'no target'}`;
         if (phase === 'move') this.state.observe('desktop', target);
-        if (phase === 'down') this.state.begin('desktop', target);
-        if (phase === 'up') this.perform(this.state.commit('desktop', target));
+        if (phase === 'down') {
+            this.state.begin('desktop', target);
+            if (target === 'confirm-floor') this.floor.begin('desktop');
+        }
+        if (phase === 'up') this.perform(this.state.commit('desktop', target), 'desktop');
         if (phase === 'cancel') this.cancel();
     }
 
     key(phase: 'down' | 'up', key: string): void {
         if (this.session) return;
         const focus = this.state.read().focus;
-        const targets = this.layout.targets();
+        const targets = this.layout.targets(this.floor.isActive());
         if (key === 'Home' && phase === 'down') this.perform('summon-controls');
-        if (key === 'Escape') this.state.cancel();
+        if (key === 'Escape') this.cancel();
+        if (this.floor.isActive()) {
+            this.floorKey(phase, key);
+            return;
+        }
         if (phase === 'down' && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(key)) {
             const direction = key === 'ArrowLeft' || key === 'ArrowUp' ? -1 : 1;
             const index = targets.findIndex(target => target.id === focus);
@@ -215,8 +265,28 @@ export class ComparisonInput {
         }
     }
 
+    private floorKey(phase: 'down' | 'up', key: string): void {
+        const steps: Record<string, readonly [number, number]> = {
+            ArrowLeft: [-0.25, 0], ArrowRight: [0.25, 0], ArrowUp: [0, -0.25], ArrowDown: [0, 0.25]
+        };
+        const step = steps[key];
+        if (phase === 'down' && this.desktopViewer && step) {
+            this.state.cancel();
+            this.floor.release('keyboard');
+            this.floor.keyboard(this.desktopViewer, ...step);
+        }
+        if (key !== 'Enter' && key !== ' ') return;
+        const target = this.floor.read().valid ? 'confirm-floor' : null;
+        if (phase === 'down') {
+            this.state.begin('keyboard', target);
+            this.floor.begin('keyboard');
+        } else {
+            this.perform(this.state.commit('keyboard', target));
+        }
+    }
+
     readStatus(): string {
-        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}.`;
+        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. ${this.floor.status()}`;
     }
 
     report(message: string): void {
