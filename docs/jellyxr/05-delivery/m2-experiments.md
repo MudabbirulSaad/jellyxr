@@ -360,3 +360,27 @@ The bridge copies only while a consumer reads subtitles, captures inside the cur
 | Local checks | TypeScript, full lint (98 inherited warnings), styles and all 263 tests in 35 files pass. Ordinary production/ES5 passes 984 files; experiment production/ES5 passes 994. Checked fixture/test markers are absent from ordinary output. No dependency version or compatibility exclusion changed |
 
 Real-server bitmap selection, offsets, replacement/cancellation, VobSub, precise synchronization, sustained copy cost and Quest readability remain G2 work. Installed libbitsub source and helper tests establish the player wiring; the technical fixture does not prove authenticated bitmap delivery. The inherited asynchronous renderer-creation paths also need cancellation qualification. Native-layer captions remain uncomposed. UI/UX Pro Max's pause/caption and recovery guidance supports the explicit non-playing attachment action and visible ordinary-player fallback. No private media was used; transient browser views were inspected without committing screenshots. Manual reload was required by the existing dev-server origin rejection.
+
+## Native underlay composition increment — 2026-09-30
+
+Source revision: d1242005b9, based on xr cb41379217 (PR #19). This prepares an EXP-01/02 comparison for FR-011/014/018; it does not establish native-layer support or qualify subtitles.
+
+The native video quad is now submitted before the renderer's projection. Both candidates create a video-fitted, front-facing plane that writes zero RGBA and depth in the opaque pass. The intended result is an opening through the opaque room for the native video, with nearer geometry and existing subtitle meshes composed in the projection. This addresses the prior video-last ordering, which could cover nearer captions and controls because layers do not perform scene depth testing between each other. The experiment explicitly requires projection alpha and reports rejection without switching to a texture automatically.
+
+The session retains the latest submitted layer list. This avoids recreating a removed/destroyed layer from a previous `renderState` snapshot when reference space or video dimensions change in the same frame. A capture-phase end listener marks the session ended before ordinary recovery listeners dispose presentation. Cleanup releases the aperture/caption resources and native layer, and restores the previous projection-alpha setting for a live session. Each candidate currently owns one projection; this is not a general coordinator for independent layer producers.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Native ownership contracts | Seven unit cases cover layer order/video identity, projection alpha, missing capability, construction failure, cleanup failure, end-event ordering, same-frame recreation and retry after a pending initial projection. Synthetic sessions establish lifecycle behaviour only |
+| Candidate aperture geometry | Real Babylon NullEngine and Three geometry agree on front, size, position, opaque-pass/depth settings and disposal for a square source. This does not compile the shader on a real GPU or measure compositor pixels |
+| PC browser | Native mode retains an explicit waiting state; attempted immersive entry in the in-app PC browser reports failure without fallback. Both texture candidates subsequently display the paused original video and PGS 2 at 4.8 s. No native layer was displayed in this check |
+| Local checks | TypeScript, full lint (98 inherited warnings), styles and all 271 tests in 37 files pass. Ordinary production/ES5 passes 984 files and experiment production/ES5 passes 994. Underlay markers occur in experimental chunks and remain absent from ordinary output. No dependency versions or compatibility exclusions changed |
+
+Required Quest checks before accepting this technique:
+
+1. Identify the device/browser and actual alpha-capable projection. In each candidate, enter Media layer mode from paused and playing technical video; inspect both eyes, correct orientation, edges and letterboxing.
+2. Compare text, ASS and PGS cues, gaps, seek and Hide/Show against the source. Verify captions remain above video and nearer room controls/objects occlude the screen correctly while leaning and moving.
+3. Move between valid positions, interrupt/exit/re-enter, and replace the active source/track. Require one audible owner, correct progress and no stale layer, aperture or caption.
+4. Measure synchronization, video clarity and sustained device cost against the texture path using permissioned Jellyfin fixtures. A PC waiting state or unit session cannot satisfy this gate.
+
+Until these pass, native alpha/occlusion, both-eye shader output, subtitle fidelity, runtime limits and performance remain unverified. The source was left detached and paused; no private media was used. UI/UX Pro Max's existing caption and recovery guidance informs the explicit failure/return copy. The [composition boundary and primary sources](../04-architecture/jellyfin-integration.md#native-media-underlay-experiment) record the reasoning; no production renderer or video path is selected.
