@@ -1,0 +1,50 @@
+name: JellyXR checks
+
+on:
+  push:
+    branches: [xr]
+  pull_request:
+    branches: [xr]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jellyxr-checks-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Inherited client checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node 24
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci --no-audit
+
+      - name: Check TypeScript
+        run: npm run build:check
+
+      - name: Lint application code
+        run: npm run lint
+
+      - name: Lint styles
+        run: npm run stylelint
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build production assets and check JavaScript compatibility
+        run: npm run build:es-check
