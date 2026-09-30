@@ -71,6 +71,6 @@ Artifact: `jellyxr-c729c0e52d91.tar.gz`, 41,836,442 bytes, under `%LOCALAPPDATA%
 
 No browser, authentication, media, network topology or real-device scenario was executed in this fresh-install slice. ADB returned no connected device. The earlier PC bootstrap and owner-reported Quest results retain their original dates and scope. This is another ordinary-client rehearsal archive, not the final integrated XR artifact or a public release.
 
-A read-only upstream merge preview separately exposed package.json/package-lock.json conflicts against development tip e466eb93f0. See the [upstream inspection](../04-architecture/upstream-assessment.md#update-inspection--2026-09-30). No upstream application change or dependency resolution was adopted; the representative update/retest portion of AT-25 remains open.
+A read-only upstream merge preview separately exposed package.json/package-lock.json conflicts against development tip e466eb93f0. See the [upstream inspection](../04-architecture/upstream-assessment.md#update-inspection--2026-09-30). No upstream application change or dependency resolution was adopted at this checkpoint. The subsequent isolated representative update/retest is recorded in the upstream assessment; final integrated media regression remains open.
 
 Documentation validation passes 433 relative links/anchors across 32 Markdown files, unique requirement definitions, all P0/work/scenario mappings and 17 unchanged dependency edges. No diagrams or application code changed in the evidence commit; whitespace checks pass.
