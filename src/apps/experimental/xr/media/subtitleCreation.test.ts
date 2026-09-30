@@ -58,6 +58,7 @@ type TestPlayer = {
     renderVobSub: HtmlVideoPlayer['renderVobSub'];
     renderSsaAss: HtmlVideoPlayer['renderSsaAss'];
     destroyCustomTrack: HtmlVideoPlayer['destroyCustomTrack'];
+    setTrackForDisplay: HtmlVideoPlayer['setTrackForDisplay'];
     _currentPlayOptions: HtmlVideoPlayer['_currentPlayOptions'];
     isFetching: boolean;
 };
@@ -94,6 +95,28 @@ describe('inherited canvas subtitle creation', () => {
             this.dispatchEvent(new Event('load'));
         });
     });
+
+    it.each(['renderPgs', 'renderVobSub', 'renderSsaAss'] as const)(
+        'clearing secondary captions preserves the primary %s owner and its pending import', async method => {
+            const { player, video, item } = setup();
+            player[method](video, { Index: 2, Codec: method === 'renderSsaAss' ? 'ass' : 'pgssub' }, item);
+            player.setTrackForDisplay(video, null, 1);
+            await vi.dynamicImportSettled();
+            const renderer = method === 'renderSsaAss' ? harness.ass[0] : harness.renderers[0];
+            expect(renderer).toBeDefined();
+            player.setTrackForDisplay(video, null, 1);
+            expect(renderer.dispose).not.toHaveBeenCalled();
+            if (method !== 'renderSsaAss') {
+                harness.renderers[0].options.onLoading();
+                expect(player.isFetching).toBe(true);
+                harness.renderers[0].options.onLoaded();
+                expect(player.isFetching).toBe(false);
+                expect(harness.renderers[0].updateCanvasSize).toHaveBeenCalledOnce();
+            }
+            player.setTrackForDisplay(video, null, 0);
+            expect(renderer.dispose).toHaveBeenCalledOnce();
+        }
+    );
 
     it.each(['renderPgs', 'renderVobSub'] as const)('does not construct a cancelled %s after its dynamic import resolves', async method => {
         const { player, video, item } = setup();

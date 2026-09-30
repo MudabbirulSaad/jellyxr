@@ -307,7 +307,7 @@ UI/UX Pro Max's existing focus, feedback and non-drag alternatives guidance info
 
 ## ASS canvas comparison increment — 2026-09-30
 
-Source revision: 421b73ff09, based on xr b0a9086eea (PR #16). This advances FR-011 / AT-10 and EXP-02. Both texture candidates copy the active libass canvas onto a transparent plane fitted to the video rectangle. Real Jellyfin tracks retain their existing renderer, fonts, timing, offsets and selection owner. The experiment never fetches another real track or disposes the owner's canvas.
+Source revision: 421b73ff09, based on xr b0a9086eea (PR #16). This advances FR-012 / AT-10 and EXP-02. Both texture candidates copy the active libass canvas onto a transparent plane fitted to the video rectangle. Real Jellyfin tracks retain their existing renderer, fonts, timing, offsets and selection owner. The experiment never fetches another real track or disposes the owner's canvas.
 
 The installed libass-wasm 4.2.4 render-ahead draw/clear state provides a revision for unchanged-frame suppression. Unknown modes copy each frame. Canvas replacement, size changes, seeking, track-off and invalidation clear or refresh the owned copy. Excessive dimensions, aspect mismatch and origin-access failure show an ordinary-player recovery message without exporting pixels or exception details. The inherited player gains a read-only presentation getter extension; its rendering lifecycle is unchanged.
 
@@ -328,7 +328,7 @@ UI/UX Pro Max's pause/caption and error-recovery guidance supports explicit cont
 
 ## PGS capture fixture increment — 2026-09-30
 
-Source revision: c944310e1a, based on xr 47fc91fa24 (PR #17). This is a bitmap-capture feasibility fixture for FR-011 / AT-10 / EXP-02, not real Jellyfin bitmap-track integration.
+Source revision: c944310e1a, based on xr 47fc91fa24 (PR #17). This is a bitmap-capture feasibility fixture for FR-012 / AT-10 / EXP-02, not real Jellyfin bitmap-track integration.
 
 An original PGS stream contains two labelled pixel captions at different coordinates, transparent corners, a translucent background, a warm stripe and explicit clear compositions. The stream is generated in TypeScript without external artwork or private media. The installed libbitsub 1.11.0 parser decodes its bytes. Its renderer's synchronous post-render `stats` event captures the canvas into an owned 2D snapshot; both XR texture candidates sample that stable copy. The fixture records the actual bitmap backend, owns its renderer and waits for initialization before disposal to avoid a late overlay after cancellation. Real Jellyfin bitmap renderers remain untouched and explicitly unsupported by the comparison.
 
@@ -346,7 +346,7 @@ Protocol/source references: installed libbitsub 1.11.0 plus its npm gitHead [b49
 
 ## Bitmap consumer bridge increment — 2026-09-30
 
-Source revision: b3b0fdcff6, based on xr 6ae98ff6b8 (PR #18). This advances FR-011 / AT-10 / EXP-02. The existing HTML video player now exposes an optional subtitle-presentation lease; this is a client seam, not a server API or new playback owner.
+Source revision: b3b0fdcff6, based on xr 6ae98ff6b8 (PR #18). This advances FR-012 / AT-10 / EXP-02. The existing HTML video player now exposes an optional subtitle-presentation lease; this is a client seam, not a server API or new playback owner.
 
 The bridge copies only while a consumer reads subtitles, captures inside the current bitmap renderer's synchronous post-render event, ignores replaced-renderer events and releases its snapshot on the last release. Both PGS and VobSub creation paths are wired to it, but VobSub has no runtime evidence. Initial acquisition requests an owner redraw through its existing sizing method without changing time, tracks, settings or playback. Video-only native-layer attachment does not acquire a subtitle copy. The original PGS fixture now exercises this same helper. Its new Attach technical video action preserves the paused state and current position.
 
@@ -363,7 +363,7 @@ Real-server bitmap selection, offsets, replacement/cancellation, VobSub, precise
 
 ## Native underlay composition increment — 2026-09-30
 
-Source revision: d1242005b9, based on xr cb41379217 (PR #19). This prepares an EXP-01/02 comparison for FR-011/014/018; it does not establish native-layer support or qualify subtitles.
+Source revision: d1242005b9, based on xr cb41379217 (PR #19). This prepares an EXP-01/02 comparison for FR-012/014/018; it does not establish native-layer support or qualify subtitles.
 
 The native video quad is now submitted before the renderer's projection. Both candidates create a video-fitted, front-facing plane that writes zero RGBA and depth in the opaque pass. The intended result is an opening through the opaque room for the native video, with nearer geometry and existing subtitle meshes composed in the projection. This addresses the prior video-last ordering, which could cover nearer captions and controls because layers do not perform scene depth testing between each other. The experiment explicitly requires projection alpha and reports rejection without switching to a texture automatically.
 
@@ -405,7 +405,7 @@ Before G2, run both candidates on Quest with each hand/controller and while swit
 
 ## Subtitle creation cancellation increment — 2026-09-30
 
-Source revision: d2e9d32ef3, based on xr d117722d99 (PR #21). This advances FR-011/018, AT-10/14 and EXP-02 through the inherited player. It does not replace a renderer or change dependency versions.
+Source revision: d2e9d32ef3, based on xr d117722d99 (PR #21). This advances FR-012/018, AT-10/14 and EXP-02 through the inherited player. It does not replace a renderer or change dependency versions.
 
 The player now invalidates canvas-renderer requests before destruction. ASS import, configuration and fallback-font continuations check request generation and playback-options identity. PGS/VobSub imports, callbacks and queued resizing check the same boundary, with instance checks on resize. Load completion/failure settles the request's own token, so a stale callback cannot finish a replacement's loading state. ASS promise failures are contained; an active error reaches the player owner, and cancellation suppresses obsolete or already queued errors.
 
@@ -422,7 +422,7 @@ Installed libbitsub 1.11.0 source inspection found a separate concern: `init()` 
 
 ## Bitmap startup disposal increment — 2026-09-30
 
-Source revision: b903865673, based on xr 76bbfc27a3 (PR #22). This repairs a reproduced subset of R-23 under FR-011/018, AT-10/14 and EXP-02. It preserves libbitsub 1.11.0, the lockfile, Jellyfin's renderer ownership and disabled dependency-installation scripts.
+Source revision: b903865673, based on xr 76bbfc27a3 (PR #22). This repairs a reproduced subset of R-23 under FR-012/018, AT-10/14 and EXP-02. It preserves libbitsub 1.11.0, the lockfile, Jellyfin's renderer ownership and disabled dependency-installation scripts.
 
 The installed library resumed initialization after disposal. Its base initializer could append a fresh canvas after WASM became ready or recreate temporary storage after loading. Separately, WebGPU initialization could assign a late device/pipeline or dereference a device already cleared by destruction. Seven unattended tests reproduced these failures before the repair. These are demonstrated startup races; they are not an established cause of the earlier PGS replacement blank frame.
 
@@ -440,7 +440,7 @@ Remaining R-23 work includes cancellation inside already-running parser, worker,
 
 ## Bitmap load cancellation increment — 2026-09-30
 
-Source revision: 660a57bbf8, based on xr 8df832b8b5 (PR #23). This extends the same pinned libbitsub 1.11.0 repair for FR-011/018, AT-10/14 and EXP-02. It closes reproduced load-ownership failures without changing dependency versions, the lockfile or Jellyfin's playback ownership.
+Source revision: 660a57bbf8, based on xr 8df832b8b5 (PR #23). This extends the same pinned libbitsub 1.11.0 repair for FR-012/018, AT-10/14 and EXP-02. It closes reproduced load-ownership failures without changing dependency versions, the lockfile or Jellyfin's playback ownership.
 
 Disposal now aborts that renderer's subtitle requests, cancels queued main-thread parsing, releases an owned worker session before acknowledgement, and prevents late load/frame/index replies from restoring disposed state. Each continuation checks the renderer before changing state or starting fallback work. The shared worker remains available to other renderers. An aborted range probe no longer attempts HEAD and ordinary GET fallbacks. Parser exceptions in a scheduled live load settle through the existing error path instead of escaping a timer callback.
 
@@ -459,7 +459,7 @@ R-23 now retains plain-text/custom-DOM and secondary-track request identity, plu
 
 ## Text subtitle ownership increment — 2026-09-30
 
-Source revision: a236039a88, based on xr 3f2e9f24b6 (PR #24). This advances FR-011/018, AT-10/14 and EXP-02 in the inherited HTML player. No dependency, server API or playback owner changes.
+Source revision: a236039a88, based on xr 3f2e9f24b6 (PR #24). This advances FR-012/018, AT-10/14 and EXP-02 in the inherited HTML player. No dependency, server API or playback owner changes.
 
 Five initial tests reproduced native cues returning after disable, stale cues mixing into a replacement, an obsolete custom response claiming the new element, secondary-first custom captions disappearing, and an old server-session lookup overriding the current selection. An additional reverse-lookup test exposed secondary native cues occupying the primary slot. These failures use the real player selection/rendering methods with controlled transport and native cue storage.
 
@@ -493,3 +493,21 @@ The source recipe and manifest record provenance and hashes under the repository
 | Documentation | Thirty Markdown files pass 409 relative links/anchors, unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 roadmap dependency edges |
 
 The development browser still reports the known HMR origin rejection; manual reload loaded the new assets. No private media was used or started. Desktop frame/load labels are uncontrolled observations and are not performance evidence. No sustained GPU-memory, Quest, compression or material-equivalence pass is inferred. UI/UX Pro Max searches for background noise and hierarchy did not yield material-specific guidance; the existing Observatory specification remains the design authority, with static restrained detail and unchanged unlit video/control surfaces. The [asset pipeline](../04-architecture/asset-pipeline.md) records the next compression, lighting and device steps.
+
+## Subtitle startup and canvas-slot increment — 2026-09-30
+
+Source revision: 6db3a0be75, based on xr 3004f0ceb6 (PR #26). This advances FR-012/018, AT-10/14 and EXP-02 within the inherited HTML player. Earlier subtitle evidence and ledger rows incorrectly cited audio requirement FR-011; those references now point to the authoritative subtitle requirement FR-012. Their observations and qualification limits are unchanged.
+
+Deferred secondary initialization now captures its original track/video/options and is canceled by newer selection, source replacement or teardown. Delayed OSD navigation cannot restore the default pair over a newer choice or initialize another source. Current navigation still removes its overlay state and performs the inherited audio initialization. Clearing secondary captions now preserves the primary ASS/PGS/VobSub renderer, its pending import, callbacks and loading state; clearing the primary or all tracks still disposes it.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Reproduction | Ten of the 45 targeted cases fail against the pre-change player. They expose obsolete default selection after newer primary/secondary choices or source replacement, late OSD initialization, and cancellation of pending primary ASS/PGS/VobSub when secondary captions are cleared. Some cases exercise the same defect through different paths; this is not a count of independent bugs |
+| Regression | Eighteen new cases bring the two player suites to 45 passing cases. Stop/end tests retain the inherited helper's clearing of playback options; normal startup and normal OSD completion still load both tracks. A newer subtitle choice preserves current navigation and audio initialization. Canvas callbacks and final primary disposal remain exercised |
+| Local checks | TypeScript, lint (98 inherited warnings, zero errors), styles and all 393 tests in 45 files pass. Ordinary/experimental production and ES5 checks pass 984/994 files with unchanged compatibility exclusions. Both output sets contain the startup repair and exclude the selected test marker |
+| Documentation | Thirty Markdown files pass 410 relative links/anchors, unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 dependency edges |
+| Evidence boundary | Real player methods run with controlled network, native cue storage, navigation and renderer constructors. Video transport and audio switching are mocked boundaries. These checks establish asynchronous ownership, not real-server delivery, decoder fidelity, audio output, XR composition or headset behavior |
+
+The first concurrent ordinary build process exited with Windows status 0xC0000005 and no compiler diagnostic; the sequential rerun passed. A manually constructed experimental ES-check command used the wrong exclusion list and rejected inherited modern worker files; validation uses the existing `escheck:xr-experiments` script without changing its exclusions. Neither event is reported as an application regression or a successful check.
+
+UI/UX Pro Max's targeted loading-feedback search returned Feedback / Loading Indicators: preserve feedback for its owning operation and avoid stale or misleading busy state. No visual redesign or new copy was needed. Real-server cross-format transitions, the earlier PGS replacement blank observation, native-layer/device tests and sustained resource measurements remain open.

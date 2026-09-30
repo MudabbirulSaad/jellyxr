@@ -268,6 +268,9 @@ export class HtmlVideoPlayer {
      * @type {number | undefined}
      */
     #secondarySubtitleTrackIndexToSetOnPlaying;
+    /** @type {ReturnType<typeof setTimeout> | undefined} */
+    #secondarySubtitleInitializationTimer;
+    #subtitleInitializationGeneration = 0;
     /**
      * @type {number | null}
      */
@@ -600,6 +603,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     async setCurrentSrc(elem, options) {
+        this.cancelSubtitleInitialization();
         elem.removeEventListener('error', this.onError);
 
         let val = options.url;
@@ -997,6 +1001,7 @@ export class HtmlVideoPlayer {
     }
 
     destroy() {
+        this.cancelSubtitleInitialization();
         this.setSubtitleOffset.cancel();
 
         destroyHlsPlayer(this);
@@ -1100,34 +1105,51 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    onNavigatedToOsd = () => {
+    onNavigatedToOsd = (initializeSubtitles = true) => {
         const dlg = this.#videoDialog;
         if (dlg) {
             dlg.classList.remove('videoPlayerContainer-onTop');
 
-            this.onStartedAndNavigatedToOsd();
+            this.onStartedAndNavigatedToOsd(initializeSubtitles);
         }
     };
 
     /**
      * @private
      */
-    onStartedAndNavigatedToOsd() {
+    onStartedAndNavigatedToOsd(initializeSubtitles = true) {
         // If this causes a failure during navigation we end up in an awkward UI state
-        this.setCurrentTrackElement(this.#subtitleTrackIndexToSetOnPlaying);
+        if (initializeSubtitles) this.setCurrentTrackElement(this.#subtitleTrackIndexToSetOnPlaying);
 
         if (this.#audioTrackIndexToSetOnPlaying != null && this.canSetAudioStreamIndex()) {
             this.setAudioStreamIndex(this.#audioTrackIndexToSetOnPlaying);
         }
 
-        if (this.#secondarySubtitleTrackIndexToSetOnPlaying != null && this.#secondarySubtitleTrackIndexToSetOnPlaying >= 0) {
+        if (initializeSubtitles && this.#secondarySubtitleTrackIndexToSetOnPlaying != null && this.#secondarySubtitleTrackIndexToSetOnPlaying >= 0) {
             /**
              * Using a 0ms timeout to set the secondary subtitles because of some weird race condition when
              * setting both primary and secondary tracks at the same time.
              * The `TextTrack` content and cues will somehow get mixed up and each track will play a mix of both languages.
              * Putting this in a timeout fixes it completely.
              */
-            setTimeout(() => this.setSecondarySubtitleStreamIndex(this.#secondarySubtitleTrackIndexToSetOnPlaying), 0);
+            const index = this.#secondarySubtitleTrackIndexToSetOnPlaying;
+            const options = this._currentPlayOptions;
+            const video = this.#mediaElement;
+            this.#secondarySubtitleInitializationTimer = setTimeout(() => {
+                this.#secondarySubtitleInitializationTimer = undefined;
+                if (options === this._currentPlayOptions && video === this.#mediaElement) {
+                    this.setSecondarySubtitleStreamIndex(index);
+                }
+            }, 0);
+        }
+    }
+
+    /** @private */
+    cancelSubtitleInitialization() {
+        this.#subtitleInitializationGeneration++;
+        if (this.#secondarySubtitleInitializationTimer !== undefined) {
+            clearTimeout(this.#secondarySubtitleInitializationTimer);
+            this.#secondarySubtitleInitializationTimer = undefined;
         }
     }
 
@@ -1160,7 +1182,15 @@ export class HtmlVideoPlayer {
             });
 
             if (this._currentPlayOptions.fullscreen) {
-                appRouter.showVideoOsd().then(this.onNavigatedToOsd);
+                const options = this._currentPlayOptions;
+                const video = this.#mediaElement;
+                const generation = this.#subtitleInitializationGeneration;
+                appRouter.showVideoOsd().then(() => {
+                    if (options === this._currentPlayOptions && video === this.#mediaElement) {
+                        // Finish the current navigation, but never override a newer track choice or stopped session.
+                        this.onNavigatedToOsd(generation === this.#subtitleInitializationGeneration);
+                    }
+                });
             } else {
                 setBackdropTransparency(TRANSPARENCY_LEVEL.Backdrop);
                 this.#videoDialog.classList.remove('videoPlayerContainer-onTop');
@@ -1335,10 +1365,9 @@ export class HtmlVideoPlayer {
      * @private
      */
     destroyCustomTrack(videoElement, targetTrackIndex) {
-        // Invalidate pending imports/configuration and callbacks before disposing either canvas owner.
-        this.#subtitleRendererGeneration++;
         const slots = this.isPrimaryTrack(targetTrackIndex) || this.isSecondaryTrack(targetTrackIndex) ?
             [targetTrackIndex] : [PRIMARY_TEXT_TRACK_INDEX, SECONDARY_TEXT_TRACK_INDEX];
+        if (slots.length === 2) this.cancelSubtitleInitialization();
         for (const slot of slots) {
             this.#subtitleSelections.delete(slot);
             this.#textSubtitleRequests.get(slot)?.cancel();
@@ -1348,6 +1377,10 @@ export class HtmlVideoPlayer {
         this.destroyCustomRenderedTrackElements(targetTrackIndex);
         this.destroyNativeTracks(videoElement, targetTrackIndex);
         this.destroyStoredTrackInfo(targetTrackIndex);
+
+        // Canvas formats belong to the primary slot; secondary cleanup must preserve its imports and callbacks.
+        if (this.isSecondaryTrack(targetTrackIndex)) return;
+        this.#subtitleRendererGeneration++;
 
         const octopus = this.#currentAssRenderer;
         if (octopus) {
@@ -1849,6 +1882,7 @@ export class HtmlVideoPlayer {
      * @private
      */
     setCurrentTrackElement(streamIndex, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+        this.cancelSubtitleInitialization();
         const selection = Symbol();
         const playOptions = this._currentPlayOptions;
         const videoElement = this.#mediaElement;
