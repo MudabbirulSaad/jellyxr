@@ -117,6 +117,10 @@ Track disposal must abort that renderer's subtitle fetches, reject late load res
 
 Extend the pinned patch only against reproduced ownership failures, with tests at network, worker and scheduled-parser boundaries. Those tests control external completions and must stay distinct from codec fidelity and actual-device qualification. The library's existing range loader accepts an abort signal; use that interface without introducing another subtitle downloader or playback owner.
 
+### Plain-text request ownership
+
+Native cues and custom text elements must apply only to the current video, source and selected primary/secondary slot. Replacing or disabling a slot invalidates and aborts its pending request; removing the primary selection invalidates both slots. A secondary selection must not cancel a still-current primary fetch, and either request may complete first. Delayed playback-session lookups must also respect the latest selection before starting rendering or changing delivery metadata. Loading feedback must settle once through response-body decoding, cancellation or failure; obsolete errors must not affect a replacement. Preserve the existing account, delivery endpoint, text sanitization and track presentation options.
+
 ### Native media underlay experiment
 
 Investigate placing the native video quad before the renderer's projection layer. Layers compose in list order without scene depth testing between them; placing video last can cover nearer scene controls and captions. The proposed projection pass therefore writes transparent black at a depth-tested, video-sized screen aperture, while the surrounding room stays opaque. Existing caption meshes render in the same projection pass as controls and foreground geometry. This keeps caption timing with the inherited owner and avoids a second subtitle timeline or direct manipulation of compositor-owned textures.
