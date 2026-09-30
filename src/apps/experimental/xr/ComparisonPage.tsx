@@ -19,6 +19,7 @@ import type { ChairQuality } from './assets/chairAssets';
 
 type Candidate = 'babylon' | 'three';
 type CanvasCaptionFixture = Awaited<ReturnType<typeof installAssFixture>> & { acquire?(): () => void };
+const TIMING_SCOPES = { 'desktop-preview': 'Desktop preview', 'immersive-xr': 'Immersive XR', suspended: 'Timing suspended' };
 
 function ComparisonFrame({ embedded, children }: PropsWithChildren<{ embedded: boolean }>) {
     if (embedded) return <div>{children}</div>;
@@ -164,6 +165,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const plainRoom = useCallback(() => setDetailedRoom(false), []);
     const recall = useCallback(() => active.current?.recallRemote(), []);
     const summonControls = useCallback(() => active.current?.summonControls(), []);
+    const resetTiming = useCallback(() => active.current?.resetTiming(), []);
     const enter = useCallback(() => {
         const instance = active.current;
         if (!instance) return;
@@ -327,10 +329,14 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                 <Typography component='p'>Choose floor arms teleport selection. Point at clear floor and confirm with trigger or pinch; Cancel move leaves you in place. On PC, use arrow keys to adjust the destination after Choose floor, Enter to confirm and Escape to cancel. A blocked destination never moves you.</Typography>
                 <Typography component='p'>Remote fixture: bring a controller close and hold its grip, or bring thumb and index finger close and pinch. Release deliberately to toss with bounded motion. Losing tracking drops it without throw momentum. Recall remote restores it to the stand. Held orientation is constrained; free rotation, angular throws and production remote controls remain unimplemented.</Typography>
                 <Typography component='p' gutterBottom sx={{ marginTop: 2 }}>
-                    {sample ? `${sample.frames} frames; recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms; remote height ${sample.remoteHeight.toFixed(3)} m.` : 'Frame observations will appear after the scene starts.'}
+                    {sample ? `${TIMING_SCOPES[sample.scope]}; ${sample.frames} frames since reset; ${sample.windowSamples}/720 recent samples. ` : 'Frame observations will appear after the scene starts.'}
+                    {sample && (sample.p95WorkMs === null ? 'Application-work p95 pending. ' : `Recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms. `)}
+                    {sample && `Remote height ${sample.remoteHeight.toFixed(3)} m.`}
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.
                     {' '}{sample?.physicsStatus}
                 </Typography>
+                <Button onClick={resetTiming} disabled={!ready || busy}>Reset timing samples</Button>
+                <Typography component='p'>Timing resets when entering or leaving XR, after interruption and when attaching a video or changing its presentation path. Use Reset timing samples after warmup; playback and room placement stay unchanged.</Typography>
                 <Typography component='p'>Use Open catalogue in the scene for six technical cards, type filtering, paging and details. Search opens a spatial keyboard; Cancel keeps your previous results, and Clear search removes the term. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
                 <Typography component='p'>Screen settings opens anchored controls for size, distance, height and tilt. Next setting cycles between them; Reset screen restores the default size and position. Video, captions and the solid screen move together. A blocked placement keeps the previous position and explains how to recover. Back to controls retains the placement for this scene. These bounded comparison settings still need headset readability and comfort testing.</Typography>
                 <Typography component='p'>Captions opens plain-text size, backing and placement controls from Screen settings. Changes retain the current video and cue; Reset captions restores 100%, opaque backing and upper placement. ASS and bitmap subtitles keep their authored layout. These settings last for the comparison scene and still require headset readability and synchronization checks.</Typography>

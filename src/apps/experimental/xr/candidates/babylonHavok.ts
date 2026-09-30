@@ -141,6 +141,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             input.update(null, null);
             input.cancel();
             simulation.reset();
+            sampler.suspend();
             video.interrupt();
         },
         pause: playback.pause,
@@ -165,8 +166,10 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
         if (document.hidden || !recovery.canPresent()) {
             simulation.reset();
+            sampler.suspend();
             return;
         }
+        sampler.synchronize(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null, recovery.isSuspended());
         const start = performance.now();
         try {
             const moved = movement.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
@@ -200,16 +203,25 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         scene.render();
         sampler.record(performance.now() - start);
     });
-    const timer = window.setInterval(() => onSample({
+    const publish = () => onSample({
         ...sampler.read(), physicsStatus: simulation.status(), remoteHeight: remote?.transformNode.position.y || 0,
         immersive: !!xr?.sessionManager.inXRSession, mediaStatus: video.readStatus(), inputStatus: input.readStatus(),
         assetStatus: [chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.',
             architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.',
             remoteModel?.status || 'Remote model failed to load. Box remains visible; retry by restarting the comparison.'].join(' ')
-    }), 1000);
+    });
+    const timer = window.setInterval(publish, 1000);
 
     return {
-        setVideo: (surface, mode) => video.attach(surface, mode),
+        setVideo(surface, mode) {
+            video.attach(surface, mode);
+            sampler.reset();
+            publish();
+        },
+        resetTiming() {
+            sampler.reset();
+            publish();
+        },
         async enterXR() {
             if (!xr) throw new Error('WebXR is unavailable in this browser.');
             await xr.enterXRAsync('immersive-vr', 'local-floor', undefined, {

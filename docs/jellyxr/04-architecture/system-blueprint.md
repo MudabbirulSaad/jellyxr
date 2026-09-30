@@ -102,6 +102,12 @@ Under FR-031 and EXP-04, distinguish a deliberate squeeze/pinch end from cancell
 
 Tracking loss, removed input, hidden/end/reset, scene movement, Recall and disposal release without inherited momentum. Fresh tracking never replays a canceled throw. Both physics adapters must apply the same explicit velocity after returning to dynamic motion, wake normally, retain collision protection and permit settling/sleep/Recall. Exercise deliberate and canceled releases through controlled native events and actual WASM wall/floor/shelf collisions. Report those checks separately from Quest hand/controller, arbitrary-impact, comfort and sustained performance qualification; no G2 choice is implied.
 
+### Comparison timing observation boundaries
+
+Under NFR-001/010 and EXP-03, keep the existing bounded 720-sample application-work window separate for ordinary desktop preview and each immersive session. A new session identity, presentation-mode transition or interruption clears both the window and its frame count. Hidden, blurred or invalidated sessions may retain required head-tracked rendering, but must not contribute qualification timing samples. Clear observations immediately on interruption events even when the runtime supplies no further animation frame; resuming starts a fresh window and never adds hidden elapsed time.
+
+An explicit media attachment or presentation-path change also clears timing history so an old/no-video workload is not presented as the new media path. Offer a labelled manual timing reset for controlled warmup/runs without changing playback, scene placement, input or physics. Display observation scope, frames since reset, recent window size and a pending state before any valid sample; zero is not a measured p95. Retain nearest-rank p95 and bounded memory. These are synchronous application-work observations, excluding GPU, compositor, decode and motion-to-photon timing. Record the actual device, refresh rate, workload and profiling limits separately; no automatic performance pass or G2 choice follows from the readout.
+
 ## Production loading boundary
 
 M3 hosts a bounded XR feature within the existing React application. Load renderer, physics and room assets only at the feature boundary; preserve ordinary routes and localization. Capability detection explains unavailable entry without treating a user-agent string as proof. The borrowed media bridge detaches without stopping or reporting through a second owner. Subtitle presentation and text rendering are chosen at G2.

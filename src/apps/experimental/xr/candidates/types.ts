@@ -1,10 +1,9 @@
 import type { BorrowedVideoSurface } from '../media/borrowVideoSurface';
 import type { VideoPresentationMode } from '../media/videoPresentation';
 import type { PauseReason } from '../input/sessionRecovery';
+import type { FrameObservations } from './frameSampler';
 
-export interface ComparisonSample {
-    frames: number;
-    p95WorkMs: number;
+export interface ComparisonSample extends FrameObservations {
     remoteHeight: number;
     physicsStatus: string;
     immersive: boolean;
@@ -18,6 +17,7 @@ export interface ComparisonScene {
     exitXR(): Promise<void>;
     recallRemote(): void;
     summonControls(): void;
+    resetTiming(): void;
     setVideo(surface: BorrowedVideoSurface | null, mode: VideoPresentationMode): void;
     dispose(): Promise<void>;
 }

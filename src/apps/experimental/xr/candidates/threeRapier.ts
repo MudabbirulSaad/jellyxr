@@ -130,6 +130,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             input.update(null, null);
             input.cancel();
             simulation.reset();
+            sampler.suspend();
             video.interrupt();
         },
         pause: playback.pause,
@@ -155,8 +156,10 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         recovery.bind(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
         if (document.hidden || !recovery.canPresent()) {
             simulation.reset();
+            sampler.suspend();
             return;
         }
+        sampler.synchronize(renderer.xr.getSession(), recovery.isSuspended());
         const start = performance.now();
         try {
             const moved = movement.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), frame,
@@ -190,16 +193,25 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         renderer.render(scene, camera);
         sampler.record(performance.now() - start);
     });
-    const timer = window.setInterval(() => onSample({
+    const publish = () => onSample({
         ...sampler.read(), physicsStatus: simulation.status(), remoteHeight: remote?.position.y || 0, immersive: renderer.xr.isPresenting,
         mediaStatus: video.readStatus(), inputStatus: input.readStatus(),
         assetStatus: [chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.',
             architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.',
             remoteModel?.status || 'Remote model failed to load. Box remains visible; retry by restarting the comparison.'].join(' ')
-    }), 1000);
+    });
+    const timer = window.setInterval(publish, 1000);
 
     return {
-        setVideo: (surface, mode) => video.attach(surface, mode),
+        setVideo(surface, mode) {
+            video.attach(surface, mode);
+            sampler.reset();
+            publish();
+        },
+        resetTiming() {
+            sampler.reset();
+            publish();
+        },
         async enterXR() {
             // The comparison is optional; unsupported ordinary browsers retain the fixture preview.
             if (!navigator.xr) throw new Error('WebXR is unavailable in this browser.');
