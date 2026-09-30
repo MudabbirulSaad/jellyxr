@@ -1,0 +1,119 @@
+diff --git a/src/scripts/browserDeviceProfile.test.ts b/src/scripts/browserDeviceProfile.test.ts
+new file mode 100644
+index 0000000000..3fb134cbd6
+--- /dev/null
++++ b/src/scripts/browserDeviceProfile.test.ts
+@@ -0,0 +1,113 @@
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++
++const fixture = vi.hoisted(() => ({
++    browser: {} as Record<string, boolean | number>,
++    preferFmp4: false,
++    opus: true
++}));
++
++vi.mock('./browser', () => ({ default: fixture.browser }));
++vi.mock('./settings/appSettings', () => ({
++    default: {
++        enableDts: () => false,
++        enableTrueHd: () => false,
++        alwaysRemuxFlac: () => false,
++        alwaysRemuxMp3: () => false,
++        disableVbrAudio: () => false,
++        enableHi10p: () => false,
++        get: () => undefined
++    }
++}));
++vi.mock('./settings/userSettings', () => ({
++    allowedAudioChannels: () => '2',
++    preferFmp4HlsContainer: () => fixture.preferFmp4,
++    limitSegmentLength: () => false
++}));
++
++interface MediaProfile {
++    Container: string;
++    Type: string;
++    AudioCodec?: string;
++    Protocol?: string;
++}
++
++interface Profile {
++    DirectPlayProfiles: MediaProfile[];
++    TranscodingProfiles: MediaProfile[];
++}
++
++beforeEach(() => {
++    vi.resetModules();
++    Object.keys(fixture.browser).forEach(key => {
++        delete fixture.browser[key];
++    });
++    fixture.preferFmp4 = false;
++    fixture.opus = true;
++    // Controlled capability inputs, not a browser or decoder compatibility claim.
++    vi.spyOn(HTMLMediaElement.prototype, 'canPlayType').mockImplementation(type =>
++        !fixture.opus && type.includes('opus') ? '' : 'probably');
++    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
++});
++
++async function profile(disableVideoAudioCodecs: string[] = []): Promise<Profile> {
++    const { default: createProfile } = await import('./browserDeviceProfile');
++    // The inherited JavaScript adds TranscodingProfiles after its initial object literal.
++    return createProfile({ globalMaxVideoBitrate: 12000000, disableVideoAudioCodecs }) as unknown as Profile;
++}
++
++function audio(entries: MediaProfile[], container: string): string[] {
++    const entry = entries.find(value => value.Type === 'Video' && value.Container.split(',').includes(container));
++    expect(entry, `Expected a video profile for ${container}`).toBeDefined();
++    return entry?.AudioCodec?.split(',') || [];
++}
++
++describe('upstream container/audio capability rehearsal', () => {
++    it.each([3, 4, 5])('separates Tizen %s OPUS in MKV/WebM from MP4/TS and HLS-TS', async version => {
++        Object.assign(fixture.browser, { tizen: true, tizenVersion: version, tv: true });
++        const result = await profile();
++        for (const container of ['mkv', 'webm']) expect(audio(result.DirectPlayProfiles, container)).toContain('opus');
++        for (const container of ['mp4', 'ts']) {
++            expect(audio(result.DirectPlayProfiles, container)).not.toContain('opus');
++            expect(audio(result.DirectPlayProfiles, container)).toEqual(expect.arrayContaining(['aac', 'mp3']));
++        }
++        const hls = result.TranscodingProfiles.filter(value => value.Type === 'Video' && value.Protocol === 'hls');
++        expect(hls).not.toHaveLength(0);
++        expect(hls.every(value => value.Container === 'ts' && !value.AudioCodec?.split(',').includes('opus'))).toBe(true);
++    });
++
++    it('keeps the independent fMP4 HLS path on a configured Tizen 5 profile', async () => {
++        Object.assign(fixture.browser, { tizen: true, tizenVersion: 5, tv: true });
++        fixture.preferFmp4 = true;
++        const result = await profile();
++        const hls = result.TranscodingProfiles.filter(value => value.Type === 'Video' && value.Protocol === 'hls');
++        expect(audio(hls, 'mp4')).toContain('opus');
++        expect(audio(hls, 'ts')).not.toContain('opus');
++    });
++
++    it('preserves OPUS in controlled Chromium Android MP4, MKV and WebM profiles', async () => {
++        Object.assign(fixture.browser, { chrome: true, android: true, mobile: true, versionMajor: 140 });
++        const result = await profile();
++        for (const container of ['mp4', 'mkv', 'webm']) expect(audio(result.DirectPlayProfiles, container)).toContain('opus');
++        expect(audio(result.DirectPlayProfiles, 'mkv')).toEqual(audio(result.DirectPlayProfiles, 'mp4'));
++    });
++
++    it('honours disabled video audio codecs in both MP4 and the separate MKV list', async () => {
++        Object.assign(fixture.browser, { chrome: true, android: true, mobile: true, versionMajor: 140 });
++        const result = await profile(['opus', 'aac']);
++        for (const container of ['mp4', 'mkv']) {
++            const codecs = audio(result.DirectPlayProfiles, container);
++            expect(codecs).not.toContain('opus');
++            expect(codecs).not.toContain('aac');
++            expect(codecs).toContain('mp3');
++        }
++    });
++
++    it('does not advertise OPUS in video profiles when the controlled capability probe rejects it', async () => {
++        Object.assign(fixture.browser, { tizen: true, tizenVersion: 4, tv: true });
++        fixture.opus = false;
++        const result = await profile();
++        const video = [...result.DirectPlayProfiles, ...result.TranscodingProfiles].filter(value => value.Type === 'Video');
++        expect(video.length).toBeGreaterThan(0);
++        expect(video.every(value => !value.AudioCodec?.split(',').includes('opus'))).toBe(true);
++    });
++});
