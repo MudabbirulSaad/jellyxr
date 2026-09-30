@@ -1,0 +1,40 @@
+{
+  "id": "observatory-room",
+  "status": "M2 representative architectural shell; not final M5 qualification",
+  "author": "JellyXR project; original procedural geometry authored with Codex assistance",
+  "licence": "GPL-2.0-or-later",
+  "licenceFile": "../../../../../../LICENSE",
+  "source": "../../../../../../scripts/jellyxr/buildObservatoryRoom.ts",
+  "externalAssets": [],
+  "authoringDependency": "three 0.186.0 (MIT)",
+  "coordinates": "right-handed, +Y up, forward -Z",
+  "units": "metres",
+  "file": "observatory-room.glb",
+  "bytes": 1089452,
+  "triangles": 15084,
+  "primitives": 4,
+  "textureCount": 0,
+  "dimensionsMetres": [
+    12.199999809265137,
+    4.399999812245369,
+    14.199999809265137
+  ],
+  "sha256": "30e803bdf4cb8f5654fb42e031c6c2759fa6e49aba936a07968e4bf913f3c955",
+  "collision": "observatory-room-collision.json",
+  "replaces": [
+    "floor",
+    "ceiling",
+    "wall-left",
+    "wall-front",
+    "wall-right",
+    "wall-back",
+    "library-plinth"
+  ],
+  "outstanding": [
+    "Baked lighting/reflections",
+    "Authored surface textures and GPU compression",
+    "Final library shelving",
+    "Quest close-range geometry and comfort review",
+    "Measured loading, draw calls and GPU cost"
+  ]
+}
