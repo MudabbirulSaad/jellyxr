@@ -108,3 +108,36 @@ The source `serviceworker.js` contains notification and activation listeners but
 Production HTTPS domain/trusted-IP hosting, separate origins, Jellyfin server base paths, ranges, WebSockets, authenticated playback/history, interrupted media and real-device upgrade/rollback remain open. Unversioned asset changes need a separate final deployment strategy; retaining only hashed chunks does not solve every mixed-version case. UI/UX Pro Max is not applied to this nonvisual infrastructure slice; inherited interface/copy are unchanged.
 
 The reference fixture ran with Python 3.11.2. The two test tabs and loopback server were closed after evidence capture; the development client and sealed artifacts were preserved. Documentation validation passes 477 relative links/anchors across 33 Markdown files, 41 unique requirements, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.
+
+## Installed dependency notices — 2026-09-30
+
+Source: `cd4877fb74494aaf275efb339b3ef7097f5e0491`, based on xr `1ac8a664ea098dfb37c7990f7eaa6b830b7c75f9`. Scope: independent W-08/W-09 preparation under D-31 and NFR-007/010, implementing the [notice collection contract](package-installation.md#dependency-notice-collection-contract). The ordinary client is unchanged. This is a notice-preservation and integrity result, not a completed redistribution or corresponding-source audit.
+
+Inspection found that the emitted `libbitsub.*.LICENSE.txt` contains a Babel/regenerator notice but omits libbitsub's own installed licence/copyright text. The inherited asset copy list also omits `@jellyfin/libass-wasm/dist/js/COPYRIGHT`, which identifies embedded libraries and their terms, and the installed Noto Sans licence. Retaining emitted comments and lockfile SPDX metadata alone did not preserve these files. The [libbitsub licence at the npm-reported source revision](https://github.com/altqx/libbitsub/blob/b49bc7082d17287d238e7626744d1c991c5f6a2a/LICENSE) was checked on 2026-09-30; the collected bytes come from the installed locked package.
+
+The [collector](../../../scripts/jellyxr/dependencyNotices.ts) copies exact installed top-level licence/notice files and the explicit combined libass notice into `web/third-party-notices/`. Its JSON inventory records package-relative paths, locked versions, metadata, absence states, byte counts and hashes. These are ordinary static files loaded only when requested; dependency runtime code is not copied into this directory. Existing emitted notices, source snapshot and lock inventory remain intact.
+
+| Check | Actual result / boundary |
+| --- | --- |
+| Installed graph | All 1,860 non-root lock entries accounted for: 1,721 packages have collected notices; 61 installed packages have no matching top-level notice; 78 optional packages are absent on this Windows installation. No required package was missing or version-mismatched |
+| Exact notice bytes | 1,731 files, 2,958,414 bytes. Every extracted notice's hash and size match its inventory, and every hash matches the installed source file. No line-ending or notice-text normalization occurs |
+| Input guards | Nineteen controlled cases cover scoped/nested packages, multiple notice files, supplemental libass notice and its absence, absent optional/missing required packages, version mismatch, invalid paths/control characters, malformed optional metadata, unsupported/linked lock entries, reused output, source-root/package/intermediate/notice links and notice-named directories |
+| Inherited checks | All 504 tests in 58 files pass. Application and offline-authoring TypeScript pass; full lint has zero errors and 98 inherited warnings; stylelint passes. Production package build succeeds with the two inherited size warnings; ES5 check passes 984 files. Experimental builds were not repeated because application, experiment and build configuration are unchanged |
+| Archive and extraction | Sealed and separately extracted payloads verify all 4,090 files. Outer tar has 6,088 ordinary file/directory members, numeric owner/group zero and no account names. This Windows/bsdtar result is not a GNU-tar or cross-platform pass |
+| Integrity failure | Appending a labelled technical line to the extracted libbitsub notice makes payload verification fail. Exact byte restoration makes all 4,090 files verify again. The original archive and sealed payload are unchanged |
+| Dependency identity | Lock hash stays `883a2e2d1bef285bf7abdc98547b16c778640c4b2d16fa8a64efe73c51bbb485`; no versions were upgraded or new dependencies installed. The existing installation was reused, not a second fresh-install qualification |
+| Device boundary | ADB reports zero authorized devices at this slice's check. No new browser, authenticated media, headset or native-input pass is claimed |
+
+Selected extracted file identities:
+
+| Installed package / file | Bytes | SHA-256 |
+| --- | --- | --- |
+| libbitsub 1.11.0 / LICENSE | 1,128 | `e052a6a20dd3ae7714556dca283e9edadc4bf4d98438581ff9429392cfdf3188` |
+| @jellyfin/libass-wasm 4.2.4 / dist/js/COPYRIGHT | 48,917 | `ab5c01d34e1f19e2bb99c893d2bd6693dc35da8c8a029f8e4aafd78af93b527a` |
+| @fontsource/noto-sans 5.3.0 / LICENSE | 4,518 | `54ec7b5a35310ad66f9f3091426f7028484cbf9ae1ab5da30122ee412a3009e1` |
+
+Local archive: `jellyxr-cd4877fb7449.tar.gz`, 45,268,874 bytes, under `%LOCALAPPDATA%/JellyXR/notice-package-cd4877fb74/`. SHA-256: `e51616b347a25b61d3ce49907854ae7559d5f03613d937c9dda6e001b2e58c8c`. This directory retains the sealed payload, separately extracted copy and outer checksum list; check logs stay outside Git as `notice-*.log`. No artifact is published or deployed.
+
+The 61 no-matching-notice records include application dependencies such as @jellyfin/ux-web, blurhash and native-promise-only as well as development packages. An absent top-level file does not mean that the package has no licence, lacks permission or is necessarily included in the runtime bundle. Final M6 work must establish emitted-module coverage, inspect those packages and nested/native/WASM sources, retain any additional terms/source required, and review the exact production XR build. The collector does not perform that legal/coverage review. G2, G3 and G4 remain open. UI/UX Pro Max is not applied to this nonvisual packaging slice; interface and copy are unchanged.
+
+Documentation validation passes 510 relative links/anchors across 33 Markdown files, 41 unique requirements, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.
