@@ -4,6 +4,7 @@ import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'nod
 import { fileURLToPath } from 'node:url';
 
 import { hashFile, inventory, verifyPayload, writeManifest } from './packageManifest.ts';
+import { copyDependencyNotices } from './dependencyNotices.ts';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const upstreamRevision = 'fae41f33eb7cd636a9ef68984adb82bb247a6e1b';
@@ -72,10 +73,12 @@ async function copyProvenance(destination: string, revision: string): Promise<vo
         path, version: entry.version || null, license: entry.license || null
     }));
     await writeFile(join(destination, 'dependency-inventory.json'), JSON.stringify(dependencies, null, 2) + '\n');
+    await copyDependencyNotices(root, join(destination, 'web/third-party-notices'));
     await writeFile(join(destination, 'NOTICE.md'), '# JellyXR build notices\n\n'
         + 'JellyXR derives from Jellyfin Web under GPL-2.0-or-later. Preserve LICENSE and CONTRIBUTORS.md. '
         + 'The source snapshot matches the manifest revision and contains build instructions and local dependency patches.\n\n'
-        + 'web/ retains emitted dependency notices. dependency-inventory.json records lockfile metadata, including development packages; '
+        + 'web/ retains emitted dependency notices. web/third-party-notices/ contains exact installed notice files and a hashed inventory, '
+        + 'including the combined libass-wasm notice and bundled font licence files. dependency-inventory.json records lockfile metadata, including development packages; '
         + 'missing licence metadata is null. This inventory is not a complete redistribution or corresponding-source audit. '
         + 'The final M6 audit must review dependency licences and any required additional source before distribution.\n');
 }
