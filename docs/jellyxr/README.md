@@ -38,6 +38,7 @@ JellyXR is a self-hosted Jellyfin Web fork with a spatial library and immersive 
 | Delivery | [PC and Quest development testing](05-delivery/development-testing-workflow.md) | Build, signed-in desktop and Quest USB setup exercised; complete playback, emulator and remote inspection pending |
 | Delivery | [M2 experiment evidence](05-delivery/m2-experiments.md) | Both scenes include spatial catalogue and media/input fixtures; actual-device qualification pending |
 | Delivery | [M1 readiness evidence](05-delivery/m1-readiness.md) | Actual build results, fixture inventory and outstanding actions |
+| Delivery | [Static client packaging and installation](05-delivery/package-installation.md) | Packaging rehearsal preparation; qualification and production topology remain open |
 | Delivery | [Risks and open questions](05-delivery/risks.md) | Active decision backlog |
 | Decisions | [Decision register](06-decisions/decision-register.md) | Confirmed, proposed and deferred entries |
 | Decisions | [Technology evaluation brief](06-decisions/technology-evaluation.md) | Criteria and experiments; no winner selected |
