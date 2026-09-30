@@ -181,7 +181,7 @@ export class ComparisonInput {
     private end = (event: XRInputSourceEvent) => {
         this.state.cancel(this.id(event.inputSource));
         this.floor.release(this.id(event.inputSource));
-        if (event.inputSource.hand) this.grab?.release(this.id(event.inputSource));
+        if (event.inputSource.hand) this.endGrab(event);
     };
     private beginGrab = (event: XRInputSourceEvent): boolean => {
         if (this.session?.visibilityState !== 'visible' || !this.recentViewerPosition() || this.state.read().source) return false;
@@ -197,8 +197,17 @@ export class ComparisonInput {
         if (!event.inputSource.hand) this.beginGrab(event);
     };
     private unsqueeze = (event: XRInputSourceEvent) => {
-        if (!event.inputSource.hand) this.grab?.release(this.id(event.inputSource));
+        if (!event.inputSource.hand) this.endGrab(event);
     };
+    private endGrab(event: XRInputSourceEvent): void {
+        const id = this.id(event.inputSource);
+        const anchor = this.anchor(event.frame, event.inputSource);
+        if (this.session?.visibilityState === 'visible' && this.recentViewerPosition() && anchor?.every(Number.isFinite)) {
+            this.grab?.drop(id);
+        } else {
+            this.grab?.release(id);
+        }
+    }
     cancel = (): void => {
         this.pointing = null;
         this.trackedViewer = null;
