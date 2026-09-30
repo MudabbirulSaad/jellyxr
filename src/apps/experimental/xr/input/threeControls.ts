@@ -1,7 +1,7 @@
 import { CanvasTexture, Group, Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, type Scene } from 'three';
 
-import { CONTROL_TARGETS } from './controlTargets';
-import { controlVisualState, drawControl } from './controlArtwork';
+import { controlCanvasSize, drawControl } from './controlArtwork';
+import { ControlPanels } from './controlPanels';
 import type { ActivationState } from './activationState';
 import type { ControlLayout } from './controlLayout';
 import type { FloorSelection } from './floorSelection';
@@ -10,11 +10,9 @@ import { drawFloorAim } from './floorArtwork';
 export function createThreeControls(scene: Scene, activation: ActivationState, layout: ControlLayout, floor: FloorSelection) {
     const root = new Group();
     scene.add(root);
-    const controls = CONTROL_TARGETS.map(target => {
+    const controls = new ControlPanels(target => {
         const canvas = document.createElement('canvas');
-        canvas.width = 512;
-        canvas.height = 192;
-        drawControl(target, 'idle', canvas);
+        [canvas.width, canvas.height] = controlCanvasSize(target);
         const texture = new CanvasTexture(canvas);
         texture.colorSpace = SRGBColorSpace;
         const material = new MeshBasicMaterial({ map: texture, toneMapped: false });
@@ -22,7 +20,19 @@ export function createThreeControls(scene: Scene, activation: ActivationState, l
         mesh.userData.jellyxrControl = true;
         mesh.position.set(...target.position);
         root.add(mesh);
-        return { target, canvas, texture, material, mesh, state: 'idle' };
+        return {
+            paint(value, state, hint) {
+                mesh.position.set(...value.position);
+                drawControl(value, state, canvas, hint);
+                texture.needsUpdate = true;
+            },
+            dispose() {
+                root.remove(mesh);
+                mesh.geometry.dispose();
+                material.dispose();
+                texture.dispose();
+            }
+        };
     });
     const floorCanvas = document.createElement('canvas');
     floorCanvas.width = floorCanvas.height = 512;
@@ -48,31 +58,14 @@ export function createThreeControls(scene: Scene, activation: ActivationState, l
             const anchor = layout.read();
             root.position.set(...anchor.origin);
             root.rotation.y = anchor.yaw;
-            const input = activation.read();
-            for (const control of controls) {
-                const target = layout.targets(floor.isActive()).find(value => value.id === control.target.id);
-                control.mesh.visible = !!target;
-                if (target) control.mesh.position.set(...target.position);
-                const state = controlVisualState(control.target, input);
-                const hint = control.target.id === 'cancel-floor' && floor.isActive() ? floor.hint() : undefined;
-                const key = `${state}:${hint || ''}`;
-                if (key === control.state) continue;
-                drawControl(control.target, state, control.canvas, hint);
-                control.texture.needsUpdate = true;
-                control.state = key;
-            }
+            controls.update(layout.targets(floor.isActive()), activation.read(), floor.isActive() ? floor.hint() : undefined);
         },
         dispose() {
             scene.remove(floorMesh);
             floorMesh.geometry.dispose();
             floorMaterial.dispose();
             floorTexture.dispose();
-            for (const control of controls) {
-                root.remove(control.mesh);
-                control.mesh.geometry.dispose();
-                control.material.dispose();
-                control.texture.dispose();
-            }
+            controls.dispose();
             scene.remove(root);
         }
     };

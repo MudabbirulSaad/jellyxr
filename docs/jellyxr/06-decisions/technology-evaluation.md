@@ -63,3 +63,11 @@ Do not put credentials or copyrighted test media into the repository. Record per
 At G2, create a dated decision record naming chosen versions, evidence, rejected alternatives and consequences for the blueprint. If no candidate satisfies a P0 constraint, revise the proposed implementation or obtain a recorded scope decision before application development proceeds.
 
 Related: [NFR targets](../02-requirements/nonfunctional-requirements.md), [test strategy](../05-delivery/test-strategy.md), [risks](../05-delivery/risks.md).
+
+## Spatial catalogue comparison contract
+
+For FR-005/006/007/014 and EXP-03/04, present the existing labelled 1,000-record technical catalogue inside each candidate scene. Both candidates use the same bounded page, selectable card geometry, detail state and explicit previous/next/filter/back actions. No fabricated movie metadata, server request, real media playback or production renderer decision is implied by this fixture.
+
+Keep at most six catalogue cards resident, with a bounded set of navigation/detail panels; reuse or dispose replaced textures, materials and geometry. Paging, filtering and detail return preserve deliberate focus, selected identity and page context. A press begun on an earlier view cannot select replacement content. Disabled boundaries must look disabled and reject ray, near and keyboard activation. The heading identifies technical data and the actual filtered range; missing artwork is labelled honestly.
+
+The catalogue opens through an explicit world-space action, settles into a clear forward workspace and remains anchored while the viewer moves. Page/detail changes do not continuously reposition it. Recovery controls remain available if the full presentation cannot fit. Both candidates share exact canvas artwork, geometry/hit bounds and input ownership. Review perspective/depth, readable wrapping, keyboard operation, resource bounds and return flow on PC; only actual Quest evidence can establish hand/controller reach, spatial clarity and catalogue performance. Production search, server collections and playback integration remain M4 requirements.

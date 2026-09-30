@@ -330,6 +330,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     {sample ? `${sample.frames} frames; recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms; remote height ${sample.remoteHeight.toFixed(3)} m.` : 'Frame observations will appear after the scene starts.'}
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.
                 </Typography>
+                <Typography component='p'>Use Open catalogue in the scene for the spatial fixture: six cards, type filtering, paging and details. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
                 <Typography variant='h6' component='h2'>Local catalogue fixture: {catalogue.total} items</Typography>
                 <Typography>Page {Math.floor(offset / 24) + 1}. Only this page is returned to the view. These are technical records, not films.</Typography>
                 <Stack direction='row' spacing={2}>
