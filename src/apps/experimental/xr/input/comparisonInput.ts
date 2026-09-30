@@ -144,7 +144,7 @@ export class ComparisonInput {
     }
 
     private start = (event: XRInputSourceEvent) => {
-        if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
+        if (this.session?.visibilityState !== 'visible' || this.grab?.source() || this.layout.isPending()) return;
         const target = this.target(event.frame, event.inputSource);
         if (event.inputSource.hand && target === 'summon-controls' && this.beginGrab(event)) return;
         const id = this.id(event.inputSource);
@@ -153,7 +153,7 @@ export class ComparisonInput {
     };
 
     private select = (event: XRInputSourceEvent) => {
-        if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
+        if (this.session?.visibilityState !== 'visible' || this.grab?.source() || this.layout.isPending()) return;
         const id = this.id(event.inputSource);
         this.perform(this.state.commit(id, this.target(event.frame, event.inputSource)), id);
     };
@@ -279,6 +279,10 @@ export class ComparisonInput {
     /** Desktop ray uses the same world-space hit bounds and explicit down/up policy. */
     pointer(phase: 'move' | 'down' | 'up' | 'cancel', ray: InputRay | null): void {
         if (this.session) return;
+        if (this.layout.isPending()) {
+            this.state.cancel();
+            return;
+        }
         const target = this.applyAim(this.aimRay(ray, undefined, this.desktopViewer?.position), 'desktop');
         this.lastPointer = `${phase}: ${target || 'no target'}`;
         if (phase === 'move') this.state.observe('desktop', target);
@@ -297,6 +301,7 @@ export class ComparisonInput {
         const targets = this.layout.targets(this.floor.isActive()).filter(target => target.enabled !== false);
         if (key === 'Home' && phase === 'down') this.perform('summon-controls');
         if (key === 'Escape') this.cancel();
+        if (this.layout.isPending()) return;
         if (this.floor.isActive()) {
             this.floorKey(phase, key);
             return;

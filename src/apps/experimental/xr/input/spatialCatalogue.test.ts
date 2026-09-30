@@ -176,6 +176,22 @@ describe('bounded world-space technical catalogue', () => {
         input.dispose();
     });
 
+    it('does not activate catalogue content before its new placement is presented', () => {
+        const input = new ComparisonInput(vi.fn());
+        input.update(null, null, undefined, viewer);
+        input.state.observe('keyboard', 'catalogue-open');
+        input.key('down', 'Enter');
+        input.key('up', 'Enter');
+        input.key('down', 'Enter');
+        input.key('up', 'Enter');
+        expect(input.catalogue.status()).not.toContain('detail');
+        input.update(null, null, undefined, viewer);
+        input.key('down', 'Enter');
+        input.key('up', 'Enter');
+        expect(input.catalogue.status()).toContain('detail jellyxr-fixture-0001');
+        input.dispose();
+    });
+
     it('wraps the full long title and unbroken identifiers without inserting invented content', () => {
         const title = 'Technical catalogue fixture 0001 / episode / Long-title wrapping and text-scale calibration';
         const lines = wrapControlText(title, 24, text => text.length);
