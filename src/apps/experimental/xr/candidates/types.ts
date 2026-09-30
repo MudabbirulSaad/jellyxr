@@ -6,6 +6,7 @@ export interface ComparisonSample {
     frames: number;
     p95WorkMs: number;
     remoteHeight: number;
+    physicsStatus: string;
     immersive: boolean;
     mediaStatus: string;
     inputStatus: string;

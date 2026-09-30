@@ -84,6 +84,12 @@ The interaction layer converts controller and hand events into common select, ba
 
 Physics owns only movable remote/artwork/panel bodies and their collision proxies. The room and screen are stable anchors. Use fixed steps, bounded catch-up after a long frame, damping, sleeping and fast-body collision protection; expose reset/recall without requiring simulation to recover itself. Hide/end suspends or disposes simulation, and returning does not replay accumulated hidden time. EXP-03/04 compare the candidates' costs and failure behaviour before exact integration is chosen.
 
+### Idle simulation comparison
+
+Under FR-031 and EXP-03/04, both M2 candidates stop fixed-step calls when every dynamic fixture body is actually asleep and none is held. Do not infer rest from a quiet-looking mesh or freeze an awake/jittering body to improve timing results. A grab, release, recall or changed static collider must allow the required physics work again; re-entry never catches up the elapsed idle/hidden interval. Unknown sleep state keeps simulation running. Physics suspension must leave rendering, media, input and stable room geometry available.
+
+The current fixture has one dynamic remote. Qualify its native sleep observation, wake and resettling against each installed WASM engine, including a long idle gap, interrupted hold and screen update. Report simulation state, executed fixed steps and skipped idle frames as experiment diagnostics, separate from frame timing. These checks do not establish Quest battery, thermal or sustained-performance gains. Any additional dynamic object must join the activity decision before this policy can apply to a larger scene.
+
 The session coordinator owns reference-space changes and deliberate teleport/snap orientation. It validates destinations, asks the existing playback owner to pause before a viewing-position change, and requires explicit Resume. It does not own a second playback clock. Library identity, filters, selection and pagination survive movement and library/cinema transitions.
 
 ### Grab tracking continuity comparison

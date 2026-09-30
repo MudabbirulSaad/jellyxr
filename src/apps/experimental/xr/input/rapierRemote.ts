@@ -34,6 +34,8 @@ export function createRapierRemote(body: RigidBody | undefined, collisions?: Col
     }, collisions);
     return {
         grab,
+        awake: () => !!grab.source() || !body.isSleeping(),
+        wake: () => body.wakeUp(),
         recall() {
             grab.release();
             body.setTranslation({ x: FIXTURE_REMOTE[0], y: FIXTURE_REMOTE[1], z: FIXTURE_REMOTE[2] }, true);
