@@ -22,6 +22,18 @@ The explicit `JELLYXR_EXPERIMENTS=1` build flag enables this route. Ordinary `se
 
 The fixture UI uses actionable technical labels. Normal product routes never show synthetic film descriptions or fake library content. It creates no competing Jellyfin player or progress reporter; a separate, silent calibration clip is opt-in and refuses to start while ordinary playback is active.
 
+## Screen-size comparison contract — 2026-09-30
+
+Under [FR-016](../02-requirements/functional-requirements.md#fr-016), compare deliberate screen-size changes in both disposable scenes before selecting a presentation path. Keep the architectural screen and its collision proxy fixed, with a graphite surround so reduced images do not expose a bright white border. The displayed image may occupy 60–100% of the existing 6.4 × 3.6 m envelope, in ten-percentage-point steps. These are bounded experiment values, not accepted headset sizing recommendations.
+
+Scene-rendered **Screen size**, **Smaller**, **Larger**, **Reset size** and **Back to controls** actions must use the existing shared controller/hand/desktop hit-testing path. Show the current percentage and physical envelope, disable actions at their limits, and preserve the stable control anchor while adjusting. Retain Return to seat and Exit XR recovery. Closing the panel preserves the size for this scene; Reset restores 100%. No preference is persisted yet.
+
+Video aspect ratio, ASS/bitmap artwork, native quad, projection aperture and plain-text caption geometry must derive from the same percentage. Size changes may replace owned presentation resources but must not release the borrowed player, seek, pause, play, change tracks or restart progress reporting. Unchanged size must not allocate resources each frame. A rejected media layer remains an explicit error, with no silent texture fallback.
+
+Validate boundary/Reset behaviour, stable target placement, both renderer geometries, layer/aperture agreement, cleanup and playback ownership in controlled tests. Inspect both PC texture previews with the labelled calibration media and captions. Real layer resizing, hand/controller operation, subtitle readability and comfort remain Quest checks. Distance, height, tilt, curved presentation, general screen recentering and scoped production preferences remain unimplemented portions of FR-016; this increment does not close that requirement or G2.
+
+UI/UX Pro Max's verified **Disabled States** guidance informs distinct disabled controls; the existing focus/press feedback and concrete action labels are retained. Its mobile sizing and haptic defaults are not XR qualification evidence.
+
 ## Candidate versions and provenance
 
 | Package | Exact experimental version | Installed package licence |

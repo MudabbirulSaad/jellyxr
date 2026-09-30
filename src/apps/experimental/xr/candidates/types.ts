@@ -33,5 +33,5 @@ export const FIXTURE_COLOURS = {
     surface: '#151B23',
     metal: '#A7B0BC',
     warm: '#D7B67A',
-    screen: '#F2F4F7'
+    screen: '#0B0F14'
 };

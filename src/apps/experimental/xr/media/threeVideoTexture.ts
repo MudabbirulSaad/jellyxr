@@ -1,11 +1,13 @@
 import { Mesh, MeshBasicMaterial, PlaneGeometry, SRGBColorSpace, VideoTexture, type Scene } from 'three';
 
+import { screenGeometry } from '../fixtures/screenFixture';
+
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { fitVideoScreen, type VideoPresentationResource } from './videoPresentation';
 import { createThreeSubtitles } from './threeSubtitles';
 
-export function createThreeVideoTexture(surface: BorrowedVideoSurface, scene: Scene): VideoPresentationResource {
-    const dimensions = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight);
+export function createThreeVideoTexture(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100): VideoPresentationResource {
+    const dimensions = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight, screenPercent);
     // Exact-version source inspection: VideoTexture observes frames and cancels only its own callback.
     const texture = new VideoTexture(surface.video);
     texture.colorSpace = SRGBColorSpace;
@@ -13,9 +15,10 @@ export function createThreeVideoTexture(surface: BorrowedVideoSurface, scene: Sc
     texture.needsUpdate = true;
     const material = new MeshBasicMaterial({ map: texture, toneMapped: false });
     const mesh = new Mesh(new PlaneGeometry(dimensions.width, dimensions.height), material);
-    mesh.position.set(0, 2, -6.47);
+    mesh.name = 'borrowed-video-screen';
+    mesh.position.set(...screenGeometry(screenPercent).videoPosition);
     scene.add(mesh);
-    const subtitles = createThreeSubtitles(surface, scene);
+    const subtitles = createThreeSubtitles(surface, scene, screenPercent);
     return {
         update() {
             // Three's renderer updates the borrowed video texture.

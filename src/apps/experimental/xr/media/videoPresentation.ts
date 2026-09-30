@@ -1,3 +1,5 @@
+import { screenGeometry } from '../fixtures/screenFixture';
+
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 
 export type VideoPresentationMode = 'media-layer' | 'video-texture';
@@ -9,16 +11,17 @@ export interface VideoPresentationResource {
 }
 
 export interface VideoPresentationBackend {
-    createTexture(surface: BorrowedVideoSurface): VideoPresentationResource;
-    createLayer(surface: BorrowedVideoSurface, session: XRSession, space: XRReferenceSpace): VideoPresentationResource;
+    createTexture(surface: BorrowedVideoSurface, screenPercent: number): VideoPresentationResource;
+    createLayer(surface: BorrowedVideoSurface, session: XRSession, space: XRReferenceSpace, screenPercent: number): VideoPresentationResource;
 }
 
 /** Letterbox within the shared screen; never stretch the video's encoded aspect ratio. */
-export function fitVideoScreen(width: number, height: number): { width: number; height: number } {
+export function fitVideoScreen(width: number, height: number, screenPercent = 100): { width: number; height: number } {
     if (!Number.isFinite(width) || !Number.isFinite(height) || width <= 0 || height <= 0) {
         throw new Error('Video dimensions are unavailable.');
     }
-    const scale = Math.min(6.4 / width, 3.6 / height);
+    const screen = screenGeometry(screenPercent);
+    const scale = Math.min(screen.width / width, screen.height / height);
     return { width: width * scale, height: height * scale };
 }
 
@@ -30,6 +33,7 @@ export class VideoPresentation {
     private session: XRSession | null = null;
     private space: XRReferenceSpace | null = null;
     private dimensions = '';
+    private screenPercent = 100;
     private failed = false;
     private status = 'No video attached.';
 
@@ -47,7 +51,7 @@ export class VideoPresentation {
         return this.status;
     }
 
-    update(session: XRSession | null, space: XRReferenceSpace | null): void {
+    update(session: XRSession | null, space: XRReferenceSpace | null, screenPercent = 100): void {
         const surface = this.surface;
         if (!surface) return;
         if (!surface.isCurrent()) {
@@ -57,12 +61,13 @@ export class VideoPresentation {
         }
         const { video } = surface;
         const dimensions = `${video.videoWidth}x${video.videoHeight}`;
-        // A new session, reference space or stream size invalidates GPU/compositor resources.
-        if (session !== this.session || space !== this.space || dimensions !== this.dimensions) {
+        // Replace only owned resources on session, stream or deliberate screen-size changes.
+        if (session !== this.session || space !== this.space || dimensions !== this.dimensions || screenPercent !== this.screenPercent) {
             this.clearResource();
             this.session = session;
             this.space = space;
             this.dimensions = dimensions;
+            this.screenPercent = screenPercent;
             this.failed = false;
         }
         if (this.failed) return;
@@ -77,7 +82,7 @@ export class VideoPresentation {
         try {
             if (!this.resource) {
                 this.resource = this.mode === 'media-layer' && session && space ?
-                    this.backend.createLayer(surface, session, space) : this.backend.createTexture(surface);
+                    this.backend.createLayer(surface, session, space, screenPercent) : this.backend.createTexture(surface, screenPercent);
             }
             this.resource.update();
             this.status = this.mode === 'media-layer' ?

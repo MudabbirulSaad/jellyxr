@@ -24,6 +24,17 @@ function setup() {
 }
 
 describe('native video underlay ownership', () => {
+    it('passes the same bounded size to native video and projection content', () => {
+        const f = setup();
+        const resource = createNativeMediaLayer(f.surface, f.session, f.space, f.content, 60);
+        expect(f.createQuadLayer).toHaveBeenCalledWith(f.surface.video, expect.objectContaining({
+            width: expect.closeTo(3.84), height: expect.closeTo(2.16)
+        }));
+        expect(f.content).toHaveBeenCalledExactlyOnceWith(60);
+        resource.dispose();
+        expect(f.surface.release).not.toHaveBeenCalled();
+    });
+
     it('places borrowed video beneath alpha projection content, then restores state without owning playback', () => {
         const f = setup();
         const play = vi.spyOn(f.surface.video, 'play');

@@ -15,7 +15,7 @@ vi.mock('./babylonSubtitles', () => ({
 }));
 
 describe('projection apertures', () => {
-    it('keeps both real plane geometries aligned, opaque-pass depth-tested and disposable', () => {
+    it.each([60, 80, 100])('keeps both %i%% plane geometries aligned, depth-tested and disposable', percent => {
         const engine = new NullEngine();
         const babylon = new BabylonScene(engine);
         babylon.useRightHandedSystem = true;
@@ -24,17 +24,17 @@ describe('projection apertures', () => {
         Object.defineProperties(video, { videoWidth: { value: 1000 }, videoHeight: { value: 1000 } });
         const surface = { video, isCurrent: () => true, release: vi.fn() };
         try {
-            const a = createBabylonMediaUnderlay(surface, babylon);
-            const b = createThreeMediaUnderlay(surface, three);
+            const a = createBabylonMediaUnderlay(surface, babylon, percent);
+            const b = createThreeMediaUnderlay(surface, three, percent);
             const bm = babylon.getMeshByName('media-underlay-aperture')!;
             const tm = three.getObjectByName('media-underlay-aperture') as Mesh<PlaneGeometry, ShaderMaterial>;
             expect(bm.position.asArray()).toEqual(tm.position.toArray());
             expect(tm.position.toArray()).toEqual([0, 2, -6.47]);
-            expect(tm.geometry.parameters.width).toBe(3.6);
-            expect(tm.geometry.parameters.height).toBe(3.6);
+            expect(tm.geometry.parameters.width).toBeCloseTo(3.6 * percent / 100);
+            expect(tm.geometry.parameters.height).toBeCloseTo(3.6 * percent / 100);
             const bounds = bm.getBoundingInfo().boundingBox;
-            expect(bounds.extendSize.x * 2).toBeCloseTo(3.6);
-            expect(bounds.extendSize.y * 2).toBeCloseTo(3.6);
+            expect(bounds.extendSize.x * 2).toBeCloseTo(3.6 * percent / 100);
+            expect(bounds.extendSize.y * 2).toBeCloseTo(3.6 * percent / 100);
             expect(bm.getVerticesData('normal')?.[2]).toBe(1);
             expect(tm.geometry.attributes.normal.getZ(0)).toBe(1);
             expect((bm.material as BabylonShader).needAlphaBlending()).toBe(false);

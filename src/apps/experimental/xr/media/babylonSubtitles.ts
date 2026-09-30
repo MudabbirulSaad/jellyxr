@@ -4,12 +4,15 @@ import type { Scene } from '@babylonjs/core/scene';
 
 import { createBabylonPanel } from '../candidates/babylonPanel';
 
+import { screenGeometry } from '../fixtures/screenFixture';
+
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { createBabylonCanvasSubtitles } from './babylonCanvasSubtitles';
-import { createSubtitleArtwork, SUBTITLE_PANEL } from './textSubtitles';
+import { createSubtitleArtwork } from './textSubtitles';
 
-export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Scene) {
-    const rich = createBabylonCanvasSubtitles(surface, scene);
+export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100) {
+    const rich = createBabylonCanvasSubtitles(surface, scene, screenPercent);
+    const panel = screenGeometry(screenPercent).captions;
     const canvas = document.createElement('canvas');
     const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning);
     const texture = new DynamicTexture('borrowed-subtitles', canvas, scene, false);
@@ -17,8 +20,8 @@ export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Sce
     material.disableLighting = true;
     material.emissiveTexture = texture;
     material.backFaceCulling = true;
-    const mesh = createBabylonPanel('borrowed-subtitles', SUBTITLE_PANEL.width, SUBTITLE_PANEL.height, scene);
-    mesh.position.set(SUBTITLE_PANEL.x, SUBTITLE_PANEL.y, SUBTITLE_PANEL.z);
+    const mesh = createBabylonPanel('borrowed-subtitles', panel.width, panel.height, scene);
+    mesh.position.set(...panel.position);
     mesh.material = material;
     mesh.setEnabled(false);
     return {

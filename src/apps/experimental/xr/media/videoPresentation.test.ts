@@ -19,6 +19,31 @@ function setup() {
 }
 
 describe('video comparison lifecycle', () => {
+    it.each(['media-layer', 'video-texture'] as const)('replaces only presentation on %s resizing, once per change', mode => {
+        const { surface, presentation, backend, session, space } = setup();
+        surface.video.currentTime = 42;
+        const play = vi.spyOn(surface.video, 'play');
+        const pause = vi.spyOn(surface.video, 'pause');
+        const load = vi.spyOn(surface.video, 'load');
+        presentation.attach(surface, mode);
+        presentation.update(session, space, 100);
+        const factory = mode === 'media-layer' ? backend.createLayer : backend.createTexture;
+        const original = factory.mock.results[0].value;
+        presentation.update(session, space, 60);
+        presentation.update(session, space, 60);
+        expect(original.dispose).toHaveBeenCalledOnce();
+        expect(factory).toHaveBeenCalledTimes(2);
+        expect(factory.mock.calls[1]).toEqual(mode === 'media-layer' ? [surface, session, space, 60] : [surface, 60]);
+        expect(surface.release).not.toHaveBeenCalled();
+        expect([surface.video.currentTime, surface.video.paused]).toEqual([42, true]);
+        expect(play).not.toHaveBeenCalled();
+        expect(pause).not.toHaveBeenCalled();
+        expect(load).not.toHaveBeenCalled();
+        presentation.dispose();
+        expect(factory.mock.results[1].value.dispose).toHaveBeenCalledOnce();
+        expect(surface.release).toHaveBeenCalledOnce();
+    });
+
     it('drops presentation resources immediately on interruption without releasing or controlling the owner', () => {
         const { surface, presentation, backend, session, space } = setup();
         const play = vi.spyOn(surface.video, 'play');
@@ -47,7 +72,7 @@ describe('video comparison lifecycle', () => {
         expect(backend.createLayer).not.toHaveBeenCalled();
         expect(backend.createTexture).not.toHaveBeenCalled();
         presentation.update(session, space);
-        expect(backend.createLayer).toHaveBeenCalledExactlyOnceWith(surface, session, space);
+        expect(backend.createLayer).toHaveBeenCalledExactlyOnceWith(surface, session, space, 100);
         presentation.update(null, null);
         expect(backend.createLayer.mock.results[0].value.dispose).toHaveBeenCalledTimes(1);
         expect(surface.release).not.toHaveBeenCalled();
@@ -110,6 +135,16 @@ describe('video comparison lifecycle', () => {
 });
 
 describe('screen fitting', () => {
+    it('preserves source aspect within the reduced envelope and rejects invalid bounds', () => {
+        const portrait = fitVideoScreen(1000, 2000, 60);
+        expect(portrait.width).toBeCloseTo(1.08);
+        expect(portrait.height).toBeCloseTo(2.16);
+        const wide = fitVideoScreen(2400, 1000, 70);
+        expect(wide.width).toBeCloseTo(4.48);
+        expect(wide.width / wide.height).toBeCloseTo(2.4);
+        for (const size of [0, 59, 101, NaN, Infinity]) expect(() => fitVideoScreen(640, 360, size)).toThrow('Screen size');
+    });
+
     it('preserves portrait and widescreen aspect ratios inside the same cinema screen', () => {
         expect(fitVideoScreen(1920, 1080)).toEqual({ width: 6.4, height: 3.6 });
         expect(fitVideoScreen(1000, 1000)).toEqual({ width: 3.6, height: 3.6 });

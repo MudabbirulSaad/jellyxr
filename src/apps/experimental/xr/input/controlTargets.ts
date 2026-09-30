@@ -6,7 +6,8 @@ import { unitRay } from './sceneQuery';
 export type SearchAction = 'catalogue-search' | 'catalogue-clear-search' | 'search-field' | 'search-heading'
     | 'search-submit' | 'search-cancel' | 'search-backspace' | 'search-space' | 'search-clear' | `search-key-${string}`;
 export type CatalogueAction = SearchAction | 'catalogue-open' | 'catalogue-close' | 'catalogue-next' | 'catalogue-previous' | 'catalogue-filter' | 'catalogue-back' | 'catalogue-heading' | 'catalogue-detail' | `catalogue-item-${string}`;
-export type ControlAction = CatalogueAction | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
+export type ScreenAction = 'screen-open' | 'screen-close' | 'screen-heading' | 'screen-smaller' | 'screen-larger' | 'screen-reset';
+export type ControlAction = ScreenAction | CatalogueAction | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
 export interface ControlTarget {
     id: ControlAction;
     label: string;
@@ -35,7 +36,8 @@ export const CONTROL_TARGETS: readonly ControlTarget[] = [
     { id: 'resume-media', label: 'Resume video', position: [0, 1.46, -1.4], width: 0.52, height: 0.22 },
     { id: 'choose-floor', label: 'Choose floor', position: [-0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
     { id: 'cancel-floor', label: 'Cancel move', position: [0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
-    { id: 'catalogue-open', label: 'Open catalogue', position: [0, 1.74, -1.4], width: 0.52, height: 0.22 }
+    { id: 'catalogue-open', label: 'Open catalogue', position: [0, 1.74, -1.4], width: 0.52, height: 0.22 },
+    { id: 'screen-open', label: 'Screen size', position: [0.6, 1.74, -1.4], width: 0.52, height: 0.22 }
 ];
 
 export const RECOVERY_TARGETS: readonly ControlTarget[] = [

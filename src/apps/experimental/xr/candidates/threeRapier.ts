@@ -110,9 +110,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         return { origin: [origin.x, origin.y, origin.z], direction: [direction.x, direction.y, direction.z] };
     });
     const video = new VideoPresentation({
-        createTexture: surface => createThreeVideoTexture(surface, scene),
-        createLayer: (surface, session, space) => createNativeMediaLayer(surface, session, space,
-            () => createThreeMediaUnderlay(surface, scene))
+        createTexture: (surface, screenPercent) => createThreeVideoTexture(surface, scene, screenPercent),
+        createLayer: (surface, session, space, screenPercent) => createNativeMediaLayer(surface, session, space,
+            percent => createThreeMediaUnderlay(surface, scene, percent), screenPercent)
     });
     const sampler = new FrameSampler();
     const recovery = new SessionRecovery({
@@ -165,7 +165,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         });
         controls.update();
         pointing.update();
-        video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
+        video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), input.screen.readSize());
         if (recovery.isSuspended()) {
             clock.reset();
         } else {

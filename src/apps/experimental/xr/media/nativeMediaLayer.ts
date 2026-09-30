@@ -1,3 +1,5 @@
+import { screenGeometry } from '../fixtures/screenFixture';
+
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { attachMediaLayer } from './mediaLayer';
 import { fitVideoScreen, type VideoPresentationResource } from './videoPresentation';
@@ -33,7 +35,7 @@ function layersForSession(session: XRSession): SubmittedLayers {
 /** The experiment owns the media layer; each renderer retains its projection layer. */
 export function createNativeMediaLayer(
     surface: BorrowedVideoSurface, session: XRSession, space: XRReferenceSpace,
-    createProjectionContent: () => VideoPresentationResource
+    createProjectionContent: (screenPercent: number) => VideoPresentationResource, screenPercent = 100
 ): VideoPresentationResource {
     if (typeof XRMediaBinding === 'undefined' || typeof XRRigidTransform === 'undefined') {
         throw new Error('Native media layers are unavailable.');
@@ -47,7 +49,8 @@ export function createNativeMediaLayer(
         throw new Error('An alpha-capable renderer projection is required.');
     }
     const priorAlpha = projection.blendTextureSourceAlpha;
-    const dimensions = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight);
+    const dimensions = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight, screenPercent);
+    const [x, y, z] = screenGeometry(screenPercent).videoPosition;
     const binding = new XRMediaBinding(session);
     const attachment = attachMediaLayer(surface, {
         readLayers: () => state.layers,
@@ -59,7 +62,7 @@ export function createNativeMediaLayer(
     }, video => binding.createQuadLayer(video, {
         space, layout: 'mono', ...dimensions,
         // eslint-disable-next-line compat/compat -- Feature-tested above; this optional path runs only inside XR.
-        transform: new XRRigidTransform({ x: 0, y: 2, z: -6.47 })
+        transform: new XRRigidTransform({ x, y, z })
     }));
     let content: VideoPresentationResource | undefined;
     let disposed = false;
@@ -79,7 +82,7 @@ export function createNativeMediaLayer(
     try {
         projection.blendTextureSourceAlpha = true;
         if (!projection.blendTextureSourceAlpha) throw new Error('Projection alpha was rejected.');
-        content = createProjectionContent();
+        content = createProjectionContent(screenPercent);
     } catch (error) {
         dispose();
         throw error;
