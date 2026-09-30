@@ -62,3 +62,12 @@ M1 installed the locked SDK 1.0.0 artifact and inspected lib/versions.js: MINIMU
 Keep the recorded upstream commit and maintain small JellyXR integration changes. Evaluate an upstream update on a separate branch, inspect connection/player/subtitle changes, update provenance, run ordinary-mode parity and XR media regression, then adopt the update deliberately. No automatic dependency replacement is part of this phase.
 
 Preserve upstream licence and authorship files. Distribution/licence review and upstream contribution policies remain applicable to their respective future work; this document does not claim endorsement by Jellyfin.
+
+
+### Update inspection — 2026-09-30
+
+Read-only remote/source inspection found official master at `e466eb93f0515246455e215d62e72b94b48ad242`. The pinned release fae41f33eb is not its ancestor; their inspected merge base is aa039568eb759ff4e3a028256d93f18740273314. Development-tip package metadata identifies version 13.0.0 and an unstable SDK 0.0.0-unstable.202609160935, whereas JellyXR deliberately retains the released 12.1.0/SDK 1.0.0 baseline. A default-branch fetch is not authorization to change these constraints.
+
+`git merge-tree --write-tree --name-only c729c0e52d913177aeef804e39e6d1ad08538f7e e466eb93f0515246455e215d62e72b94b48ad242` reports conflicts in package.json and package-lock.json. ESLint configuration, index.jsx and webpack.common.js merge textually. This command creates no working-tree merge or adopted revision; a clean textual merge is not runtime compatibility evidence.
+
+Representative official changes available for a later isolated rehearsal include photo autoplay ownership (b924dc518159d1bde3204b57b146d830f1bbc88f), Tizen container/audio capability separation (a510fba5a54d8d899b17f445121e6277511c2e0c) and multiple-gamepad navigation (37bf9d271bc7fd71c6090299d3f5a13acd97bc07). Their source diffs were inspected; no change is cherry-picked here. The current htmlVideoPlayer integration is a separate maintained boundary, and ordinary/XR regression must accompany any adopted player or capability change. AT-25 still needs an actual representative update and relevant checks; this inspection only identifies the next work and package-conflict risk.

@@ -97,7 +97,7 @@ During desktop navigation, a browser-control action unintentionally toggled the 
 | Compatible direct-play media | Not inventoried | Negotiated delivery method; AT-08 |
 | Remux/direct-stream and transcode cases | F-01 PC Playback Info reports HLS direct streaming with audio conversion | Pure remux, video transcoding and corresponding Quest paths remain unverified; AT-08 |
 | Prohibited-transcode and unavailable-source cases | Not prepared | Controlled permission/failure fixtures before AT-08/14; do not alter the owner's server policy merely to create a case |
-| Multiple audio tracks and chapters | Available in F-01 | Two audio choices and eleven chapters observed; switching during playback and chapter seeking untested; AT-09/10 |
+| Multiple audio tracks and chapters | Available in F-01 | Two audio choices and eleven chapters observed; PC chapter seeking and track-control recovery are recorded below. Audible track correctness, full seek coverage and Quest operation remain open; AT-09/10 |
 | Text, ASS and bitmap subtitles | SUBRIP available in F-01; actual-server ASS/bitmap not inventoried. Original technical ASS and PGS fixtures now run through the installed subtitle libraries in the M2 workbench | PC text/ASS presentation evidence is recorded in [M2](m2-experiments.md); actual-server ASS/bitmap and Quest synchronization remain unverified; AT-10/EXP-02 |
 | 1,000-item catalogue | Deterministic M2 fixture implemented and pagination tested | Actual-device incremental browsing/performance pending for EXP-03/AT-05/24; no fabricated catalogue added to the owner's library |
 | Interrupted network/server and expired session | Not exercised | Controlled recovery runs; AT-14 |
@@ -117,6 +117,10 @@ Client source: xr 4ebb2ca076 (PR #30), experiment development build on loopback 
 | Stop, page reload and Resume | Paused at 535.936 s, used Back, fully reloaded details and selected the visible Resume action. The first decoded sample captured after startup was 546.816 s with playback running at readyState 4, consistent with resuming near the prior position rather than the beginning. The initial seek boundary and exact start offset were not captured; cross-device resume, queue, report ownership and all of AT-07 remain unqualified |
 
 No credentials, private identifiers, titles, dialogue, artwork or screenshots are committed. Playback history changed under D-23. A paused Playback Info attempt displayed only its close control; no new delivery-method claim is inferred from that attempt. Earlier HLS evidence remains dated separately. Selected paused screenshots did not establish an active caption; without a verified cue interval this is neither a rendering pass nor a diagnosed missing-subtitle defect. These are ordinary desktop observations, not Quest, media-layer or XR-session qualification.
+
+### Fresh baseline rebuild — 2026-09-30
+
+The [fresh-install packaging run](packaging-evidence.md#fresh-install-rehearsal--2026-09-30) verifies xr c729c0e52d in an isolated Windows checkout with no prior node_modules: locked installation, exact dependency-patch hashes, TypeScript/lint/styles, all 427 tests and both ordinary/experimental production compatibility checks pass. The package also extracts and verifies. This strengthens build readiness without changing the pending media, emulator, remote-inspection or Quest results. The detailed evidence records warnings, artifact identity and limits.
 
 ### Remaining work
 
