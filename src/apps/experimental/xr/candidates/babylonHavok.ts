@@ -228,6 +228,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
                 optionalFeatures: ['hand-tracking', 'layers']
             });
             recovery.bind(xr.sessionManager.session, xr.sessionManager.referenceSpace);
+            sampler.synchronize(xr.sessionManager.session, recovery.isSuspended());
+            publish();
         },
         async exitXR() {
             if (xr?.sessionManager.inXRSession) await xr.exitXRAsync();

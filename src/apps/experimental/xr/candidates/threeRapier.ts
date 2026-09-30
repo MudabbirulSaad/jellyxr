@@ -222,6 +222,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             try {
                 await renderer.xr.setSession(session);
                 recovery.bind(session, renderer.xr.getReferenceSpace());
+                sampler.synchronize(session, recovery.isSuspended());
+                publish();
             } catch (error) {
                 await session.end();
                 throw error;
