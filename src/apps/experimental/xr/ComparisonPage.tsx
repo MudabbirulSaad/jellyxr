@@ -8,7 +8,6 @@ import Page from 'components/Page';
 import loading from 'components/loading/loading';
 import { playbackManager } from 'components/playback/playbackmanager';
 
-import { readCatalogueFixture } from './fixtures/catalogueFixture';
 import type { ComparisonSample, ComparisonScene } from './candidates/types';
 import { borrowVideoSurface } from './media/borrowVideoSurface';
 import type { VideoPresentationMode } from './media/videoPresentation';
@@ -42,10 +41,8 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const [ready, setReady] = useState(false);
     const [busy, setBusy] = useState(false);
     const [sample, setSample] = useState<ComparisonSample>();
-    const [offset, setOffset] = useState(0);
     const [mediaMode, setMediaMode] = useState<VideoPresentationMode>('media-layer');
     const [fixtureCaptions, setFixtureCaptions] = useState(true);
-    const catalogue = readCatalogueFixture({ offset, limit: 24 });
 
     useEffect(() => {
         if (!embedded) loading.hide();
@@ -184,8 +181,6 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
             setStatus('The session could not end cleanly. Use the headset system exit, then reload.');
         }).finally(() => setBusy(false));
     }, []);
-    const previous = useCallback(() => setOffset(value => Math.max(0, value - 24)), []);
-    const next = useCallback(() => setOffset(value => Math.min(984, value + 24)), []);
     const chooseLayers = useCallback(() => setMediaMode('media-layer'), []);
     const chooseTexture = useCallback(() => setMediaMode('video-texture'), []);
     const toggleFixtureCaptions = useCallback(() => {
@@ -331,13 +326,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.
                 </Typography>
                 <Typography component='p'>Use Open catalogue in the scene for the spatial fixture: six cards, type filtering, paging and details. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
-                <Typography variant='h6' component='h2'>Local catalogue fixture: {catalogue.total} items</Typography>
-                <Typography>Page {Math.floor(offset / 24) + 1}. Only this page is returned to the view. These are technical records, not films.</Typography>
-                <Stack direction='row' spacing={2}>
-                    <Button onClick={previous} disabled={offset === 0}>Previous fixture page</Button>
-                    <Button onClick={next} disabled={catalogue.nextOffset === null}>Next fixture page</Button>
-                </Stack>
-                <ul>{catalogue.items.map(item => <li key={item.id}>{item.title}{item.artwork === 'missing' ? ' / Missing-artwork case' : ''}</li>)}</ul>
+
             </Box>
         </ComparisonFrame>
     );
