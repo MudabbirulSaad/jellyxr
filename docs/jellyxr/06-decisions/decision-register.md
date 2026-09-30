@@ -69,3 +69,7 @@ FR-012's comparison now exposes scene-local text size, backing and placement wit
 ### Implementation record — canvas filtering, 2026-09-30
 
 The [minification repair](../05-delivery/m2-experiments.md#canvas-minification-filtering-increment--2026-09-30) corrects a demonstrated Babylon/Three canvas-sampling mismatch under FR-012/014/017. Enable trilinear mipmap sampling only when it preserves the canvas dimensions; restricted contexts retain bilinear sampling and authored layout. Tests cover resource replacement, unchanged-update ownership and disposal, with selected original PC media fixtures. Production text strategy, exact GPU cost, native alpha and actual-headset clarity remain G2 decisions/evidence; this does not select a renderer.
+
+### Implementation record — installed dependency notices, 2026-09-30
+
+Under D-31 and NFR-007/010, [preserve exact installed notice files](../05-delivery/package-installation.md#dependency-notice-collection-contract) in the served package with locked identity and hashes. The [archive evidence](../05-delivery/packaging-evidence.md#installed-dependency-notices--2026-09-30) demonstrates concrete libbitsub, combined libass and font-notice gaps closed by this collection. Include development dependencies and explicit absence states instead of asserting runtime coverage. Do not interpret file collection as redistribution approval, corresponding-source completion or G4 qualification; final production runtime coverage and remaining terms/source need review before release. No dependency or technology choice changes.

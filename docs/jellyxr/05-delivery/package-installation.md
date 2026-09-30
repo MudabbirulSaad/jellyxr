@@ -24,9 +24,16 @@ The payload contains:
 | `source/jellyxr-source.tar.gz` | Git source snapshot at the manifest revision, including build instructions, original asset sources and dependency patches |
 | `LICENSE`, `CONTRIBUTORS.md`, `NOTICE.md` | Inherited licence, contributor attribution and notice boundaries |
 | `package-lock.json`, `dependency-inventory.json` | Locked dependency identity and available licence metadata; missing metadata is recorded as null |
+| `web/third-party-notices/` | Exact installed licence/notice files with a hashed inventory; includes development dependencies and is not a runtime SBOM or final redistribution approval |
 | `INSTALL.md` | This procedure |
 
 The build sets the commit-based label, bundled fonts and ordinary production mode explicitly. Experimental XR scenes are excluded. The manifest makes no G4 claim, captures no account, server endpoint, machine username or media history, and does not record the developer's complete environment. Dependency installation remains a prerequisite, not a verified packager action. Archive bytes may differ between operating systems or tar versions; the checksums identify the actual output, not a promise of byte-for-byte reproducible archives.
+
+### Dependency notice collection contract
+
+For W-08/W-09 and NFR-007/010, retain exact licence and notice bytes from installed locked packages with package-relative source paths, versions and hashes. Scan their top-level LICENSE/LICENCE, COPYING, NOTICE, COPYRIGHT, OFL and UNLICENSE files, plus the combined `@jellyfin/libass-wasm/dist/js/COPYRIGHT` that covers its embedded libraries/font. Keep these records in the served static directory so installation does not discard them. Preserve the existing emitted JavaScript notices and Git source snapshot.
+
+Record optional packages absent on the build platform and installed packages with no matching notice file explicitly. A missing required package, version mismatch, invalid lock path or linked package/notice must stop collection. Do not infer licence terms from a missing file, rewrite upstream notices or turn lockfile SPDX metadata into a legal approval. The inventory covers installed dependency notice files, including development packages; it does not prove which modules are emitted, completeness of nested vendor notices, corresponding-source fulfilment or final redistribution compatibility. Those remain M6 audit items, including native/WASM inputs and any future XR runtime assets.
 
 The outer archive uses USTAR metadata with numeric owner/group zero and no local account names. The two supported command variants follow the [libarchive tar manual](https://github.com/libarchive/libarchive/blob/master/tar/bsdtar.1) and [GNU tar options](https://www.gnu.org/s/tar/manual/html_node/Option-Summary.html). Actual tool versions and platform are recorded in the manifest; another platform's successful build is not inferred.
 
