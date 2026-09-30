@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { cp, lstat, mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { hashFile, inventory, verifyPayload, writeManifest } from './packageManifest.ts';
@@ -26,7 +26,7 @@ function checkSource(revision?: string): string {
 async function prepareDestination(value: string): Promise<string> {
     const output = resolve(value);
     const parent = await realpath(dirname(output));
-    const actual = join(parent, output.slice(dirname(output).length + 1));
+    const actual = join(parent, basename(output));
     const fromRoot = relative(await realpath(root), actual);
     if (!isAbsolute(fromRoot) && fromRoot !== '..' && !fromRoot.startsWith(`..${sep}`)) {
         throw new Error('Package output must be outside the repository');

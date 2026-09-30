@@ -1,6 +1,6 @@
 # Static client packaging and installation
 
-Status: packaging procedure under preparation. This document does not approve a JellyXR release or a hosting configuration. G2, G3 and G4 remain open; the current ordinary production client has no production spatial journey. An archive from this stage is a rehearsal build.
+Status: packaging and extraction exercised on Windows with Node 24.13.0, npm 11.15.0 and bsdtar 3.8.8. This document does not approve a JellyXR release or a hosting configuration. G2, G3 and G4 remain open; the current ordinary production client has no production spatial journey. An archive from this stage is a rehearsal build.
 
 ## Build and inspect an archive
 
