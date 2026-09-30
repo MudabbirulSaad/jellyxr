@@ -238,6 +238,10 @@ export class ComparisonInput {
         }
         if (action === 'select-fixture') this.selectionCount++;
         if (action === 'reset-count') this.selectionCount = 0;
+        if (action === 'text-size') {
+            this.cancel();
+            this.layout.cycleTextSize();
+        }
         if (action === 'summon-controls') this.summonControls();
         this.lastAction = actionLabel(action);
         this.onAction(action);
@@ -374,7 +378,7 @@ export class ComparisonInput {
     }
 
     readStatus(): string {
-        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. ${this.floor.status()} ${this.catalogue.status()} ${this.screen.status()}`;
+        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. Text size: ${this.layout.readTextScale() * 100}%. ${this.floor.status()} ${this.catalogue.status()} ${this.screen.status()}`;
     }
 
     readPointing(): (PointingAim & { pressed: boolean }) | null {

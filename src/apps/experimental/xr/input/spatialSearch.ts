@@ -3,8 +3,8 @@ import type { ControlAction, ControlTarget } from './controlTargets';
 export const SEARCH_LIMIT = 48;
 const ROWS = ['1234567890', 'qwertyuiop', 'asdfghjkl', "zxcvbnm-/'"];
 const HEADING: ControlTarget = { id: 'search-heading', kind: 'heading', enabled: false,
-    label: 'Search technical catalogue', description: 'Local technical records · Cancel keeps your place',
-    position: [0, 2.5, -2.5], width: 1.96, height: 0.25 };
+    label: 'Search', description: 'Technical records · Cancel keeps your place',
+    position: [0, 2.52, -2.5], width: 1.96, height: 0.32 };
 const KEYS = ROWS.flatMap((row, index) => [...row].map((character, column): ControlTarget => ({
     id: `search-key-${character}`, label: character.toUpperCase(), kind: 'key',
     position: [(column - (row.length - 1) / 2) * 0.2, 1.75 - index * 0.23, -2.4], width: 0.18, height: 0.2
