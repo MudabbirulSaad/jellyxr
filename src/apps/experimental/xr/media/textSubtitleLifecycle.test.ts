@@ -6,6 +6,7 @@ const harness = vi.hoisted(() => ({
     verticalPosition: '-2',
     events: vi.fn(),
     errors: vi.fn(),
+    showVideoOsd: vi.fn(),
     api: { getSessions: vi.fn(), deviceId: () => 'technical-device' }
 }));
 
@@ -15,16 +16,31 @@ vi.mock('scripts/settings/userSettings', () => ({ currentSettings: { getSubtitle
 vi.mock('apps/legacy/features/playback/utils/subtitleStyles', () => ({ useCustomSubtitles: () => harness.custom }));
 vi.mock('components/subtitlesettings/subtitleappearancehelper', () => ({ default: { applyStyles: vi.fn(), getStyles: () => ({ text: [] }) } }));
 vi.mock('components/apphost', () => ({ appHost: { supports: () => true } }));
-vi.mock('components/loading/loading', () => ({ default: {} }));
-vi.mock('components/playback/playbackmanager', () => ({ playbackManager: { getSubtitleUrl: (track: { Index: number }) => `https://fixture.invalid/${track.Index}.vtt` } }));
-vi.mock('components/router/appRouter', () => ({ appRouter: { baseUrl: () => '' } }));
-vi.mock('components/htmlMediaHelper', () => ({ onErrorInternal: harness.errors }));
+vi.mock('components/loading/loading', () => ({ default: { hide: vi.fn() } }));
+vi.mock('components/playback/playbackmanager', () => ({ playbackManager: {
+    getSubtitleUrl: (track: { Index: number }) => `https://fixture.invalid/${track.Index}.vtt`,
+    trackHasSecondarySubtitleSupport: () => true
+} }));
+vi.mock('components/router/appRouter', () => ({ appRouter: { baseUrl: () => '', showVideoOsd: harness.showVideoOsd } }));
+vi.mock('components/htmlMediaHelper', () => ({
+    onErrorInternal: harness.errors, destroyHlsPlayer: vi.fn(), destroyFlvPlayer: vi.fn(), destroyCastPlayer: vi.fn(),
+    getCrossOriginValue: () => '', enableHlsJsPlayerForCodecs: () => false,
+    applySrc: () => Promise.resolve(), playWithPromise: () => Promise.resolve(),
+    // The inherited helper clears playback options after Stop/end; retain that ownership boundary here.
+    onEndedInternal: (player: { _currentPlayOptions: unknown }) => { player._currentPlayOptions = null; }, resetSrc: vi.fn(),
+    seekOnPlaybackStart: (_player: unknown, _video: unknown, _position: unknown, callback: () => void) => callback()
+}));
 vi.mock('components/itemHelper', () => ({ default: { isLocalItem: () => false } }));
 vi.mock('lib/jellyfin-apiclient', () => ({ ServerConnections: { getApiClient: () => harness.api } }));
 vi.mock('lib/globalize', () => ({ default: {} }));
 vi.mock('scripts/browserDeviceProfile', () => ({ default: {}, canPlaySecondaryAudio: vi.fn() }));
 vi.mock('scripts/settings/webSettings', () => ({ getIncludeCorsCredentials: vi.fn() }));
-vi.mock('components/backdrop/backdrop', () => ({ setBackdropTransparency: vi.fn() }));
+vi.mock('components/backdrop/backdrop', () => ({
+    setBackdropTransparency: vi.fn(),
+    // Match the inherited module's named export.
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    TRANSPARENCY_LEVEL: { None: 0 }
+}));
 vi.mock('utils/events.ts', () => ({ default: { trigger: harness.events } }));
 vi.mock('utils/dom', () => ({ default: {} }));
 
@@ -35,6 +51,16 @@ type TestPlayer = {
     setCurrentTrackElement: HtmlVideoPlayer['setCurrentTrackElement'];
     destroyCustomTrack: HtmlVideoPlayer['destroyCustomTrack'];
     updateSubtitleText: HtmlVideoPlayer['updateSubtitleText'];
+    setCurrentSrc: HtmlVideoPlayer['setCurrentSrc'];
+    onStartedAndNavigatedToOsd: HtmlVideoPlayer['onStartedAndNavigatedToOsd'];
+    setSubtitleStreamIndex: HtmlVideoPlayer['setSubtitleStreamIndex'];
+    setSecondarySubtitleStreamIndex: HtmlVideoPlayer['setSecondarySubtitleStreamIndex'];
+    stop: HtmlVideoPlayer['stop'];
+    destroy: HtmlVideoPlayer['destroy'];
+    onEnded: HtmlVideoPlayer['onEnded'];
+    onPlaying: HtmlVideoPlayer['onPlaying'];
+    canSetAudioStreamIndex: HtmlVideoPlayer['canSetAudioStreamIndex'];
+    setAudioStreamIndex: HtmlVideoPlayer['setAudioStreamIndex'];
     _currentPlayOptions: HtmlVideoPlayer['_currentPlayOptions'];
     isFetching: boolean;
 };
@@ -78,6 +104,7 @@ describe('inherited plain-text subtitle lifecycle', () => {
         harness.verticalPosition = '-2';
         harness.events.mockClear();
         harness.errors.mockClear();
+        harness.showVideoOsd.mockReset();
         harness.api.getSessions.mockReset();
         vi.stubGlobal('VTTCue', class {
             line = 'auto';
@@ -89,6 +116,7 @@ describe('inherited plain-text subtitle lifecycle', () => {
         document.head.querySelector('#htmlvideoplayer-cuestyle')?.remove();
         vi.unstubAllGlobals();
         vi.restoreAllMocks();
+        vi.useRealTimers();
     });
 
     it('does not re-enable native captions after the selected track is removed', async () => {
@@ -324,5 +352,94 @@ describe('inherited plain-text subtitle lifecycle', () => {
         final.resolve(captions('Technical selected again'));
         await settle();
         expect(tracks[0].cues.map(cue => cue.text)).toEqual(['\u200ETechnical selected again']);
+    });
+
+    async function startup(throughOsd = false) {
+        const state = await setup();
+        const { player, video } = state;
+        vi.spyOn(video, 'pause').mockImplementation(() => undefined);
+        await player.setCurrentSrc(video, { ...player._currentPlayOptions, fullscreen: throughOsd, url: 'https://fixture.invalid/video.mp4',
+            mediaSource: { MediaStreams: [track(0), track(1), track(2), track(3)],
+                DefaultSubtitleStreamIndex: 2, DefaultSecondarySubtitleStreamIndex: 3, DefaultAudioStreamIndex: 0 } });
+        const fetchMock = vi.fn((url: string) => Promise.resolve(captions(`Technical ${url}`)));
+        vi.stubGlobal('fetch', fetchMock);
+        vi.useFakeTimers();
+        const navigation = deferred<void>();
+        harness.showVideoOsd.mockReturnValue(navigation.promise);
+        if (throughOsd) player.onPlaying({ target: video } as unknown as Event);
+        else player.onStartedAndNavigatedToOsd();
+        return { ...state, fetchMock, navigation };
+    }
+
+    it('initializes both default tracks once during ordinary startup', async () => {
+        const { tracks, fetchMock } = await startup();
+        await vi.runAllTimersAsync();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(tracks[0].cues[0].text).toContain('/2.js');
+        expect(tracks[1].cues[0].text).toContain('/3.js');
+    });
+
+    it.each(['primary-off', 'secondary-off', 'select-secondary', 'stop', 'end', 'destroy', 'source'] as const)(
+        'does not apply the startup secondary track after %s', async action => {
+            const { player, video, tracks, fetchMock } = await startup();
+            if (action === 'primary-off') player.setSubtitleStreamIndex(-1);
+            if (action === 'secondary-off') player.setSecondarySubtitleStreamIndex(-1);
+            if (action === 'select-secondary') player.setSecondarySubtitleStreamIndex(1);
+            if (action === 'stop') await player.stop(false);
+            if (action === 'end') player.onEnded({ target: video } as unknown as Event);
+            if (action === 'destroy') player.destroy();
+            if (action === 'source') {
+                await player.setCurrentSrc(video, { ...player._currentPlayOptions,
+                    url: 'https://fixture.invalid/next.mp4', mediaSource: { ...player._currentPlayOptions.mediaSource } });
+            }
+            await vi.runAllTimersAsync();
+            expect(fetchMock.mock.calls.map(call => call[0])).not.toContain('https://fixture.invalid/3.js');
+            if (action === 'select-secondary') {
+                expect(tracks[1].cues[0].text).toContain('/1.js');
+                expect(tracks[1].mode).toBe('showing');
+            } else { expect(tracks[1]?.mode || 'disabled').toBe('disabled'); }
+        }
+    );
+
+    it.each(['select', 'stop', 'end', 'source', 'destroy'] as const)(
+        'ignores completed OSD navigation after %s invalidates startup', async action => {
+            const { player, video, fetchMock, navigation, tracks } = await startup(true);
+            if (action === 'select') player.setSubtitleStreamIndex(1);
+            if (action === 'stop') await player.stop(false);
+            if (action === 'end') player.onEnded({ target: video } as unknown as Event);
+            if (action === 'source') {
+                await player.setCurrentSrc(video, { ...player._currentPlayOptions,
+                    url: 'https://fixture.invalid/next.mp4', mediaSource: { ...player._currentPlayOptions.mediaSource } });
+            }
+            if (action === 'destroy') player.destroy();
+            navigation.resolve();
+            await vi.runAllTimersAsync();
+            expect(fetchMock.mock.calls.map(call => call[0])).toEqual(action === 'select' ? ['https://fixture.invalid/1.js'] : []);
+            if (action === 'select') expect(tracks[0].cues[0].text).toContain('/1.js');
+        }
+    );
+
+    it('initializes the current pair when OSD navigation completes normally', async () => {
+        const { tracks, fetchMock, navigation } = await startup(true);
+        expect(fetchMock).not.toHaveBeenCalled();
+        navigation.resolve();
+        await vi.runAllTimersAsync();
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+        expect(tracks[0].cues[0].text).toContain('/2.js');
+        expect(tracks[1].cues[0].text).toContain('/3.js');
+    });
+
+    it('finishes current OSD navigation and audio initialization without replacing a newer subtitle choice', async () => {
+        const { player, navigation, fetchMock } = await startup(true);
+        vi.spyOn(player, 'canSetAudioStreamIndex').mockReturnValue(true);
+        const audio = vi.spyOn(player, 'setAudioStreamIndex').mockImplementation(() => undefined);
+        const dialog = document.querySelector('.videoPlayerContainer');
+        dialog?.classList.add('videoPlayerContainer-onTop');
+        player.setSubtitleStreamIndex(1);
+        navigation.resolve();
+        await vi.runAllTimersAsync();
+        expect(audio).toHaveBeenCalledExactlyOnceWith(0);
+        expect(fetchMock.mock.calls.map(call => call[0])).toEqual(['https://fixture.invalid/1.js']);
+        expect(dialog?.classList.contains('videoPlayerContainer-onTop')).toBe(false);
     });
 });
