@@ -64,6 +64,14 @@ The package contains a dedicated `web/` static root and separate provenance/sour
 
 Package generation and integrity are distinct from qualification. The manifest records that the packager does not assess G4; only the acceptance evidence can establish release readiness. During M2, the ordinary production build is a packaging rehearsal, with experiments excluded. No archive command publishes a release, starts a public service or changes a deployment. HTTPS/domain/IP, base-path, CORS, media-range, WebSocket and cached-client behaviour still require the final hosting/device matrix.
 
+### Static base-path and cache rehearsal
+
+Before approving a deployment, exercise two verified package revisions under a non-root static path. Redirect the directory URL to its trailing-slash form, serve only `web/`, and return a real failure for missing assets rather than an HTML application shell. Compare fresh navigation, normal reload, an already-open tab after a root switch, and rollback without clearing browser storage. Record emitted build identity and asset responses separately from visible bootstrap success.
+
+Mutable entry points and configuration need revalidation; content-hashed resources can have long-lived cache headers only while their URLs continue to identify the same bytes. Retain prior hashed resources for still-open clients during a transition instead of merging complete mutable asset trees. A server root switch does not replace JavaScript already loaded in a tab. The inherited `src/serviceworker.js` has notification/activation handlers but no fetch handler or asset-cache implementation; do not assume it supplies offline assets or upgrade recovery. These are source observations to verify against the final deployed build. HTTP guidance: [Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control), checked 2026-09-30.
+
+A loopback fixture can establish base-path/static-cache behaviour for its exact responses. It cannot qualify production TLS, separate origins, server base paths, media ranges, WebSockets, authenticated playback or Quest behaviour. Keep those AT-01/02/24 gates separate.
+
 Publish tested instructions for the reference topology and separately served assets, with versioned prerequisites, trusted-certificate guidance, base-path examples, upgrade/rollback and WebSocket/range checks. This phase specifies that work; it does not deploy a service or generate production proxy configuration.
 
 For PC iteration and headset USB development forwarding, see the [development testing workflow](../05-delivery/development-testing-workflow.md). Mapping a development app port does not forward the Jellyfin endpoint or prove production CORS, certificates, base paths and media routes. Repeat the required access matrix on the final hosting topology before G4.
