@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_SCREEN_POSE } from '../fixtures/screenFixture';
+
 import { fitVideoScreen, VideoPresentation } from './videoPresentation';
 
 function setup() {
@@ -33,7 +35,7 @@ describe('video comparison lifecycle', () => {
         presentation.update(session, space, 60);
         expect(original.dispose).toHaveBeenCalledOnce();
         expect(factory).toHaveBeenCalledTimes(2);
-        expect(factory.mock.calls[1]).toEqual(mode === 'media-layer' ? [surface, session, space, 60] : [surface, 60]);
+        expect(factory.mock.calls[1]).toEqual(mode === 'media-layer' ? [surface, session, space, 60, DEFAULT_SCREEN_POSE] : [surface, 60, DEFAULT_SCREEN_POSE]);
         expect(surface.release).not.toHaveBeenCalled();
         expect([surface.video.currentTime, surface.video.paused]).toEqual([42, true]);
         expect(play).not.toHaveBeenCalled();
@@ -42,6 +44,27 @@ describe('video comparison lifecycle', () => {
         presentation.dispose();
         expect(factory.mock.results[1].value.dispose).toHaveBeenCalledOnce();
         expect(surface.release).toHaveBeenCalledOnce();
+    });
+
+    it.each(['media-layer', 'video-texture'] as const)('rebuilds %s once for a pose change, without changing playback or the lease', mode => {
+        const { surface, presentation, backend, session, space } = setup();
+        const play = vi.spyOn(surface.video, 'play');
+        const pause = vi.spyOn(surface.video, 'pause');
+        surface.video.currentTime = 18;
+        presentation.attach(surface, mode);
+        presentation.update(session, space);
+        const pose = { distance: 5, height: 1.8, tilt: 10 };
+        presentation.update(session, space, 100, pose);
+        presentation.update(session, space, 100, { ...pose });
+        const factory = mode === 'media-layer' ? backend.createLayer : backend.createTexture;
+        expect(factory).toHaveBeenCalledTimes(2);
+        expect(factory.mock.results[0].value.dispose).toHaveBeenCalledOnce();
+        expect(factory.mock.calls[1]).toEqual(mode === 'media-layer' ? [surface, session, space, 100, pose] : [surface, 100, pose]);
+        expect(surface.release).not.toHaveBeenCalled();
+        expect(play).not.toHaveBeenCalled();
+        expect(pause).not.toHaveBeenCalled();
+        expect(surface.video.currentTime).toBe(18);
+        presentation.dispose();
     });
 
     it('drops presentation resources immediately on interruption without releasing or controlling the owner', () => {
@@ -72,7 +95,7 @@ describe('video comparison lifecycle', () => {
         expect(backend.createLayer).not.toHaveBeenCalled();
         expect(backend.createTexture).not.toHaveBeenCalled();
         presentation.update(session, space);
-        expect(backend.createLayer).toHaveBeenCalledExactlyOnceWith(surface, session, space, 100);
+        expect(backend.createLayer).toHaveBeenCalledExactlyOnceWith(surface, session, space, 100, DEFAULT_SCREEN_POSE);
         presentation.update(null, null);
         expect(backend.createLayer.mock.results[0].value.dispose).toHaveBeenCalledTimes(1);
         expect(surface.release).not.toHaveBeenCalled();

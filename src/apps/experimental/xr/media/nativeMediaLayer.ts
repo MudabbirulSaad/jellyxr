@@ -1,4 +1,4 @@
-import { screenGeometry } from '../fixtures/screenFixture';
+import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { attachMediaLayer } from './mediaLayer';
@@ -35,7 +35,8 @@ function layersForSession(session: XRSession): SubmittedLayers {
 /** The experiment owns the media layer; each renderer retains its projection layer. */
 export function createNativeMediaLayer(
     surface: BorrowedVideoSurface, session: XRSession, space: XRReferenceSpace,
-    createProjectionContent: (screenPercent: number) => VideoPresentationResource, screenPercent = 100
+    createProjectionContent: (screenPercent: number, pose: ScreenPose) => VideoPresentationResource,
+    screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE
 ): VideoPresentationResource {
     if (typeof XRMediaBinding === 'undefined' || typeof XRRigidTransform === 'undefined') {
         throw new Error('Native media layers are unavailable.');
@@ -50,7 +51,9 @@ export function createNativeMediaLayer(
     }
     const priorAlpha = projection.blendTextureSourceAlpha;
     const dimensions = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight, screenPercent);
-    const [x, y, z] = screenGeometry(screenPercent).videoPosition;
+    const geometry = screenGeometry(screenPercent, pose);
+    const [x, y, z] = geometry.videoPosition;
+    const [qx, qy, qz, qw] = geometry.orientation;
     const binding = new XRMediaBinding(session);
     const attachment = attachMediaLayer(surface, {
         readLayers: () => state.layers,
@@ -62,7 +65,7 @@ export function createNativeMediaLayer(
     }, video => binding.createQuadLayer(video, {
         space, layout: 'mono', ...dimensions,
         // eslint-disable-next-line compat/compat -- Feature-tested above; this optional path runs only inside XR.
-        transform: new XRRigidTransform({ x, y, z })
+        transform: new XRRigidTransform({ x, y, z }, { x: qx, y: qy, z: qz, w: qw })
     }));
     let content: VideoPresentationResource | undefined;
     let disposed = false;
@@ -82,7 +85,7 @@ export function createNativeMediaLayer(
     try {
         projection.blendTextureSourceAlpha = true;
         if (!projection.blendTextureSourceAlpha) throw new Error('Projection alpha was rejected.');
-        content = createProjectionContent(screenPercent);
+        content = createProjectionContent(screenPercent, pose);
     } catch (error) {
         dispose();
         throw error;

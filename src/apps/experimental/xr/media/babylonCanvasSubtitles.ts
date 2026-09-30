@@ -4,13 +4,13 @@ import type { Scene } from '@babylonjs/core/scene';
 
 import { createBabylonPanel } from '../candidates/babylonPanel';
 
-import { screenGeometry } from '../fixtures/screenFixture';
+import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { createCanvasSubtitleArtwork } from './canvasSubtitles';
 import { fitVideoScreen } from './videoPresentation';
 
-export function createBabylonCanvasSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100) {
+export function createBabylonCanvasSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE) {
     const canvas = document.createElement('canvas');
     const artwork = createCanvasSubtitleArtwork(surface, canvas);
     let texture = new DynamicTexture('borrowed-ass', canvas, scene, false);
@@ -22,7 +22,8 @@ export function createBabylonCanvasSubtitles(surface: BorrowedVideoSurface, scen
     material.disableDepthWrite = true;
     const size = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight, screenPercent);
     const mesh = createBabylonPanel('borrowed-ass', size.width, size.height, scene);
-    mesh.position.set(...screenGeometry(screenPercent).canvasPosition);
+    mesh.rotation.x = screenGeometry(screenPercent, pose).pitch;
+    mesh.position.set(...screenGeometry(screenPercent, pose).canvasPosition);
     mesh.material = material;
     mesh.setEnabled(false);
     return {

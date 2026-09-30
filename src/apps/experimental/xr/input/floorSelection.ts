@@ -1,4 +1,5 @@
-import { ROOM_FIXTURE, isFixtureDestinationClear, type Point3 } from '../fixtures/roomFixture';
+import { ROOM_FIXTURE, isFixtureDestinationClear, type Point3, type CollisionSource } from '../fixtures/roomFixture';
+import { boxRayDistance } from '../fixtures/boxGeometry';
 
 import type { InputRay } from './controlTargets';
 import type { ControlViewerPose } from './controlLayout';
@@ -7,30 +8,8 @@ import type { SceneSurfaceQuery } from './sceneQuery';
 
 export interface FloorAim { point: Point3 | null; valid: boolean }
 
-/** Slab intersection in normalized ray metres, including a ray starting inside a proxy. */
-function boxDistance(ray: InputRay, centre: Point3, size: Point3): number | null {
-    let near = 0;
-    let far = Infinity;
-    for (let axis = 0; axis < 3; axis++) {
-        const low = centre[axis] - size[axis] / 2;
-        const high = centre[axis] + size[axis] / 2;
-        const origin = ray.origin[axis];
-        const direction = ray.direction[axis];
-        if (Math.abs(direction) < 0.00001) {
-            if (origin < low || origin > high) return null;
-        } else {
-            const a = (low - origin) / direction;
-            const b = (high - origin) / direction;
-            near = Math.max(near, Math.min(a, b));
-            far = Math.min(far, Math.max(a, b));
-            if (near > far) return null;
-        }
-    }
-    return near;
-}
-
 /** Straight-ray fixture selection: an occluded floor is never a valid destination. */
-export function aimFloor(input: InputRay | null, query?: SceneSurfaceQuery): FloorAim {
+export function aimFloor(input: InputRay | null, query?: SceneSurfaceQuery, boxes = ROOM_FIXTURE): FloorAim {
     if (!input || !input.origin.every(Number.isFinite) || !input.direction.every(Number.isFinite)) return { point: null, valid: false };
     const length = Math.hypot(...input.direction);
     if (length < 0.00001) return { point: null, valid: false };
@@ -41,12 +20,12 @@ export function aimFloor(input: InputRay | null, query?: SceneSurfaceQuery): Flo
     const point: Point3 = [input.origin[0] + direction[0] * distance, 0, input.origin[2] + direction[2] * distance];
     const ray = { origin: input.origin, direction };
     const surface = query?.(ray, distance);
-    const occluded = (surface !== null && surface !== undefined && surface < distance - 0.002) || ROOM_FIXTURE.some(box => {
+    const occluded = (surface !== null && surface !== undefined && surface < distance - 0.002) || boxes.some(box => {
         if (box.collision !== 'static' || box.id === 'floor') return false;
-        const hit = boxDistance(ray, box.position, box.size);
+        const hit = boxRayDistance(ray.origin, ray.direction, box);
         return hit !== null && hit < distance - 0.001;
     });
-    return { point, valid: !occluded && isFixtureDestinationClear(point) };
+    return { point, valid: !occluded && isFixtureDestinationClear(point, boxes) };
 }
 
 /** Destination remains a proposal until the same source completes an unmoved activation. */
@@ -55,7 +34,7 @@ export class FloorSelection {
     private aim: FloorAim = { point: null, valid: false };
     private held: { source: string; point: Point3 } | null = null;
 
-    constructor(private readonly query?: SceneSurfaceQuery) {}
+    constructor(private readonly query?: SceneSurfaceQuery, private readonly collisions: CollisionSource = () => ROOM_FIXTURE) {}
 
     arm(): void {
         this.cancel();
@@ -65,7 +44,7 @@ export class FloorSelection {
     read(): FloorAim { return this.aim; }
     observe(ray: InputRay | null): void {
         if (!this.active) return;
-        this.aim = aimFloor(ray, this.query);
+        this.aim = aimFloor(ray, this.query, this.collisions());
         if (this.held && (!this.aim.valid || !this.aim.point || this.drift(this.held.point, this.aim.point) > 0.15)) this.held = null;
     }
     begin(source: string): void {

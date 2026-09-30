@@ -24,8 +24,8 @@ function isValid(root: ViewerRoot, trackedPosition: Point3): boolean {
 }
 
 /** Moves the viewer's floor projection, preserving measured height and current orientation. */
-export function teleportViewer(root: ViewerRoot, trackedPosition: Point3, destination: Point3): ViewerRoot | null {
-    if (!isValid(root, trackedPosition) || !isFixtureDestinationClear(destination)) return null;
+export function teleportViewer(root: ViewerRoot, trackedPosition: Point3, destination: Point3, destinationClear: (point: Point3) => boolean = isFixtureDestinationClear): ViewerRoot | null {
+    if (!isValid(root, trackedPosition) || !destinationClear(destination)) return null;
     const rotated = rotateFloorPoint(trackedPosition, root.yaw);
     return { origin: [destination[0] - rotated[0], 0, destination[2] - rotated[2]], yaw: root.yaw };
 }

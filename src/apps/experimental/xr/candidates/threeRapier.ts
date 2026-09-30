@@ -6,6 +6,7 @@ import RAPIER from '@dimforge/rapier3d-compat';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
 import { ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { RoomCollision } from '../fixtures/roomCollision';
 import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
@@ -20,6 +21,7 @@ import { movementAction, MovementSession } from '../input/movementSession';
 import { SessionRecovery } from '../input/sessionRecovery';
 import { viewerWorldPosition } from '../input/movement';
 import { createRapierRemote } from '../input/rapierRemote';
+import { createRapierScreen } from '../input/rapierScreen';
 import { loadThreeChairs } from '../assets/threeChairs';
 import { loadThreeArchitecture } from '../assets/threeArchitecture';
 import type { ChairQuality } from '../assets/chairAssets';
@@ -51,6 +53,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const meshes: Mesh<BoxGeometry, MeshStandardMaterial>[] = [];
     let remote: Mesh<BoxGeometry, MeshStandardMaterial> | undefined;
     let remoteBody: RAPIER.RigidBody | undefined;
+    const fixtures: { mesh: Mesh; body: RAPIER.RigidBody; collider: RAPIER.Collider }[] = [];
     for (const box of ROOM_FIXTURE) {
         const material = new MeshStandardMaterial({
             color: FIXTURE_COLOURS[box.material],
@@ -73,20 +76,24 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         const collider = RAPIER.ColliderDesc.cuboid(box.size[0] / 2, box.size[1] / 2, box.size[2] / 2)
             .setFriction(0.6).setRestitution(0.1);
         if (dynamic) collider.setMass(0.18);
-        world.createCollider(collider, body);
+        const shape = world.createCollider(collider, body);
+        fixtures.push({ mesh, body, collider: shape });
         if (dynamic) {
             remote = mesh;
             remoteBody = body;
         }
     }
 
+    const screen = fixtures.find(fixture => fixture.mesh.name === 'screen')!;
+    const room = new RoomCollision(createRapierScreen(screen.mesh, screen.body, screen.collider));
+
     // A failed import retains visible collision proxies and an explicit diagnostic.
     const chairs = await loadThreeChairs(scene, quality).catch(() => undefined);
     const architecture = await loadThreeArchitecture(scene, detailedRoom).catch(() => undefined);
     const clock = new FixedStepClock();
-    const physicalRemote = createRapierRemote(remoteBody);
+    const physicalRemote = createRapierRemote(remoteBody, room.read);
     const recallRemote = () => physicalRemote?.recall();
-    const movement = new MovementSession(() => playback.pause('movement'));
+    const movement = new MovementSession(() => playback.pause('movement'), room.destinationClear);
     const input = new ComparisonInput(action => {
         if (recovery.isSuspended()) return;
         const move = movementAction(action);
@@ -100,7 +107,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     }, physicalRemote?.grab, point => {
         if (!recovery.isSuspended()) movement.requestDestination(point);
-    }, createThreeSceneQuery(scene));
+    }, createThreeSceneQuery(scene), room);
     const controls = createThreeControls(scene, input.state, input.layout, input.floor);
     const pointing = createThreePointing(scene, input);
     const raycaster = new Raycaster();
@@ -110,9 +117,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         return { origin: [origin.x, origin.y, origin.z], direction: [direction.x, direction.y, direction.z] };
     });
     const video = new VideoPresentation({
-        createTexture: (surface, screenPercent) => createThreeVideoTexture(surface, scene, screenPercent),
-        createLayer: (surface, session, space, screenPercent) => createNativeMediaLayer(surface, session, space,
-            percent => createThreeMediaUnderlay(surface, scene, percent), screenPercent)
+        createTexture: (surface, screenPercent, pose) => createThreeVideoTexture(surface, scene, screenPercent, pose),
+        createLayer: (surface, session, space, screenPercent, pose) => createNativeMediaLayer(surface, session, space,
+            (percent, placement) => createThreeMediaUnderlay(surface, scene, percent, placement), screenPercent, pose)
     });
     const sampler = new FrameSampler();
     const recovery = new SessionRecovery({
@@ -165,7 +172,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         });
         controls.update();
         pointing.update();
-        video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), input.screen.readSize());
+        video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), input.screen.readSize(), input.screen.readPose());
         if (recovery.isSuspended()) {
             clock.reset();
         } else {

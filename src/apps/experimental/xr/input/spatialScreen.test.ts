@@ -6,10 +6,51 @@ import { ControlLayout, isControlPlacementClear, isControlPlacementInView } from
 import { hitControl, type ControlAction } from './controlTargets';
 import { controlVisualState } from './controlArtwork';
 import { screenGeometry } from '../fixtures/screenFixture';
+import { RoomCollision } from '../fixtures/roomCollision';
 
 const viewer = { position: [0, 1.65, 0] as const, forward: [0, 0, -1] as const };
 
 describe('spatial screen size', () => {
+    it('steps each placement setting within its bounds and resets size and pose together', () => {
+        const screen = new SpatialScreen();
+        screen.handle('screen-open');
+        screen.handle('screen-smaller');
+        screen.handle('screen-next-setting');
+        for (let i = 0; i < 10; i++) screen.handle('screen-closer');
+        expect(screen.readPose().distance).toBe(4);
+        expect(screen.handle('screen-closer')).toBeNull();
+        screen.handle('screen-next-setting');
+        for (let i = 0; i < 8; i++) screen.handle('screen-lower');
+        expect(screen.readPose().height).toBe(1.2);
+        expect(screen.handle('screen-lower')).toBeNull();
+        screen.handle('screen-next-setting');
+        for (let i = 0; i < 3; i++) screen.handle('screen-tilt-up');
+        expect(screen.readPose().tilt).toBe(15);
+        expect(screen.handle('screen-tilt-up')).toBeNull();
+        const result = screen.handle('screen-reset')!;
+        expect(screen.readSize()).toBe(100);
+        expect(screen.readPose()).toEqual({ distance: 6.5, height: 2, tilt: 0 });
+        expect(result.targets.find(target => target.id === 'screen-reset')?.enabled).toBe(false);
+        expect(result.targets.find(target => target.id === result.focus)?.enabled).not.toBe(false);
+    });
+
+    it('leaves the controls and query geometry at the previous valid pose with actionable rejection text', () => {
+        const room = new RoomCollision();
+        const screen = new SpatialScreen((percent, pose) => room.tryScreen(percent, pose, viewer.position));
+        screen.handle('screen-open');
+        screen.handle('screen-next-setting');
+        screen.handle('screen-next-setting');
+        screen.handle('screen-lower');
+        expect(screen.readPose().height).toBe(1.9);
+        const prior = room.readScreen();
+        const blocked = screen.handle('screen-lower')!;
+        expect(blocked.targets[0].description).toContain('Screen would meet the room');
+        expect(screen.readPose().height).toBe(1.9);
+        expect(room.readScreen()).toBe(prior);
+        screen.handle('screen-reset');
+        expect(screen.readPose().height).toBe(2);
+    });
+
     it('bounds adjustment, retains size across closing, and resets without changing other state', () => {
         const screen = new SpatialScreen();
         expect(screen.handle('screen-smaller')).toBeNull();

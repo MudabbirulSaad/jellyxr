@@ -34,6 +34,16 @@ Validate boundary/Reset behaviour, stable target placement, both renderer geomet
 
 UI/UX Pro Max's verified **Disabled States** guidance informs distinct disabled controls; the existing focus/press feedback and concrete action labels are retained. Its mobile sizing and haptic defaults are not XR qualification evidence.
 
+## Expanded flat-screen placement contract — 2026-09-30
+
+Extend the bounded FR-016 comparison with deliberate distance, height and tilt controls. Preserve the size-only results above as historical evidence. For this expanded experiment, the graphite backing and its collision box now follow the selected image envelope and pose; the room architecture remains fixed. Video, authored caption canvas, plain-text caption panel and native-layer aperture must share that pose and maintain their local depth separation. No source aspect ratio or player-owned state changes.
+
+The proposed comparison range is 4–6.5 m from the room's reference seat, centre height 1.2–2.8 m and tilt ±15 degrees. Distance changes in 0.25 m steps, height in 0.1 m steps and tilt in five-degree steps. These are experimental bounds, not headset comfort recommendations. A change must fit inside the room and avoid other solid geometry, the current viewer and the remote. Keep the screen at least 1.75 m from the tracked head so it cannot cross the 1.4 m reference control bank; this is a comparison safeguard, not a comfort threshold. Reject a conservative swept envelope through the viewer or remote, including Reset. Reject blocked changes with an actionable message and retain the prior valid placement. Never move the camera or push an object to make a screen placement fit. Reset restores the default size and pose only when that placement is clear.
+
+Use a per-scene collision model, not mutable global fixtures. Teleport validation, floor occlusion, control placement, remote sweeps and engine collision bodies must observe the same screen pose. Tilted-screen queries use the oriented box; do not leave an invisible collider at the old location. Placement cancels pending input/grabs and stays fixed after confirmation. Preserve seated button alternatives and Back/Return to seat/Exit XR. Validate transforms and clearance in controlled tests, inspect both candidate previews, and retain native-layer, actual hand/controller and comfort gates as pending until measured.
+
+General recentering toward an arbitrary orientation, curved presentation and persistent production preferences are separate remaining FR-016 work. This contract is not a G2 engine choice.
+
 ## Candidate versions and provenance
 
 | Package | Exact experimental version | Installed package licence |

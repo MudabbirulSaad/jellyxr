@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_SCREEN_POSE } from '../fixtures/screenFixture';
+
 import { createNativeMediaLayer } from './nativeMediaLayer';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -30,8 +32,21 @@ describe('native video underlay ownership', () => {
         expect(f.createQuadLayer).toHaveBeenCalledWith(f.surface.video, expect.objectContaining({
             width: expect.closeTo(3.84), height: expect.closeTo(2.16)
         }));
-        expect(f.content).toHaveBeenCalledExactlyOnceWith(60);
+        expect(f.content).toHaveBeenCalledExactlyOnceWith(60, DEFAULT_SCREEN_POSE);
         resource.dispose();
+        expect(f.surface.release).not.toHaveBeenCalled();
+    });
+
+    it('rotates the native quad about the same centre and local depth as projection content', () => {
+        const f = setup();
+        const pose = { distance: 5, height: 1.8, tilt: 15 };
+        const resource = createNativeMediaLayer(f.surface, f.session, f.space, f.content, 80, pose);
+        const angle = -Math.PI / 12;
+        expect(XRRigidTransform).toHaveBeenCalledWith({ x: 0, y: expect.closeTo(1.8 - Math.sin(angle) * 0.03), z: expect.closeTo(-5 + Math.cos(angle) * 0.03) },
+            { x: expect.closeTo(Math.sin(angle / 2)), y: 0, z: 0, w: expect.closeTo(Math.cos(angle / 2)) });
+        expect(f.content).toHaveBeenCalledExactlyOnceWith(80, pose);
+        resource.dispose();
+        expect(f.surface.video.currentTime).toBe(4.8);
         expect(f.surface.release).not.toHaveBeenCalled();
     });
 

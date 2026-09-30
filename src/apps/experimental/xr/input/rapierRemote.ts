@@ -1,10 +1,10 @@
 import { RigidBodyType, type RigidBody } from '@dimforge/rapier3d-compat';
 
-import { FIXTURE_REMOTE } from '../fixtures/roomFixture';
+import { FIXTURE_REMOTE, type CollisionSource } from '../fixtures/roomFixture';
 
 import { remoteHalfBounds, RemoteGrab } from './remoteGrab';
 
-export function createRapierRemote(body: RigidBody | undefined) {
+export function createRapierRemote(body: RigidBody | undefined, collisions?: CollisionSource) {
     if (!body) return undefined;
     let heldRotation = body.rotation();
     const zero = { x: 0, y: 0, z: 0 };
@@ -31,7 +31,7 @@ export function createRapierRemote(body: RigidBody | undefined) {
             body.setBodyType(RigidBodyType.Dynamic, true);
             stop();
         }
-    });
+    }, collisions);
     return {
         grab,
         recall() {
