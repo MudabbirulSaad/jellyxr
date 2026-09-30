@@ -74,3 +74,37 @@ No browser, authentication, media, network topology or real-device scenario was 
 A read-only upstream merge preview separately exposed package.json/package-lock.json conflicts against development tip e466eb93f0. See the [upstream inspection](../04-architecture/upstream-assessment.md#update-inspection--2026-09-30). No upstream application change or dependency resolution was adopted at this checkpoint. The subsequent isolated representative update/retest is recorded in the upstream assessment; final integrated media regression remains open.
 
 Documentation validation passes 433 relative links/anchors across 32 Markdown files, unique requirement definitions, all P0/work/scenario mappings and 17 unchanged dependency edges. No diagrams or application code changed in the evidence commit; whitespace checks pass.
+
+## Static base-path and rollback rehearsal — 2026-09-30
+
+Current package source: `34abf4b263966bf8a2a1aae1e0b1cbe80421126e` (xr after PR #39). Prior package source: `eb9eee362a807fd1592a3d4227194921c2882b4a`. Both are ordinary-client rehearsals, with the spatial comparison excluded. This is independent W-08/W-09 work under the [static hosting contract](../04-architecture/deployment-security.md#static-base-path-and-cache-rehearsal), not a G4 pass.
+
+The new package rebuilds successfully and passes ES5 on 984 files with the two inherited bundle-size warnings. The packager verifies its sealed payload; extraction to a new empty directory followed by CLI verification also passes all 2,357 files. The prior payload passes CLI verification before use. Toolchain remains Windows x64, Node 24.13.0, npm 11.15.0 and bsdtar 3.8.8. No dependency or application changes were made for this hosting experiment. The prior 472-test source check is recorded in the spatial text-size evidence; it is not a new test run for these documentation/fixture changes.
+
+New artifact: `jellyxr-34abf4b26396.tar.gz`, 43,116,708 bytes, under `%LOCALAPPDATA%/JellyXR/hosting-package-34abf4b263/`. SHA-256:
+
+```text
+ab890c7ebdf00845b0a2d4a19a470e970b3bd5f5693de2b0b110cf3430d48873
+```
+
+The [Python reference host](../references/hosting-rehearsal.py) serves only manifest-listed `web/` files at `http://127.0.0.1:8131/xr/`. A separate local state file switches between the two sealed directories and optionally retains missing content-hashed files from the other version. Each served file is checked against its manifest hash. There is no HTTP mutation endpoint, Jellyfin proxy, production deployment or public exposure. The [replay procedure](package-installation.md#replay-the-isolated-static-host-experiment) records the actual test setup.
+
+| Check | Actual result / boundary |
+| --- | --- |
+| Base path | `/xr` returns 308 to `/xr/`. In the Codex in-app browser, the old package loads Select Server and Add Server under `/xr/#/...`; scripts, styles and fonts load from the prefixed static root. No endpoint or account is entered |
+| Already-open client | After switching the active root to the new package, the old tab still opens Add Server and retains its original logged build identity `jellyxr-eb9eee362a80`. This route's assets are unchanged; it is not proof that all lazy routes survive the switch |
+| Missing old asset | Manifest comparison finds one old-only lazy chunk, `index.b291e3c4f85cd371b263.chunk.js`. A direct HTTP request after the root-only switch returns 404. Enabling retained content-hashed resources returns 200 with the exact old manifest hash. This is a real package-resource check, not an observed player failure |
+| Upgrade | New navigation logs `jellyxr-34abf4b26396` and reaches Select Server. Normal reload of the prior tab also logs the new build and reaches Add Server. No browser storage is cleared. Entry HTML, main bundle and runtime differ between these revisions |
+| Rollback | Switching back to the old package and normally reloading the upgraded tab logs `jellyxr-eb9eee362a80` and reaches Add Server again. The new-only chunk, `index.5119ec170410ceaa344a.chunk.js`, remains retrievable from the retained new directory with its exact original hash |
+| HTTP cache responses | Direct HTTP checks for index, config, serviceworker and fixed main bundle return `no-cache`, ETag and 304 for a matching conditional request. An index request with the newer ETag after rollback returns 200 and a different ETag. The retained hashed chunk returns `public, max-age=31536000, immutable`. These are fixture-header checks, not the production proxy policy |
+| Browser cache boundary | Across four bootstraps, the request log has one 308, 227 successful static responses and four 404s for the inherited `/System/Info/Public` discovery probe. No static request fails. The browser sent no `If-None-Match` headers in this run, so no actual-browser conditional-cache pass is claimed. Cold/returning profile, persistent cache, service-worker registration and back/forward restoration still need final-topology inspection |
+| Isolation | Direct requests for root manifest/source, outside-prefix main bundle, missing JS and a non-web notice return 404; encoded parent traversal returns 400. The fixture supplies no HTML fallback for missing assets. Python syntax parsing passes; this is not a general-purpose HTTP security audit |
+| Observed browser | Codex in-app browser on Windows reports `Chrome/154.0.0.0` in its HTTP user agent. This is a reported browser token, not a Quest Browser version. No emulation or device qualification is inferred |
+
+PC references: [upgraded connection screen](../references/images/m6-base-path-upgraded.png) and [rolled-back connection screen](../references/images/m6-base-path-rollback.png). Build identities above come from the inherited console output, not from pixels in these otherwise identical screens. Logs and state stay outside Git in `%LOCALAPPDATA%/JellyXR/hosting-*`.
+
+The source `serviceworker.js` contains notification and activation listeners but no fetch/cache handler. That source observation does not establish whether another worker controls an existing production profile. HTTP revalidation guidance was checked against [MDN Cache-Control](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Cache-Control) on 2026-09-30; the tested fixture uses those semantics without claiming browser-cache or offline support.
+
+Production HTTPS domain/trusted-IP hosting, separate origins, Jellyfin server base paths, ranges, WebSockets, authenticated playback/history, interrupted media and real-device upgrade/rollback remain open. Unversioned asset changes need a separate final deployment strategy; retaining only hashed chunks does not solve every mixed-version case. UI/UX Pro Max is not applied to this nonvisual infrastructure slice; inherited interface/copy are unchanged.
+
+The reference fixture ran with Python 3.11.2. The two test tabs and loopback server were closed after evidence capture; the development client and sealed artifacts were preserved. Documentation validation passes 477 relative links/anchors across 33 Markdown files, 41 unique requirements, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.

@@ -56,8 +56,22 @@ Exact Jellyfin asset-directory locations and reverse-proxy rules depend on the i
 
 Stage and verify each version alongside the prior one. Switch the configured static root only after its smoke test passes. Preserve the previous whole directory until returning clients, cached assets and interrupted requests have been tested. Do not remove old hashed assets while an active client may still request them.
 
+The [loopback hosting rehearsal](packaging-evidence.md#static-base-path-and-rollback-rehearsal--2026-09-30) demonstrates why retention matters: an old content-hashed lazy chunk returns 404 after a root-only switch, while a fallback to that exact retained file returns its original bytes. Configure the chosen static host to retain those immutable resources without overlaying mutable entry files. HTML, configuration and fixed filenames need revalidation; do not mark every `.js` file immutable solely because of its extension. A root switch leaves already-loaded JavaScript running until a deliberate reload. The final topology must also test changed unversioned assets and in-flight media, which this limited retention check does not cover.
+
 Check the actual service-worker/cache behaviour during an upgrade; a new directory on the server alone does not prove that existing tabs loaded it. Record the client build identity, close active playback deliberately and reload through the normal browser flow. If an old client remains, inspect application cache/service-worker state in the browser's supported developer tools. Clearing site data can remove authentication and preferences, so include that effect in any tested recovery instructions.
 
 To roll back, restore the previous static-root configuration and repeat fresh/returning-client and playback checks against the prior build. Keep the Jellyfin endpoint unchanged unless a separate server change was deliberately planned. Rollback is not complete until browser asset/cache state and playback are verified.
 
 Before release, review all P0 evidence and the support matrix, dependency/source redistribution obligations, credential/diagnostic audit and upstream update rehearsal. Package creation is neither public publication nor permission to deploy production automatically.
+
+## Replay the isolated static-host experiment
+
+The [reference fixture](../references/hosting-rehearsal.py) is a Python standard-library experiment bound only to `127.0.0.1:8131`, with the client mounted at `/xr/`. It is not a production hosting recommendation or API proxy. Supply two previously verified package directories, an external JSON state file and an external HTTP log path:
+
+```text
+python docs/jellyxr/references/hosting-rehearsal.py OLD_PAYLOAD NEW_PAYLOAD STATE_JSON HTTP_LOG
+```
+
+Create the state file with `{"active":"old","retain":false}`. Open `http://127.0.0.1:8131/xr`, verify its trailing-slash redirect and server-selection screen, then follow Add Server without entering an endpoint. Record the build line emitted by the inherited client. Set `active` to `new` in the state file; compare a still-open tab, a new navigation and normal reload. With `retain:false`, request an old content-hashed chunk absent from the new manifest and record the 404. Set `retain:true` and verify its returned bytes against the old manifest. Reverse `active` to `old` for rollback and check the new revision's unique chunk in the same way. Do not modify either sealed payload.
+
+The fixture revalidates fixed resources with ETags and marks content-hashed names immutable. Test matching `If-None-Match` responses separately from the browser run; a server's 304 support does not prove that a tested browser used its cache. Paths outside the manifest's `web/` allowlist and missing assets fail. Stop the local process after collecting evidence. This experiment does not connect to Jellyfin, emulate TLS, implement media ranges or qualify session persistence.
