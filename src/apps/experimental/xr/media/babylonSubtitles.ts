@@ -9,16 +9,21 @@ import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixture
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { createBabylonCanvasSubtitles } from './babylonCanvasSubtitles';
 import { createSubtitleArtwork } from './textSubtitles';
+import { captionGeometry, readDefaultCaptions, type ReadCaptionSettings } from './captionSettings';
 
-export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE) {
+export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE,
+    readSettings: ReadCaptionSettings = readDefaultCaptions) {
     const rich = createBabylonCanvasSubtitles(surface, scene, screenPercent, pose);
-    const panel = screenGeometry(screenPercent, pose).captions;
+    const panel = captionGeometry(readSettings(), screenPercent, pose);
     const canvas = document.createElement('canvas');
-    const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning);
+    const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning, readSettings);
     const texture = new DynamicTexture('borrowed-subtitles', canvas, scene, false);
+    texture.hasAlpha = true;
     const material = new StandardMaterial('borrowed-subtitles', scene);
     material.disableLighting = true;
     material.emissiveTexture = texture;
+    material.opacityTexture = texture;
+    material.disableDepthWrite = true;
     material.backFaceCulling = true;
     const mesh = createBabylonPanel('borrowed-subtitles', panel.width, panel.height, scene);
     mesh.rotation.x = screenGeometry(screenPercent, pose).pitch;
@@ -28,6 +33,7 @@ export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Sce
     return {
         update() {
             rich.update();
+            mesh.position.set(...captionGeometry(readSettings(), screenPercent, pose).position);
             if (!artwork.update()) return;
             mesh.setEnabled(artwork.isVisible());
             if (artwork.isVisible()) texture.update();

@@ -5,7 +5,8 @@ import { ComparisonInput } from './comparisonInput';
 import { ControlLayout, isControlPlacementClear, isControlPlacementInView } from './controlLayout';
 import { hitControl, type ControlAction } from './controlTargets';
 import { controlVisualState } from './controlArtwork';
-import { screenGeometry } from '../fixtures/screenFixture';
+import { captionGeometry, DEFAULT_CAPTION_SETTINGS } from '../media/captionSettings';
+import { SpatialCaptions } from './spatialCaptions';
 import { RoomCollision } from '../fixtures/roomCollision';
 
 const viewer = { position: [0, 1.65, 0] as const, forward: [0, 0, -1] as const };
@@ -85,12 +86,12 @@ describe('spatial screen size', () => {
             expect(layout.read()).toBe(anchor);
             expect(isControlPlacementClear(anchor, result.targets)).toBe(true);
             expect(isControlPlacementInView(viewer, anchor, result.targets)).toBe(true);
-            const heading = result.targets[0];
-            const captions = screenGeometry(screen.readSize()).captions;
-            const captionBottom = (captions.position[1] - captions.height / 2 - viewer.position[1]) / -captions.position[2];
-            const headingTop = (heading.position[1] + heading.height / 2 - viewer.position[1]) / -heading.position[2];
-            // At the reference seat, the size heading must not cover the plain-text caption panel.
-            expect(captionBottom).toBeGreaterThan(headingTop);
+            const captions = captionGeometry(DEFAULT_CAPTION_SETTINGS, screen.readSize());
+            // Settings must not hide the caption being adjusted at the default viewing pose.
+            const captionRight = captions.width / 2 / -captions.position[2];
+            for (const target of new SpatialCaptions().targets()) {
+                expect((target.position[0] - target.width / 2) / -target.position[2]).toBeGreaterThan(captionRight);
+            }
             for (const target of result.targets) {
                 const ray = { origin: [target.position[0], target.position[1], 0] as const, direction: [0, 0, -1] as const };
                 expect(hitControl(ray, undefined, anchor, result.targets)).toBe(target.enabled === false ? null : target.id);

@@ -1,8 +1,10 @@
 import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
 import { CONTROL_TARGETS, type ControlAction, type ControlTarget } from './controlTargets';
+import { SpatialCaptions } from './spatialCaptions';
 
 type Setting = 'size' | 'distance' | 'height' | 'tilt';
+interface ScreenView { targets: readonly ControlTarget[]; focus: ControlAction; reanchor: boolean }
 const settings: readonly Setting[] = ['size', 'distance', 'height', 'tilt'];
 const controls: Record<Setting, { label: string; unit: string; decimals: number; min: number; max: number; step: number;
     decrease: ControlAction; increase: ControlAction; less: string; more: string }> = {
@@ -18,6 +20,8 @@ const controls: Record<Setting, { label: string; unit: string; decimals: number;
 
 /** Scene-local comparison setting; independent of the player and persisted preferences. */
 export class SpatialScreen {
+    readonly captions = new SpatialCaptions();
+    private captionsOpen = false;
     private percent = 100;
     private pose = DEFAULT_SCREEN_POSE;
     private setting: Setting = 'size';
@@ -29,14 +33,19 @@ export class SpatialScreen {
     readSize(): number { return this.percent; }
     readPose(): ScreenPose { return this.pose; }
     isOpen(): boolean { return this.open; }
+    isCaptionsOpen(): boolean { return this.captionsOpen; }
     private value(): number { return this.setting === 'size' ? this.percent : this.pose[this.setting]; }
     private isDefault(): boolean { return this.percent === 100 && this.pose.distance === 6.5 && this.pose.height === 2 && this.pose.tilt === 0; }
 
-    handle(action: ControlAction): { targets: readonly ControlTarget[]; focus: ControlAction; reanchor: boolean } | null {
+    handle(action: ControlAction): ScreenView | null {
         if (action === 'screen-open') {
             this.open = true;
+            this.captionsOpen = false;
         } else {
             if (!this.open) return null;
+            if (action === 'caption-open' || this.captionsOpen) {
+                return this.handleCaptions(action);
+            }
             if (action === 'screen-close') {
                 this.open = false;
                 return { targets: CONTROL_TARGETS, focus: 'screen-open', reanchor: true };
@@ -53,6 +62,18 @@ export class SpatialScreen {
         let focus: ControlAction = targets.find(target => target.id === action && target.enabled !== false)?.id || 'screen-close';
         if (action === 'screen-open') focus = this.value() > control.min ? control.decrease : control.increase;
         return { targets, focus, reanchor: action === 'screen-open' };
+    }
+
+    private handleCaptions(action: ControlAction): ScreenView | null {
+        if (action === 'caption-close') {
+            this.captionsOpen = false;
+            return { targets: this.targets(), focus: 'caption-open', reanchor: true };
+        }
+        if (action !== 'caption-open' && !this.captions.handle(action)) return null;
+        this.captionsOpen = true;
+        const targets = this.captions.targets();
+        const focus = targets.find(target => target.id === action && target.enabled !== false)?.id || 'caption-size';
+        return { targets, focus, reanchor: action === 'caption-open' };
     }
 
     private adjust(action: ControlAction): boolean {
@@ -94,9 +115,10 @@ export class SpatialScreen {
             { id: c.increase, label: c.more, position: [0, 1.24, -1.4], width: 0.52, height: 0.22, enabled: value < c.max,
                 description: value < c.max ? `Step: ${c.step}${c.unit}` : 'Upper limit reached' },
             { id: 'screen-reset', label: 'Reset screen', position: [0.6, 1.24, -1.4], width: 0.52, height: 0.22, enabled: !this.isDefault(), description: 'Default size and pose' },
-            { id: 'screen-close', label: 'Back to controls', position: [-0.72, 0.94, -1.4], width: 0.64, height: 0.22, description: 'Keep this placement' },
-            { id: 'return-seat', label: 'Return to seat', position: [0, 0.94, -1.4], width: 0.64, height: 0.22, description: 'Pause and return' },
-            { id: 'exit-xr', label: 'Exit XR', position: [0.72, 0.94, -1.4], width: 0.64, height: 0.22, description: 'Leave immersive view' }
+            { id: 'screen-close', label: 'Back to controls', position: [-0.9, 0.91, -1.4], width: 0.52, height: 0.28, description: 'Keep this placement' },
+            { id: 'caption-open', label: 'Captions', position: [-0.3, 0.91, -1.4], width: 0.52, height: 0.28, description: 'Plain-text settings' },
+            { id: 'return-seat', label: 'Return to seat', position: [0.3, 0.91, -1.4], width: 0.52, height: 0.28, description: 'Pause and return' },
+            { id: 'exit-xr', label: 'Exit XR', position: [0.9, 0.91, -1.4], width: 0.52, height: 0.28, description: 'Leave immersive view' }
         ];
     }
 

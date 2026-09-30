@@ -8,6 +8,7 @@ import { controlCanvasSize, drawControl, type ControlVisualState } from './contr
 import { SpatialCatalogue } from './spatialCatalogue';
 import { SpatialScreen } from './spatialScreen';
 import { SpatialSearch } from './spatialSearch';
+import { SpatialCaptions } from './spatialCaptions';
 
 const viewer = { position: [0, 1.65, 0] as const, forward: [0, 0, -1] as const };
 const idle = { focus: null, hover: null, pressed: null, source: undefined };
@@ -49,7 +50,15 @@ function views(): readonly (readonly ControlTarget[])[] {
     const screen = new SpatialScreen(() => 'Screen overlaps the room. Try a smaller size, greater height or different distance.');
     screen.handle('screen-open');
     const error = screen.handle('screen-smaller')!.targets;
-    return [CONTROL_TARGETS, FLOOR_TARGETS, RECOVERY_TARGETS, page, detail, empty, search.targets(), error];
+    const captions = new SpatialCaptions();
+    const captionViews = [captions.targets()];
+    for (let step = 0; step < 2; step++) {
+        captions.handle('caption-size');
+        captions.handle('caption-backing');
+        captions.handle('caption-position');
+        captionViews.push(captions.targets());
+    }
+    return [CONTROL_TARGETS, FLOOR_TARGETS, RECOVERY_TARGETS, page, detail, empty, search.targets(), error, ...captionViews];
 }
 
 function sized(targets: readonly ControlTarget[], steps: number): readonly ControlTarget[] {

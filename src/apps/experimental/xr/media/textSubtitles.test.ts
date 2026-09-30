@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createSubtitleArtwork, TextSubtitleReader, wrapSubtitle } from './textSubtitles';
 import type { BorrowedSubtitleSurface } from './borrowVideoSurface';
+import { DEFAULT_CAPTION_SETTINGS, type CaptionSettings } from './captionSettings';
 
 function setup() {
     const video = document.createElement('video');
@@ -23,6 +24,64 @@ function setup() {
 }
 
 describe('borrowed subtitle presentation', () => {
+    it('repaints a paused cue on style changes, outlines unbacked text, and keeps gaps and warnings honest', () => {
+        const { surface, track } = setup();
+        let settings: CaptionSettings = DEFAULT_CAPTION_SETTINGS;
+        const warning = { message: undefined as string | undefined };
+        const context = {
+            font: '', fillStyle: '', clearRect: vi.fn(), fillRect: vi.fn(), fillText: vi.fn(), strokeText: vi.fn(),
+            measureText: (value: string) => ({ width: value.length * 25 })
+        };
+        const canvas = document.createElement('canvas');
+        vi.spyOn(canvas, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D);
+        const artwork = createSubtitleArtwork(surface, canvas, () => warning.message, () => settings);
+        expect(artwork.update()).toBe(true);
+        expect(context.font).toContain('50px');
+        settings = { ...settings, size: 1.5, backing: 0.75 };
+        expect(artwork.update()).toBe(true);
+        expect(context.font).toContain('75px');
+        expect(context.fillRect).toHaveBeenLastCalledWith(0, 216, 1600, 168);
+        expect(artwork.update()).toBe(false);
+        settings = { ...settings, position: 'Lower' };
+        expect(artwork.update()).toBe(false); // Moving the existing mesh needs no texture upload.
+        settings = { ...settings, backing: 0 };
+        context.fillRect.mockClear();
+        context.strokeText.mockClear();
+        expect(artwork.update()).toBe(true);
+        expect(context.fillRect).not.toHaveBeenCalled();
+        expect(context.strokeText).toHaveBeenCalledExactlyOnceWith('Technical caption', 800, 300);
+        track.activeCues = [];
+        expect(artwork.update()).toBe(true);
+        expect(artwork.isVisible()).toBe(false);
+        warning.message = 'Caption renderer unavailable. Use the ordinary player.';
+        expect(artwork.update()).toBe(true);
+        expect(artwork.isVisible()).toBe(true);
+        expect(context.font).toContain('50px');
+        expect(context.fillRect).toHaveBeenCalled();
+        expect(surface.release).not.toHaveBeenCalled();
+    });
+
+    it.each([1, 1.25, 1.5] as const)('keeps five complete lines within the canvas at caption size %s', size => {
+        const { surface, cue, text } = setup();
+        cue.text = text.textContent = 'First line\nSecond line\nThird line\nFourth line\nFifth line';
+        const context = {
+            font: '', clearRect: vi.fn(), fillRect: vi.fn(), fillText: vi.fn(), strokeText: vi.fn(),
+            measureText: (value: string) => ({ width: value.length * 25 * size })
+        };
+        const canvas = document.createElement('canvas');
+        vi.spyOn(canvas, 'getContext').mockReturnValue(context as unknown as CanvasRenderingContext2D);
+        const artwork = createSubtitleArtwork(surface, canvas, undefined, () => ({ ...DEFAULT_CAPTION_SETTINGS, size }));
+        artwork.update();
+        expect(context.font).toContain(`${50 * size}px`);
+        expect(context.fillText.mock.calls.map(call => call[0])).toEqual(cue.text.split('\n'));
+        for (const [, , y] of context.fillText.mock.calls) {
+            expect(y - 25 * size).toBeGreaterThan(0);
+            expect(y + 25 * size).toBeLessThan(canvas.height);
+        }
+        expect(context.fillRect.mock.calls[0][1]).toBeGreaterThan(0);
+        expect(context.fillRect.mock.calls[0][1] + context.fillRect.mock.calls[0][3]).toBeLessThan(canvas.height);
+    });
+
     it('follows owner cue changes, track off and seeking without changing the source', () => {
         const { reader, surface, track, video, cue, text } = setup();
         expect(reader.read().text).toBe('Technical caption');
@@ -79,7 +138,7 @@ describe('borrowed subtitle presentation', () => {
     it('uploads only changed frames, clears cue gaps and reports overflow once', () => {
         const { surface, track, cue, text } = setup();
         const context = {
-            clearRect: vi.fn(), fillRect: vi.fn(), fillText: vi.fn(),
+            clearRect: vi.fn(), fillRect: vi.fn(), fillText: vi.fn(), strokeText: vi.fn(),
             measureText: (value: string) => ({ width: value.length * 30 })
         };
         const canvas = document.createElement('canvas');
@@ -87,14 +146,14 @@ describe('borrowed subtitle presentation', () => {
         const artwork = createSubtitleArtwork(surface, canvas);
         expect(artwork.update()).toBe(true);
         expect(artwork.isVisible()).toBe(true);
-        expect(context.fillText).toHaveBeenCalledExactlyOnceWith('Technical caption', 800, 200);
+        expect(context.fillText).toHaveBeenCalledExactlyOnceWith('Technical caption', 800, 300);
         expect(artwork.update()).toBe(false);
         cue.text = 'x'.repeat(2001);
         text.textContent = cue.text;
         expect(artwork.update()).toBe(true);
         expect(artwork.isVisible()).toBe(true);
         expect(artwork.readStatus()).toContain('exceeds');
-        expect(context.fillText).toHaveBeenCalledWith('Subtitle layout unavailable.', 800, 168);
+        expect(context.fillText).toHaveBeenCalledWith('Subtitle layout unavailable.', 800, 268);
         expect(artwork.update()).toBe(false);
         track.activeCues = [];
         expect(artwork.update()).toBe(true);

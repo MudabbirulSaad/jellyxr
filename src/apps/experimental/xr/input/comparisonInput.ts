@@ -348,7 +348,7 @@ export class ComparisonInput {
     private escape(): void {
         this.cancel();
         if (this.catalogue.search.isOpen()) this.perform('search-cancel');
-        if (this.screen.isOpen()) this.perform('screen-close');
+        if (this.screen.isOpen()) this.perform(this.screen.isCaptionsOpen() ? 'caption-close' : 'screen-close');
     }
 
     private activateKey(phase: 'down' | 'up', focus: ControlAction | null, targets: readonly { id: ControlAction }[]): void {

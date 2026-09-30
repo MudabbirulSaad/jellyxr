@@ -61,3 +61,7 @@ Under FR-016, extend both disposable candidates with explicit size, distance, he
 ### Implementation record — native sleep scheduling, 2026-09-30
 
 Under FR-031, skip simulation calls only after the installed engine confirms that the comparison's dynamic remote is asleep. Keep held bodies active, wake on deliberate body/static changes and clear the clock across idle/hidden intervals. Rapier provides public sleep/wake methods. Babylon's pinned body declarations lack a public sleep query, so the [guarded experiment adapter](../../../src/apps/experimental/xr/input/havokActivity.ts) isolates its native handle and Havok activation operations; unknown state keeps simulation running. Actual WASM and PC evidence is recorded in the M2 report. This maintenance seam must be included in the G2 comparison and retested on upgrades; it is not a renderer selection or a measured Quest performance gain.
+
+### Implementation record — plain-text caption controls, 2026-09-30
+
+FR-012's comparison now exposes scene-local text size, backing and placement with explicit Back/Reset. Settings affect the borrowed plain-text presentation only; authored ASS/bitmap layout, track selection, timeline and server preferences retain their existing owners. The [comparison evidence](../05-delivery/m2-experiments.md#plain-text-caption-settings-increment--2026-09-30) includes paused-cue PC checks and open minification/readability questions. No subtitle support class, production preference policy or G2 decision is approved by this increment.
