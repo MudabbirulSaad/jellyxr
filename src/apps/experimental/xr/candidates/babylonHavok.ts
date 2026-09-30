@@ -36,6 +36,7 @@ import { createHavokRemote } from '../input/havokRemote';
 import { createHavokScreen } from '../input/havokScreen';
 import { loadBabylonChairs } from '../assets/babylonChairs';
 import { loadBabylonArchitecture } from '../assets/babylonArchitecture';
+import { loadBabylonRemote } from '../assets/babylonRemote';
 import type { ChairQuality } from '../assets/chairAssets';
 import '@babylonjs/core/Culling/ray';
 
@@ -95,6 +96,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     // A failed import retains visible collision proxies and an explicit diagnostic.
     const chairs = await loadBabylonChairs(scene, quality).catch(() => undefined);
     const architecture = await loadBabylonArchitecture(scene, detailedRoom).catch(() => undefined);
+    const remoteModel = await loadBabylonRemote(scene, remote?.transformNode).catch(() => undefined);
     const sampler = new FrameSampler();
     const xr = await WebXRExperienceHelper.CreateAsync(scene).catch(() => undefined);
     // Optional on ordinary browsers; no automatic mesh fallback hides a layer failure.
@@ -110,8 +112,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const simulation = new PhysicsScheduler(physicalRemote || { awake: () => true, wake: () => undefined });
     const remoteMaterial = scene.getMaterialByName('remote-material');
     const updateRemoteFeedback = () => {
+        const held = !!physicalRemote?.grab.source();
+        remoteModel?.setHeld(held);
         if (remoteMaterial instanceof PBRMaterial) {
-            const held = !!physicalRemote?.grab.source();
             remoteMaterial.emissiveColor.set(held ? 0.3 : 0, held ? 0.15 : 0, 0);
         }
     };
@@ -201,7 +204,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         ...sampler.read(), physicsStatus: simulation.status(), remoteHeight: remote?.transformNode.position.y || 0,
         immersive: !!xr?.sessionManager.inXRSession, mediaStatus: video.readStatus(), inputStatus: input.readStatus(),
         assetStatus: [chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.',
-            architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.'].join(' ')
+            architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.',
+            remoteModel?.status || 'Remote model failed to load. Box remains visible; retry by restarting the comparison.'].join(' ')
     }), 1000);
 
     return {
@@ -238,6 +242,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
                 xr?.dispose();
                 chairs?.dispose();
                 architecture?.dispose();
+                remoteModel?.dispose();
                 for (const aggregate of aggregates) aggregate.dispose();
                 scene.dispose();
                 engine.dispose();

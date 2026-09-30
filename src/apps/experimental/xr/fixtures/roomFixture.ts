@@ -3,6 +3,7 @@ import { overlapsBox } from './boxGeometry';
 
 import chairCollision from '../assets/observatory/observatory-chair-collision.json';
 import roomCollision from '../assets/observatory/observatory-room-collision.json';
+import remoteCollision from '../assets/observatory/observatory-remote-collision.json';
 
 export type Point3 = readonly [number, number, number];
 
@@ -18,7 +19,7 @@ export interface FixtureBox {
 export type CollisionSource = () => readonly FixtureBox[];
 
 export const FIXTURE_REMOTE: Point3 = [0.35, 1, -1.2];
-export const REMOTE_SIZE: Point3 = [0.08, 0.035, 0.19];
+export const REMOTE_SIZE = remoteCollision.boxes[0].size as unknown as Point3;
 
 const seat = (id: string, x: number, z: number): FixtureBox[] => chairCollision.boxes.map(box => ({
     id: `${id}-${box.id}`, size: box.size as unknown as Point3,

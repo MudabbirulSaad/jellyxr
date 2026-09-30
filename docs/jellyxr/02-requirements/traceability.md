@@ -51,7 +51,7 @@ Goals are defined in the [Product BRD](../01-business/product-brd.md); BF/BX ent
 | [FR-028](functional-requirements.md#fr-028) | BG-01 | [System](../04-architecture/system-blueprint.md) | [W-10](../05-delivery/roadmap.md#w-10) | [AT-22](../05-delivery/test-strategy.md#at-22) | Future |
 | [FR-029](functional-requirements.md#fr-029) | BG-06 | [System](../04-architecture/system-blueprint.md) | [W-11](../05-delivery/roadmap.md#w-11) | [AT-23](../05-delivery/test-strategy.md#at-23) | Future |
 | [FR-030](functional-requirements.md#fr-030) | BG-02, BG-03 | [Movement](../03-experience/experience-blueprint.md#movement-and-object-recovery) | [W-06](../05-delivery/roadmap.md#w-06) | [AT-26](../05-delivery/test-strategy.md#at-26) | First release |
-| [FR-031](functional-requirements.md#fr-031) | BG-03 | [Physical behaviour](../04-architecture/system-blueprint.md#interaction-and-simulation) | [W-07](../05-delivery/roadmap.md#w-07) | [AT-27](../05-delivery/test-strategy.md#at-27), [AT-24](../05-delivery/test-strategy.md#at-24) | First release |
+| [FR-031](functional-requirements.md#fr-031) | BG-03 | [Physical behaviour](../04-architecture/system-blueprint.md#interaction-and-simulation), [remote model contract](../04-architecture/asset-pipeline.md#remote-model-comparison-contract--2026-09-30) | [W-07](../05-delivery/roadmap.md#w-07) | [AT-27](../05-delivery/test-strategy.md#at-27), [AT-24](../05-delivery/test-strategy.md#at-24) | First release; [partial model evidence](../05-delivery/m2-experiments.md#remote-model-increment--2026-09-30), device gates open |
 
 ## Nonfunctional coverage
 
