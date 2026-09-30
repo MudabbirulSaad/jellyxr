@@ -16,7 +16,7 @@ import { WebXRExperienceHelper } from '@babylonjs/core/XR/webXRExperienceHelper'
 import { WebXRLayers } from '@babylonjs/core/XR/features/WebXRLayers';
 import '@babylonjs/core/Physics/joinedPhysicsEngineComponent';
 
-import { FixedStepClock } from '../fixtures/fixedStepClock';
+import { PhysicsScheduler } from '../fixtures/physicsScheduler';
 import { ROOM_FIXTURE } from '../fixtures/roomFixture';
 import { RoomCollision } from '../fixtures/roomCollision';
 import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
@@ -95,7 +95,6 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     // A failed import retains visible collision proxies and an explicit diagnostic.
     const chairs = await loadBabylonChairs(scene, quality).catch(() => undefined);
     const architecture = await loadBabylonArchitecture(scene, detailedRoom).catch(() => undefined);
-    const clock = new FixedStepClock();
     const sampler = new FrameSampler();
     const xr = await WebXRExperienceHelper.CreateAsync(scene).catch(() => undefined);
     // Optional on ordinary browsers; no automatic mesh fallback hides a layer failure.
@@ -107,7 +106,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         createLayer: (surface, session, space, screenPercent, pose) => createNativeMediaLayer(surface, session, space,
             (percent, placement) => createBabylonMediaUnderlay(surface, scene, percent, placement), screenPercent, pose)
     });
-    const physicalRemote = remote ? createHavokRemote(remote, plugin, room.read) : undefined;
+    const physicalRemote = remote ? createHavokRemote(remote, plugin, havok, room.read) : undefined;
+    const simulation = new PhysicsScheduler(physicalRemote || { awake: () => true, wake: () => undefined });
     const remoteMaterial = scene.getMaterialByName('remote-material');
     const updateRemoteFeedback = () => {
         if (remoteMaterial instanceof PBRMaterial) {
@@ -137,7 +137,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             movement.cancel();
             input.update(null, null);
             input.cancel();
-            clock.reset();
+            simulation.reset();
             video.interrupt();
         },
         pause: playback.pause,
@@ -161,7 +161,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         recovery.bind(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
         if (document.hidden || !recovery.canPresent()) {
-            clock.reset();
+            simulation.reset();
             return;
         }
         const start = performance.now();
@@ -189,20 +189,16 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         pointing.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
             xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null, input.screen.readSize(), input.screen.readPose());
-        if (recovery.isSuspended()) {
-            clock.reset();
-        } else {
-            clock.advance(start, seconds => {
-                physicalRemote?.grab.step(seconds);
-                plugin.executeStep(seconds, bodies);
-            });
-        }
+        simulation.advance(start, recovery.isSuspended(), room.read(), seconds => {
+            physicalRemote?.grab.step(seconds);
+            plugin.executeStep(seconds, bodies);
+        });
         updateRemoteFeedback();
         scene.render();
         sampler.record(performance.now() - start);
     });
     const timer = window.setInterval(() => onSample({
-        ...sampler.read(), remoteHeight: remote?.transformNode.position.y || 0,
+        ...sampler.read(), physicsStatus: simulation.status(), remoteHeight: remote?.transformNode.position.y || 0,
         immersive: !!xr?.sessionManager.inXRSession, mediaStatus: video.readStatus(), inputStatus: input.readStatus(),
         assetStatus: [chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.',
             architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.'].join(' ')

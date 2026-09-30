@@ -329,6 +329,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                 <Typography component='p' gutterBottom sx={{ marginTop: 2 }}>
                     {sample ? `${sample.frames} frames; recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms; remote height ${sample.remoteHeight.toFixed(3)} m.` : 'Frame observations will appear after the scene starts.'}
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.
+                    {' '}{sample?.physicsStatus}
                 </Typography>
                 <Typography component='p'>Use Open catalogue in the scene for six technical cards, type filtering, paging and details. Search opens a spatial keyboard; Cancel keeps your previous results, and Clear search removes the term. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
                 <Typography component='p'>Screen settings opens anchored controls for size, distance, height and tilt. Next setting cycles between them; Reset screen restores the default size and position. Video, captions and the solid screen move together. A blocked placement keeps the previous position and explains how to recover. Back to controls retains the placement for this scene. These bounded comparison settings still need headset readability and comfort testing.</Typography>

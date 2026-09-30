@@ -4,7 +4,7 @@ import {
 } from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 
-import { FixedStepClock } from '../fixtures/fixedStepClock';
+import { PhysicsScheduler } from '../fixtures/physicsScheduler';
 import { ROOM_FIXTURE } from '../fixtures/roomFixture';
 import { RoomCollision } from '../fixtures/roomCollision';
 import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
@@ -90,8 +90,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     // A failed import retains visible collision proxies and an explicit diagnostic.
     const chairs = await loadThreeChairs(scene, quality).catch(() => undefined);
     const architecture = await loadThreeArchitecture(scene, detailedRoom).catch(() => undefined);
-    const clock = new FixedStepClock();
     const physicalRemote = createRapierRemote(remoteBody, room.read);
+    const simulation = new PhysicsScheduler(physicalRemote || { awake: () => true, wake: () => undefined });
     const recallRemote = () => physicalRemote?.recall();
     const movement = new MovementSession(() => playback.pause('movement'), room.destinationClear);
     const input = new ComparisonInput(action => {
@@ -127,7 +127,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             movement.cancel();
             input.update(null, null);
             input.cancel();
-            clock.reset();
+            simulation.reset();
             video.interrupt();
         },
         pause: playback.pause,
@@ -152,7 +152,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     renderer.setAnimationLoop((time, frame) => {
         recovery.bind(renderer.xr.getSession(), renderer.xr.getReferenceSpace());
         if (document.hidden || !recovery.canPresent()) {
-            clock.reset();
+            simulation.reset();
             return;
         }
         const start = performance.now();
@@ -173,15 +173,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         controls.update();
         pointing.update();
         video.update(renderer.xr.getSession(), renderer.xr.getReferenceSpace(), input.screen.readSize(), input.screen.readPose());
-        if (recovery.isSuspended()) {
-            clock.reset();
-        } else {
-            clock.advance(time, seconds => {
-                physicalRemote?.grab.step(seconds);
-                world.timestep = seconds;
-                world.step();
-            });
-        }
+        simulation.advance(time, recovery.isSuspended(), room.read(), seconds => {
+            physicalRemote?.grab.step(seconds);
+            world.timestep = seconds;
+            world.step();
+        });
         if (remote && remoteBody) {
             remote.material.emissive.set(physicalRemote?.grab.source() ? FIXTURE_COLOURS.warm : 0);
             remote.position.copy(remoteBody.translation());
@@ -191,7 +187,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         sampler.record(performance.now() - start);
     });
     const timer = window.setInterval(() => onSample({
-        ...sampler.read(), remoteHeight: remote?.position.y || 0, immersive: renderer.xr.isPresenting,
+        ...sampler.read(), physicsStatus: simulation.status(), remoteHeight: remote?.position.y || 0, immersive: renderer.xr.isPresenting,
         mediaStatus: video.readStatus(), inputStatus: input.readStatus(),
         assetStatus: [chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.',
             architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.'].join(' ')
