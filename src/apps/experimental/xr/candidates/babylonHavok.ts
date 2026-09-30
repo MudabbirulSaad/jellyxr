@@ -18,6 +18,7 @@ import '@babylonjs/core/Physics/joinedPhysicsEngineComponent';
 
 import { FixedStepClock } from '../fixtures/fixedStepClock';
 import { ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { RoomCollision } from '../fixtures/roomCollision';
 import { COMPARISON_LIGHTS } from '../fixtures/lightingFixture';
 import { VideoPresentation } from '../media/videoPresentation';
 import { createNativeMediaLayer } from '../media/nativeMediaLayer';
@@ -32,6 +33,7 @@ import { movementAction, MovementSession } from '../input/movementSession';
 import { SessionRecovery } from '../input/sessionRecovery';
 import { viewerWorldPosition } from '../input/movement';
 import { createHavokRemote } from '../input/havokRemote';
+import { createHavokScreen } from '../input/havokScreen';
 import { loadBabylonChairs } from '../assets/babylonChairs';
 import { loadBabylonArchitecture } from '../assets/babylonArchitecture';
 import type { ChairQuality } from '../assets/chairAssets';
@@ -87,6 +89,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     }
 
+    const screen = aggregates.find(aggregate => aggregate.transformNode.name === 'screen')!;
+    const room = new RoomCollision(createHavokScreen(screen, plugin));
+
     // A failed import retains visible collision proxies and an explicit diagnostic.
     const chairs = await loadBabylonChairs(scene, quality).catch(() => undefined);
     const architecture = await loadBabylonArchitecture(scene, detailedRoom).catch(() => undefined);
@@ -98,11 +103,11 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         xr.featuresManager.enableFeature(WebXRLayers.Name, 'latest', {}, true, false);
     }
     const video = new VideoPresentation({
-        createTexture: (surface, screenPercent) => createBabylonVideoTexture(surface, scene, engine, screenPercent),
-        createLayer: (surface, session, space, screenPercent) => createNativeMediaLayer(surface, session, space,
-            percent => createBabylonMediaUnderlay(surface, scene, percent), screenPercent)
+        createTexture: (surface, screenPercent, pose) => createBabylonVideoTexture(surface, scene, engine, screenPercent, pose),
+        createLayer: (surface, session, space, screenPercent, pose) => createNativeMediaLayer(surface, session, space,
+            (percent, placement) => createBabylonMediaUnderlay(surface, scene, percent, placement), screenPercent, pose)
     });
-    const physicalRemote = remote ? createHavokRemote(remote, plugin) : undefined;
+    const physicalRemote = remote ? createHavokRemote(remote, plugin, room.read) : undefined;
     const remoteMaterial = scene.getMaterialByName('remote-material');
     const updateRemoteFeedback = () => {
         if (remoteMaterial instanceof PBRMaterial) {
@@ -111,7 +116,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     };
     const recallRemote = () => physicalRemote?.recall();
-    const movement = new MovementSession(() => playback.pause('movement'));
+    const movement = new MovementSession(() => playback.pause('movement'), room.destinationClear);
     const input = new ComparisonInput(action => {
         if (recovery.isSuspended()) return;
         const move = movementAction(action);
@@ -124,7 +129,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         }
     }, physicalRemote?.grab, point => {
         if (!recovery.isSuspended()) movement.requestDestination(point);
-    }, createBabylonSceneQuery(scene));
+    }, createBabylonSceneQuery(scene), room);
     const controls = createBabylonControls(scene, input.state, input.layout, input.floor);
     const pointing = createBabylonPointing(scene, input);
     const recovery = new SessionRecovery({
@@ -183,7 +188,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         controls.update();
         pointing.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
-            xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null, input.screen.readSize());
+            xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null, input.screen.readSize(), input.screen.readPose());
         if (recovery.isSuspended()) {
             clock.reset();
         } else {

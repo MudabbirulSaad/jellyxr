@@ -53,3 +53,7 @@ A deferred decision records alternatives, evidence, owner, impact and deadline i
 Confirmed product direction does not approve unmeasured implementation details. M1 resolves the product direction and target decisions above; G1 remains open until its remaining environment/fixture evidence is recorded. G2 resolves technical choices. Update affected requirements, parity, traceability and work breakdown together.
 
 See [technology evaluation](technology-evaluation.md) and [roadmap gates](../05-delivery/roadmap.md).
+
+### Implementation record — bounded screen placement, 2026-09-30
+
+Under FR-016, extend both disposable candidates with explicit size, distance, height and tilt controls. The backing and fixed collision body now follow the screen; architecture stays fixed, and placement is rejected when room/viewer/remote clearance fails. Button changes settle immediately without camera travel or player commands. The [comparison contract and evidence](../05-delivery/m2-experiments.md#screen-placement-increment--2026-09-30) supersede the earlier size-only fixed-backing implementation, while preserving those historical results. Bounds remain experimental. D-27's stable screen means no uncontrolled dynamic screen motion; this deliberate adjustment does not select a production engine or close G2.

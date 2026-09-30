@@ -15,7 +15,7 @@ vi.mock('./textSubtitles', () => ({
 }));
 
 describe('shared video and caption geometry', () => {
-    it.each([60, 80, 100])('aligns both real renderer resources at %i%% without touching the player', percent => {
+    it.each([60, 80, 100].flatMap(percent => [0, -15, 15].map(tilt => ({ percent, tilt }))))('aligns both real renderer resources at $percent%, tilt $tilt without touching the player', ({ percent, tilt }) => {
         vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({} as CanvasRenderingContext2D);
         const engine = new NullEngine();
         const babylon = new BabylonScene(engine);
@@ -27,19 +27,25 @@ describe('shared video and caption geometry', () => {
         const play = vi.spyOn(video, 'play');
         const pause = vi.spyOn(video, 'pause');
         try {
-            const a = createBabylonVideoTexture(surface, babylon, engine, percent);
-            const b = createThreeVideoTexture(surface, three, percent);
+            const pose = { distance: 5, height: 1.8, tilt };
+            const a = createBabylonVideoTexture(surface, babylon, engine, percent, pose);
+            const b = createThreeVideoTexture(surface, three, percent, pose);
             const scale = percent / 100;
             const expected = [
-                { name: 'borrowed-video-screen', width: 1.8 * scale, height: 3.6 * scale, position: [0, 2, -6.47] },
-                { name: 'borrowed-ass', width: 1.8 * scale, height: 3.6 * scale, position: [0, 2, -6.45] },
-                { name: 'borrowed-subtitles', width: 4.8 * scale, height: 1.2 * scale, position: [0, 2 + 0.65 * scale, -6.39] }
+                { name: 'borrowed-video-screen', width: 1.8 * scale, height: 3.6 * scale, position: [0, 0, 0.03] },
+                { name: 'borrowed-ass', width: 1.8 * scale, height: 3.6 * scale, position: [0, 0, 0.05] },
+                { name: 'borrowed-subtitles', width: 4.8 * scale, height: 1.2 * scale, position: [0, 0.65 * scale, 0.11] }
             ];
             for (const item of expected) {
                 const bm = babylon.getMeshByName(item.name)!;
                 const tm = three.getObjectByName(item.name) as Mesh<PlaneGeometry>;
-                expect(bm.position.asArray()).toEqual(item.position);
-                expect(tm.position.toArray()).toEqual(item.position);
+                const angle = -tilt * Math.PI / 180;
+                const y = item.position[1] * Math.cos(angle) - item.position[2] * Math.sin(angle) + pose.height;
+                const z = item.position[1] * Math.sin(angle) + item.position[2] * Math.cos(angle) - pose.distance;
+                expect(bm.position.asArray()).toEqual([0, expect.closeTo(y), expect.closeTo(z)]);
+                expect(tm.position.toArray()).toEqual(bm.position.asArray());
+                expect(bm.rotation.x).toBeCloseTo(angle);
+                expect(tm.rotation.x).toBeCloseTo(angle);
                 expect(tm.geometry.parameters.width).toBeCloseTo(item.width);
                 expect(tm.geometry.parameters.height).toBeCloseTo(item.height);
                 expect(bm.getBoundingInfo().boundingBox.extendSize.x * 2).toBeCloseTo(item.width);

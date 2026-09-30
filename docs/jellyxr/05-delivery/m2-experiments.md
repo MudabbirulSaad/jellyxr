@@ -34,6 +34,16 @@ Validate boundary/Reset behaviour, stable target placement, both renderer geomet
 
 UI/UX Pro Max's verified **Disabled States** guidance informs distinct disabled controls; the existing focus/press feedback and concrete action labels are retained. Its mobile sizing and haptic defaults are not XR qualification evidence.
 
+## Expanded flat-screen placement contract — 2026-09-30
+
+Extend the bounded FR-016 comparison with deliberate distance, height and tilt controls. Preserve the size-only results above as historical evidence. For this expanded experiment, the graphite backing and its collision box now follow the selected image envelope and pose; the room architecture remains fixed. Video, authored caption canvas, plain-text caption panel and native-layer aperture must share that pose and maintain their local depth separation. No source aspect ratio or player-owned state changes.
+
+The proposed comparison range is 4–6.5 m from the room's reference seat, centre height 1.2–2.8 m and tilt ±15 degrees. Distance changes in 0.25 m steps, height in 0.1 m steps and tilt in five-degree steps. These are experimental bounds, not headset comfort recommendations. A change must fit inside the room and avoid other solid geometry, the current viewer and the remote. Keep the screen at least 1.75 m from the tracked head so it cannot cross the 1.4 m reference control bank; this is a comparison safeguard, not a comfort threshold. Reject a conservative swept envelope through the viewer or remote, including Reset. Reject blocked changes with an actionable message and retain the prior valid placement. Never move the camera or push an object to make a screen placement fit. Reset restores the default size and pose only when that placement is clear.
+
+Use a per-scene collision model, not mutable global fixtures. Teleport validation, floor occlusion, control placement, remote sweeps and engine collision bodies must observe the same screen pose. Tilted-screen queries use the oriented box; do not leave an invisible collider at the old location. Placement cancels pending input/grabs and stays fixed after confirmation. Preserve seated button alternatives and Back/Return to seat/Exit XR. Validate transforms and clearance in controlled tests, inspect both candidate previews, and retain native-layer, actual hand/controller and comfort gates as pending until measured.
+
+General recentering toward an arbitrary orientation, curved presentation and persistent production preferences are separate remaining FR-016 work. This contract is not a G2 engine choice.
+
 ## Candidate versions and provenance
 
 | Package | Exact experimental version | Installed package licence |
@@ -617,3 +627,28 @@ PC references: [Babylon text at 60%](../references/images/m2-size-babylon-60.png
 Additional screen distance/height/tilt, curved presentation, general recentering and persisted preferences remain open under FR-016. ASS resizing has controlled geometry coverage but was not visually rechecked in this slice. Native layer resizing, subtitle classes and all required hand/controller, comfort and sustained Quest evidence remain open at G2; G3/G4 are not advanced.
 
 Documentation validation passes 444 relative links/anchors across 33 Markdown files, 41 unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.
+
+## Screen-placement increment — 2026-09-30
+
+Source: `2379d90127f737300ffcdfae477c8c9a8bc86624`, branch `milestone/m2-screen-placement`, based on `xr` `212ba7e6d0`. Implements the [expanded comparison contract](#expanded-flat-screen-placement-contract--2026-09-30), extending the earlier size-only experiment. G2 remains open.
+
+Screen settings now cycles between size, seat distance, centre height and tilt. Explicit step buttons, disabled range limits, Reset, Back, Return to seat and Exit XR remain in a stable eight-panel workspace. UI/UX Pro Max guidance informs visible focus, disabled states, concrete recovery copy and alternatives to dragging. The comparison ranges are not headset sizing recommendations.
+
+The solid backing, video texture, plain/rich captions, native quad and projection aperture share size and pitch. A per-scene collision source also feeds floor occlusion, teleport clearance, control placement and remote sweeps. Havok replaces the owned box shape on the existing fixed body; Rapier resizes its existing collider. Both move their visible backing with the body. Invalid room, viewer or remote clearance retains the previous placement; an accepted change cancels pending input. The screen remains fixed after adjustment, without moving the viewer or changing playback.
+
+| Check | Actual result and limits |
+| --- | --- |
+| Controlled regression | 457 tests across 53 files pass, including 18 added cases. Covers bounded steps and reset, rejected placement retention, per-scene isolation, oriented ray/overlap queries, floor obstruction, remote sweep and removal of the old screen obstruction. Existing input/movement recovery tests also pass |
+| Actual physics libraries | Both installed WASM engines run the new adapter tests without a headset. Ray hits agree with the oriented query box across translation, positive/negative pitch, reduced size and reset. Old-position and reduced-width misses pass; the original body remains. This does not establish measured device collision cost, comfort or long-session stability |
+| Presentation and owner | Real Three geometry and Babylon NullEngine geometry agree for video, plain/rich captions and alpha apertures across sizes and positive/negative tilt. Native transform arguments and lifecycle use a controlled host. Presentation rebuilds once per distinct pose, without play/pause/load, seek or lease release. Artwork drawing is mocked in geometry tests; actual caption fidelity remains separately qualified |
+| Babylon PC texture | Keyboard steps reached 80%, seat distance 5.50 m, centre 1.8 m and +10° tilt with the original text cue visible. Further lowering stopped at 1.5 m and showed a room-collision error when 1.4 m was requested. The rejection copy was then clarified to offer size, height or distance adjustment. The technical video remained paused at 0.359806 s across placement and the reset/close sequence |
+| Three PC texture | The original PGS 1 cue remained visible at 80%, 5.00 m, 1.9 m and −10° tilt. Reset restored 100%, 6.50 m, 2.0 m and 0°, followed by return to room controls. The video remained paused at 0.599806 s. The fixture used the inherited bitmap `webgpu` backend; neither server-delivered tracks nor audible playback was tested here |
+| Interaction boundary | PC keyboard checks only. No new mouse, controller, hand, binocular-depth, native-layer or headset comfort pass. The Quest was absent from ADB at the start of this slice. Headset-dependent gates remain open |
+| Local checks | Full test suite and TypeScript pass. Full lint has 98 inherited warnings and zero errors; affected-file lint passes. Stylelint passes. Ordinary production/ES5 passes 984 files; experimental production/ES5 passes 994 files, with the two inherited bundle-size warnings |
+| Production boundary | New screen-action/copy and room markers are absent from ordinary production JavaScript. Dependency versions and the lockfile are unchanged. No production renderer, player replacement or new server interface is introduced |
+
+PC references: [Babylon text with raised tilt](../references/images/m2-placement-babylon-text.png) and [Three PGS with lowered tilt](../references/images/m2-placement-three-pgs.png). These contain only labelled technical content. They demonstrate selected desktop states, not readable headset text, synchronized delivery, colour fidelity or performance rankings. Local logs are in `%LOCALAPPDATA%/JellyXR/screen-placement-*.log`.
+
+Remaining FR-016 work includes general orientation recentering, qualified curved presentation and scoped production preferences. The controls can cover parts of a lowered video while open; the reference screenshots are not a full placement/accessibility qualification. Actual native layers, both required input methods, complete subtitle/media classes and sustained Quest measurements still block G2. G3/G4 are unchanged.
+
+Documentation validation passes 449 relative links/anchors across 33 Markdown files, 41 unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.

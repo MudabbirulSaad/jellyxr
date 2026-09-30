@@ -1,4 +1,5 @@
-import { REMOTE_SIZE, ROOM_FIXTURE, type Point3 } from '../fixtures/roomFixture';
+import { REMOTE_SIZE, ROOM_FIXTURE, type Point3, type CollisionSource } from '../fixtures/roomFixture';
+import { boxLocalPoint, pitchedHalfBounds, rotatePitch } from '../fixtures/boxGeometry';
 
 export interface RemotePose {
     position: Point3;
@@ -52,15 +53,16 @@ function entryFraction(from: Point3, delta: Point3, min: Point3, max: Point3): n
 }
 
 /** Swept box against the comparison's static proxies, not merely an end-point overlap test. */
-export function constrainRemote(from: Point3, to: Point3, half: Point3): Point3 {
+export function constrainRemote(from: Point3, to: Point3, half: Point3, boxes = ROOM_FIXTURE): Point3 {
     if (!finite(from) || !finite(to) || !finite(half) || half.some(v => v <= 0)) return from;
     const delta: Point3 = [to[0] - from[0], to[1] - from[1], to[2] - from[2]];
     let fraction = 1;
-    for (const box of ROOM_FIXTURE) {
+    for (const box of boxes) {
         if (box.collision !== 'static') continue;
-        const min = box.position.map((v, i) => v - box.size[i] / 2 - half[i] - 0.001) as unknown as Point3;
-        const max = box.position.map((v, i) => v + box.size[i] / 2 + half[i] + 0.001) as unknown as Point3;
-        fraction = Math.min(fraction, entryFraction(from, delta, min, max));
+        const localHalf = pitchedHalfBounds(half, box.pitch);
+        const min = box.size.map((v, i) => -v / 2 - localHalf[i] - 0.001) as unknown as Point3;
+        const max = box.size.map((v, i) => v / 2 + localHalf[i] + 0.001) as unknown as Point3;
+        fraction = Math.min(fraction, entryFraction(boxLocalPoint(from, box), rotatePitch(delta, -(box.pitch || 0)), min, max));
     }
     return [from[0] + delta[0] * fraction, from[1] + delta[1] * fraction, from[2] + delta[2] * fraction];
 }
@@ -71,7 +73,9 @@ export class RemoteGrab {
     private offset: Point3 = [0, 0, 0];
     private target: Point3 | null = null;
 
-    constructor(private readonly body: RemoteBody) {}
+    constructor(private readonly body: RemoteBody, private readonly collisions: CollisionSource = () => ROOM_FIXTURE) {}
+
+    readPose(): RemotePose { return this.body.read(); }
 
     begin(source: string, anchor: Point3 | null): boolean {
         if (this.owner || !anchor || !finite(anchor)) return false;
@@ -102,7 +106,7 @@ export class RemoteGrab {
         const distance = Math.hypot(...delta);
         const fraction = distance > 0 ? Math.min(1 - Math.exp(-20 * seconds), 3 * seconds / distance) : 0;
         const next: Point3 = [position[0] + delta[0] * fraction, position[1] + delta[1] * fraction, position[2] + delta[2] * fraction];
-        this.body.move(constrainRemote(position, next, half));
+        this.body.move(constrainRemote(position, next, half, this.collisions()));
     }
 
     source(): string | null {

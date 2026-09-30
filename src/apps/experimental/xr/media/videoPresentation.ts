@@ -1,4 +1,4 @@
-import { screenGeometry } from '../fixtures/screenFixture';
+import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 
@@ -11,8 +11,8 @@ export interface VideoPresentationResource {
 }
 
 export interface VideoPresentationBackend {
-    createTexture(surface: BorrowedVideoSurface, screenPercent: number): VideoPresentationResource;
-    createLayer(surface: BorrowedVideoSurface, session: XRSession, space: XRReferenceSpace, screenPercent: number): VideoPresentationResource;
+    createTexture(surface: BorrowedVideoSurface, screenPercent: number, pose: ScreenPose): VideoPresentationResource;
+    createLayer(surface: BorrowedVideoSurface, session: XRSession, space: XRReferenceSpace, screenPercent: number, pose: ScreenPose): VideoPresentationResource;
 }
 
 /** Letterbox within the shared screen; never stretch the video's encoded aspect ratio. */
@@ -34,6 +34,7 @@ export class VideoPresentation {
     private space: XRReferenceSpace | null = null;
     private dimensions = '';
     private screenPercent = 100;
+    private screenPose = DEFAULT_SCREEN_POSE;
     private failed = false;
     private status = 'No video attached.';
 
@@ -51,7 +52,7 @@ export class VideoPresentation {
         return this.status;
     }
 
-    update(session: XRSession | null, space: XRReferenceSpace | null, screenPercent = 100): void {
+    update(session: XRSession | null, space: XRReferenceSpace | null, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE): void {
         const surface = this.surface;
         if (!surface) return;
         if (!surface.isCurrent()) {
@@ -61,13 +62,15 @@ export class VideoPresentation {
         }
         const { video } = surface;
         const dimensions = `${video.videoWidth}x${video.videoHeight}`;
-        // Replace only owned resources on session, stream or deliberate screen-size changes.
-        if (session !== this.session || space !== this.space || dimensions !== this.dimensions || screenPercent !== this.screenPercent) {
+        // Replace only owned resources on session, stream or deliberate screen-placement changes.
+        if (session !== this.session || space !== this.space || dimensions !== this.dimensions || screenPercent !== this.screenPercent
+            || pose.distance !== this.screenPose.distance || pose.height !== this.screenPose.height || pose.tilt !== this.screenPose.tilt) {
             this.clearResource();
             this.session = session;
             this.space = space;
             this.dimensions = dimensions;
             this.screenPercent = screenPercent;
+            this.screenPose = { ...pose };
             this.failed = false;
         }
         if (this.failed) return;
@@ -82,7 +85,7 @@ export class VideoPresentation {
         try {
             if (!this.resource) {
                 this.resource = this.mode === 'media-layer' && session && space ?
-                    this.backend.createLayer(surface, session, space, screenPercent) : this.backend.createTexture(surface, screenPercent);
+                    this.backend.createLayer(surface, session, space, screenPercent, pose) : this.backend.createTexture(surface, screenPercent, pose);
             }
             this.resource.update();
             this.status = this.mode === 'media-layer' ?

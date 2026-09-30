@@ -8,14 +8,14 @@ import '@babylonjs/core/Engines/Extensions/engine.videoTexture';
 
 import { createBabylonPanel } from '../candidates/babylonPanel';
 
-import { screenGeometry } from '../fixtures/screenFixture';
+import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { fitVideoScreen, type VideoPresentationResource } from './videoPresentation';
 import { createBabylonSubtitles } from './babylonSubtitles';
 
 export function createBabylonVideoTexture(
-    surface: BorrowedVideoSurface, scene: Scene, engine: Engine, screenPercent = 100
+    surface: BorrowedVideoSurface, scene: Scene, engine: Engine, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE
 ): VideoPresentationResource {
     const { video } = surface;
     const dimensions = fitVideoScreen(video.videoWidth, video.videoHeight, screenPercent);
@@ -27,9 +27,10 @@ export function createBabylonVideoTexture(
     material.emissiveTexture = texture;
     material.backFaceCulling = true;
     const mesh = createBabylonPanel('borrowed-video-screen', dimensions.width, dimensions.height, scene);
-    mesh.position.set(...screenGeometry(screenPercent).videoPosition);
+    mesh.rotation.x = screenGeometry(screenPercent, pose).pitch;
+    mesh.position.set(...screenGeometry(screenPercent, pose).videoPosition);
     mesh.material = material;
-    const subtitles = createBabylonSubtitles(surface, scene, screenPercent);
+    const subtitles = createBabylonSubtitles(surface, scene, screenPercent, pose);
     let lastTime = -1;
     return {
         update() {

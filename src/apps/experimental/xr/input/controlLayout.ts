@@ -1,4 +1,5 @@
-import { ROOM_FIXTURE, type Point3 } from '../fixtures/roomFixture';
+import { ROOM_FIXTURE, type Point3, type CollisionSource } from '../fixtures/roomFixture';
+import { overlapsBox } from '../fixtures/boxGeometry';
 
 import { CONTROL_TARGETS, FLOOR_TARGETS, INITIAL_CONTROL_ANCHOR, RECOVERY_TARGETS, controlLocalPoint, type ControlAnchor, type ControlTarget } from './controlTargets';
 import { rotateFloorPoint, viewerWorldPosition } from './movement';
@@ -17,19 +18,18 @@ export function isControlPlacementInView(viewer: ControlViewerPose, anchor: Cont
 }
 
 /** Conservative axis-aligned proxy check for the complete bank, including rotated corners. */
-export function isControlPlacementClear(anchor: ControlAnchor, targets = CONTROL_TARGETS): boolean {
+export function isControlPlacementClear(anchor: ControlAnchor, targets = CONTROL_TARGETS, boxes = ROOM_FIXTURE): boolean {
     if (!anchor.origin.every(Number.isFinite) || !Number.isFinite(anchor.yaw)) return false;
     return targets.every(target => {
         const centre = viewerWorldPosition(anchor, target.position);
-        const half = [
+        const half: Point3 = [
             Math.abs(Math.cos(anchor.yaw)) * target.width / 2 + 0.015,
             target.height / 2 + 0.015,
             Math.abs(Math.sin(anchor.yaw)) * target.width / 2 + 0.015
         ];
         if (Math.abs(centre[0]) + half[0] > 5.85 || Math.abs(centre[2]) + half[2] > 6.85
             || centre[1] - half[1] < 0.15 || centre[1] + half[1] > 3.9) return false;
-        return !ROOM_FIXTURE.some(box => box.collision === 'static'
-            && centre.every((value, axis) => Math.abs(value - box.position[axis]) < half[axis] + box.size[axis] / 2));
+        return !boxes.some(box => box.collision === 'static' && overlapsBox(centre, half, box));
     });
 }
 
@@ -40,6 +40,8 @@ export class ControlLayout {
     private contentTargets = CONTROL_TARGETS;
     private pending = false;
 
+    constructor(private readonly collisions: CollisionSource = () => ROOM_FIXTURE) {}
+
     read(): ControlAnchor { return this.anchor; }
     targets(floorMode = false): readonly ControlTarget[] {
         return floorMode && this.visibleTargets === CONTROL_TARGETS ? FLOOR_TARGETS : this.visibleTargets;
@@ -49,7 +51,7 @@ export class ControlLayout {
     cancel(): void { this.pending = false; }
     setContent(targets: readonly ControlTarget[], reanchor: boolean): void {
         this.contentTargets = targets;
-        if (reanchor || !isControlPlacementClear(this.anchor, targets)) this.request();
+        if (reanchor || !isControlPlacementClear(this.anchor, targets, this.collisions())) this.request();
         else this.visibleTargets = targets;
     }
 
@@ -79,7 +81,7 @@ export class ControlLayout {
                 const candidate: ControlAnchor = {
                     origin: [viewer.position[0] + shift[0], shift[1], viewer.position[2] + shift[2]], yaw
                 };
-                if (isControlPlacementClear(candidate, targets) && isControlPlacementInView(viewer, candidate, targets)) return candidate;
+                if (isControlPlacementClear(candidate, targets, this.collisions()) && isControlPlacementInView(viewer, candidate, targets)) return candidate;
             }
         }
         return null;

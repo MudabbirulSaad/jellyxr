@@ -1,4 +1,5 @@
 import type { Point3 } from '../fixtures/roomFixture';
+import { RoomCollision } from '../fixtures/roomCollision';
 
 import { aimFloor, FloorSelection } from './floorSelection';
 
@@ -24,10 +25,10 @@ function actionLabel(action: ControlAction | null): string {
 /** Uses one native select event stream for controller trigger and hand pinch; never gaze. */
 export class ComparisonInput {
     readonly state = new ActivationState();
-    readonly layout = new ControlLayout();
+    readonly layout: ControlLayout;
     readonly floor: FloorSelection;
     readonly catalogue = new SpatialCatalogue();
-    readonly screen = new SpatialScreen();
+    readonly screen: SpatialScreen;
     private pointing: (PointingAim & { source: string }) | null = null;
     private trackedViewer: { position: Point3; sampledAt: number } | null = null;
     private desktopViewer: ControlViewerPose | undefined;
@@ -42,9 +43,19 @@ export class ComparisonInput {
     constructor(
         private readonly onAction: (action: ControlAction) => void, private readonly grab?: RemoteGrab,
         private readonly onTeleport: (point: Point3) => void = () => undefined,
-        private readonly sceneQuery: SceneSurfaceQuery = () => null
+        private readonly sceneQuery: SceneSurfaceQuery = () => null,
+        private readonly room = new RoomCollision()
     ) {
-        this.floor = new FloorSelection(sceneQuery);
+        this.layout = new ControlLayout(room.read);
+        this.floor = new FloorSelection(sceneQuery, room.read);
+        this.screen = new SpatialScreen((percent, pose) => {
+            const viewer = this.session ? this.trackedViewer : null;
+            let position = this.desktopViewer?.position;
+            if (this.session) position = viewer && performance.now() - viewer.sampledAt <= 100 ? viewer.position : undefined;
+            const message = room.tryScreen(percent, pose, position, this.grab?.readPose());
+            if (!message) this.cancel();
+            return message;
+        });
     }
 
     summonControls(): void {
@@ -57,7 +68,7 @@ export class ComparisonInput {
         if (!aim || aim.blocked) return aim;
         if (this.floor.isActive()) {
             if (aim.action !== 'summon-controls') return aim;
-            const floor = aimFloor(ray, this.sceneQuery);
+            const floor = aimFloor(ray, this.sceneQuery, this.room.read());
             return { ...aim, action: floor.valid ? 'confirm-floor' : null, blocked: !floor.valid,
                 point: floor.valid && floor.point ? floor.point : aim.point };
         }

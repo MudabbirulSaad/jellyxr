@@ -1,4 +1,4 @@
-import { FIXTURE_LIBRARY, FIXTURE_SEAT, type Point3 } from '../fixtures/roomFixture';
+import { FIXTURE_LIBRARY, FIXTURE_SEAT, isFixtureDestinationClear, type Point3 } from '../fixtures/roomFixture';
 
 import { applyMovement, INITIAL_VIEWER_ROOT, inverseReferenceTransform, snapViewer, teleportViewer, type ViewerRoot } from './movement';
 
@@ -23,7 +23,7 @@ export class MovementSession {
     private baseSpace: XRReferenceSpace | null = null;
     private pending: MovementAction | Point3 | null = null;
 
-    constructor(private readonly pauseForMovement: () => void) {}
+    constructor(private readonly pauseForMovement: () => void, private readonly destinationClear: (point: Point3) => boolean = isFixtureDestinationClear) {}
 
     request(action: MovementAction): void {
         this.pending = action;
@@ -79,10 +79,10 @@ export class MovementSession {
     }
 
     private plan(action: MovementAction | Point3, tracked: Point3): ViewerRoot | null {
-        if (typeof action !== 'string') return teleportViewer(this.root, tracked, action);
+        if (typeof action !== 'string') return teleportViewer(this.root, tracked, action, this.destinationClear);
         if (action === 'turn-left') return snapViewer(this.root, tracked, 1);
         if (action === 'turn-right') return snapViewer(this.root, tracked, -1);
-        return teleportViewer(this.root, tracked, action === 'return-seat' ? FIXTURE_SEAT : FIXTURE_LIBRARY);
+        return teleportViewer(this.root, tracked, action === 'return-seat' ? FIXTURE_SEAT : FIXTURE_LIBRARY, this.destinationClear);
     }
 
     private offsetSpace(root: ViewerRoot): XRReferenceSpace | undefined {

@@ -1,4 +1,5 @@
 import { SCREEN_FRAME } from './screenFixture';
+import { overlapsBox } from './boxGeometry';
 
 import chairCollision from '../assets/observatory/observatory-chair-collision.json';
 
@@ -8,9 +9,12 @@ export interface FixtureBox {
     id: string;
     size: Point3;
     position: Point3;
+    pitch?: number;
     material: 'graphite' | 'surface' | 'metal' | 'warm' | 'screen';
     collision: 'static' | 'dynamic' | 'none';
 }
+
+export type CollisionSource = () => readonly FixtureBox[];
 
 export const FIXTURE_REMOTE: Point3 = [0.35, 1, -1.2];
 export const REMOTE_SIZE: Point3 = [0.08, 0.035, 0.19];
@@ -43,18 +47,14 @@ export const FIXTURE_SEAT: Point3 = [0, 0, 0];
 export const FIXTURE_LIBRARY: Point3 = [0, 0, 6.2];
 
 /** Footprint clearance only; actual tracked-space and mesh queries are candidate experiments. */
-export function isFixtureDestinationClear(point: Point3): boolean {
+export function isFixtureDestinationClear(point: Point3, boxes = ROOM_FIXTURE): boolean {
     const [x, y, z] = point;
     const clearance = 0.35;
     if (!point.every(Number.isFinite) || Math.abs(y) > 0.02
         || Math.abs(x) > 5.5 || Math.abs(z) > 6.5) return false;
 
-    return !ROOM_FIXTURE.some(box => {
+    return !boxes.some(box => {
         if (box.collision !== 'static' || box.id === 'floor' || box.id === 'ceiling') return false;
-        const [width, height, depth] = box.size;
-        const [bx, by, bz] = box.position;
-        return by - height / 2 < 1.8
-            && Math.abs(x - bx) < width / 2 + clearance
-            && Math.abs(z - bz) < depth / 2 + clearance;
+        return overlapsBox([x, 0.9, z], [clearance, 0.9, clearance], box);
     });
 }

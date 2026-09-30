@@ -4,11 +4,11 @@ import { PhysicsMotionType, PhysicsPrestepType } from '@babylonjs/core/Physics/v
 import type { PhysicsAggregate } from '@babylonjs/core/Physics/v2/physicsAggregate';
 import type { HavokPlugin } from '@babylonjs/core/Physics/v2/Plugins/havokPlugin';
 
-import { FIXTURE_REMOTE } from '../fixtures/roomFixture';
+import { FIXTURE_REMOTE, type CollisionSource } from '../fixtures/roomFixture';
 
 import { remoteHalfBounds, RemoteGrab } from './remoteGrab';
 
-export function createHavokRemote(remote: PhysicsAggregate, plugin: HavokPlugin) {
+export function createHavokRemote(remote: PhysicsAggregate, plugin: HavokPlugin, collisions?: CollisionSource) {
     let heldRotation = Quaternion.Identity();
     const rotation = () => remote.transformNode.rotationQuaternion || Quaternion.Identity();
     const stop = () => {
@@ -33,7 +33,7 @@ export function createHavokRemote(remote: PhysicsAggregate, plugin: HavokPlugin)
             remote.body.setMotionType(PhysicsMotionType.DYNAMIC);
             stop();
         }
-    });
+    }, collisions);
     return {
         grab,
         recall() {

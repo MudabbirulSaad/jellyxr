@@ -24,12 +24,16 @@ describe('projection apertures', () => {
         Object.defineProperties(video, { videoWidth: { value: 1000 }, videoHeight: { value: 1000 } });
         const surface = { video, isCurrent: () => true, release: vi.fn() };
         try {
-            const a = createBabylonMediaUnderlay(surface, babylon, percent);
-            const b = createThreeMediaUnderlay(surface, three, percent);
+            const pose = { distance: 4.5, height: 2.1, tilt: 10 };
+            const a = createBabylonMediaUnderlay(surface, babylon, percent, pose);
+            const b = createThreeMediaUnderlay(surface, three, percent, pose);
             const bm = babylon.getMeshByName('media-underlay-aperture')!;
             const tm = three.getObjectByName('media-underlay-aperture') as Mesh<PlaneGeometry, ShaderMaterial>;
             expect(bm.position.asArray()).toEqual(tm.position.toArray());
-            expect(tm.position.toArray()).toEqual([0, 2, -6.47]);
+            const angle = -Math.PI / 18;
+            expect(tm.position.toArray()).toEqual([0, expect.closeTo(2.1 - Math.sin(angle) * 0.03), expect.closeTo(-4.5 + Math.cos(angle) * 0.03)]);
+            expect(bm.rotation.x).toBeCloseTo(angle);
+            expect(tm.rotation.x).toBeCloseTo(angle);
             expect(tm.geometry.parameters.width).toBeCloseTo(3.6 * percent / 100);
             expect(tm.geometry.parameters.height).toBeCloseTo(3.6 * percent / 100);
             const bounds = bm.getBoundingInfo().boundingBox;

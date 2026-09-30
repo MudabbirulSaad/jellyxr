@@ -1,6 +1,6 @@
 # Roadmap and work breakdown
 
-Status: M1 merged; readiness closure and M2 preparation active under the approved M6 goal. Updated: 2026-09-29. Product owner: MudabbirulSaad.
+Status: M1 merged; readiness closure and M2 preparation active under the approved M6 goal. Updated: 2026-09-30. Product owner: MudabbirulSaad.
 
 This is the authoritative work sequence. Acceptance lives in the [functional](../02-requirements/functional-requirements.md) and [nonfunctional](../02-requirements/nonfunctional-requirements.md) requirements, connected by [traceability](../02-requirements/traceability.md). The [execution ledger](implementation-goal.md) records actual progress; [M1 evidence](m1-readiness.md) preserves observed setup results.
 
@@ -10,7 +10,7 @@ This is the authoritative work sequence. Acceptance lives in the [functional](..
 | --- | --- | --- | --- |
 | M0 Planning baseline | W-01 | Linked requirements, blueprints, source audit and documentation validation | Complete; merge 84571b91b3 |
 | M1 Readiness closure | W-02 preparation | Detailed ordinary playback, tooling/version and fixture inventory; revised scope and G1 disposition | PR #1 merged at f82e5c10c2; desktop follow-up adds chapter, track-control and reload/Resume observations. Audible/synchronized tracks, exact resume offset, Quest controls, emulator metadata and manual inspection remain open |
-| M2 Prove media, spatial interaction and technology | W-02 experiments | Equal Babylon/Havok and Three/Rapier scenes; media/subtitle, input, movement, build and performance evidence; G2 | [Comparison workbench](m2-experiments.md) includes PC-checked video, text/ASS/PGS fixtures, bitmap/native-layer seams, scene-occlusion and pointing fixtures, movement, original chairs and bounded screen sizing; other viewing geometry, real-server bitmap, native composition, visual pointing and mandatory device evidence remain open, no technology selected |
+| M2 Prove media, spatial interaction and technology | W-02 experiments | Equal Babylon/Havok and Three/Rapier scenes; media/subtitle, input, movement, build and performance evidence; G2 | [Comparison workbench](m2-experiments.md) includes PC-checked video, text/ASS/PGS fixtures, bitmap/native-layer seams, scene-occlusion and pointing fixtures, movement, original chairs and bounded screen size/distance/height/tilt; general recenter/curvature, real-server bitmap, native composition, visual pointing and mandatory device evidence remain open, no technology selected |
 | M3 Production integration boundaries | W-03, W-04, W-05; W-06 lifecycle seam | Bounded lazy XR feature in inherited React app; shared identity/library state, borrowed media bridge, scoped preferences and clean entry/exit | Awaiting G2; independent contracts/fixtures may be prepared |
 | M4 Complete spatial journey | W-06 | Connect/authenticate in ordinary mode, enter XR, browse/search/detail/play/control/return in simple room; both inputs and seated movement/recovery | Awaiting integration |
 | M5 Finish Cinema Observatory | W-07 | Production models/materials, physical objects, comfortable screen/text/controls and actual-headset review; G3 | Awaiting functional journey |
