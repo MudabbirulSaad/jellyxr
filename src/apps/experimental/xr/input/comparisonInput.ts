@@ -49,9 +49,7 @@ export class ComparisonInput {
         this.layout = new ControlLayout(room.read);
         this.floor = new FloorSelection(sceneQuery, room.read);
         this.screen = new SpatialScreen((percent, pose) => {
-            const viewer = this.session ? this.trackedViewer : null;
-            let position = this.desktopViewer?.position;
-            if (this.session) position = viewer && performance.now() - viewer.sampledAt <= 100 ? viewer.position : undefined;
+            const position = this.session ? this.recentViewerPosition() : this.desktopViewer?.position;
             const message = room.tryScreen(percent, pose, position, this.grab?.readPose());
             if (!message) this.cancel();
             return message;
@@ -93,6 +91,11 @@ export class ComparisonInput {
             this.trackedViewer = { position, sampledAt: performance.now() };
             return { position, forward };
         }
+    }
+
+    private recentViewerPosition(): Point3 | undefined {
+        const viewer = this.trackedViewer;
+        return viewer && performance.now() - viewer.sampledAt <= 100 ? viewer.position : undefined;
     }
 
     private updateLayout(viewer?: ControlViewerPose): void {
@@ -137,8 +140,8 @@ export class ComparisonInput {
         if (owner && owner !== this.id(source)) return null;
         const pose = frame.getPose(source.targetRaySpace, this.space);
         // Input-event frames forbid getViewerPose(). Use only the last active animation sample.
-        const viewer = this.trackedViewer;
-        if (!pose || !viewer || performance.now() - viewer.sampledAt > 100) return null;
+        const viewer = this.recentViewerPosition();
+        if (!pose || !viewer) return null;
         let near: Point3 | undefined;
         if (source.hand) {
             const joint = source.hand.get('index-finger-tip');
@@ -151,7 +154,7 @@ export class ComparisonInput {
         }
         const m = pose.transform.matrix;
         return this.aimRay({ origin: [m[12], m[13], m[14]], direction: [-m[8], -m[9], -m[10]] },
-            near || [m[12], m[13], m[14]], viewer.position);
+            near || [m[12], m[13], m[14]], viewer);
     }
 
     private target(frame: XRFrame, source: XRInputSource): ControlAction | null {
@@ -181,7 +184,7 @@ export class ComparisonInput {
         if (event.inputSource.hand) this.grab?.release(this.id(event.inputSource));
     };
     private beginGrab = (event: XRInputSourceEvent): boolean => {
-        if (this.session?.visibilityState !== 'visible' || this.state.read().source) return false;
+        if (this.session?.visibilityState !== 'visible' || !this.recentViewerPosition() || this.state.read().source) return false;
         const began = this.grab?.begin(this.id(event.inputSource), this.anchor(event.frame, event.inputSource)) || false;
         if (began) {
             this.pointing = null;
@@ -257,7 +260,7 @@ export class ComparisonInput {
         }
         this.space = space;
         this.updateLayout(session ? this.sampleViewer(frame) : desktopViewer);
-        if (!session || !frame || session.visibilityState !== 'visible') {
+        if (!session || !frame || session.visibilityState !== 'visible' || !this.trackedViewer) {
             if (session) this.cancel();
             return;
         }

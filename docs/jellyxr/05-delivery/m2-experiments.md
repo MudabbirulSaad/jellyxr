@@ -674,3 +674,23 @@ PC references: [Babylon case view](../references/images/m2-library-bays-babylon.
 UI/UX Pro Max was reviewed selectively. The two permitted searches did not provide a verified shelving-layout match; this composition follows the approved Cinema Observatory specification and general consistency guidance. Headset scale/readability, near hand interaction, actual GPU/query cost, baked lighting and compressed surface textures remain open. Production artwork mounting and constrained artwork interaction are separate work. Quest was absent from ADB at this slice's start; no new device evidence, renderer decision or G2/G3/G4 pass is recorded.
 
 Documentation validation passes 456 relative links/anchors across 33 Markdown files, 41 unique requirements, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.
+
+## Grab-tracking recovery increment — 2026-09-30
+
+Source: `7626205f9d738625fb3419d3159c625c8d47ad61`, branch `milestone/m2-grab-tracking-loss`, based on `xr` `bf1ddf031e`. Repairs the shared native input adapter under FR-021/023/031 and the [grab continuity contract](../04-architecture/system-blueprint.md#grab-tracking-continuity-comparison); it does not select an engine or close G2.
+
+The existing adapter checked the grab anchor but could keep moving a held remote after `getViewerPose` returned no valid head pose. Controller squeeze could also start a grab after the last head sample aged beyond the existing 100 ms selection limit. Six new cases exercise controller and hand events: five failed before the repair; the existing stale-head rejection on the hand selection path already passed.
+
+The adapter now uses one recent animation-frame head-position check for pointing, screen clearance and grab startup. A missing/nonfinite head sample cancels pending input and releases the remote before the held-body update. Restoring tracking does not restore the old hold; a new squeeze/pinch is required. Native event handlers borrow the recent sample and never call the animation-only viewer-pose API. No playback, renderer, model or dependency change is included.
+
+| Check | Actual result and limits |
+| --- | --- |
+| Reproduction | `npm exec vitest -- run src/apps/experimental/xr/input/remoteInput.test.ts` produced five failures before the fix: controller/hand hold survived missing head tracking, both survived a nonfinite head position, and controller grab started from a stale sample. The assertion observed an active grab owner where none was expected |
+| Repaired ownership | All ten remote-input cases pass. Lost tracking releases exactly once, clears movement, refuses startup until a fresh sample, stays released on recovery, and permits a fresh action. Event-frame viewer-pose access is set to throw; neither input method calls it |
+| Regression | 38 focused selection, remote, recovery and actual-physics adapter tests pass. Full suite: 464 tests across 53 files pass. Existing source removal, hidden-session, joint-loss and physical shelf/recall cases retain their coverage |
+| Build and compatibility | TypeScript, full lint (98 inherited warnings, zero errors) and stylelint pass. Ordinary production/ES5 passes 984 files; experimental production/ES5 passes 994 files with the two inherited bundle-size warnings. The new input helper/recovery marker is present only in experimental output |
+| Evidence boundary | Native events/poses are controlled test objects; actual Havok/Rapier tests separately exercise their installed WASM adapters. No browser or Quest tracking-loss pass is inferred. ADB reported zero attached devices. No fresh media or visual result was needed or claimed for this input-only repair |
+
+UI/UX Pro Max's Dragging Movements guidance was checked: retain recall/button alternatives instead of making recovery depend on another drag. Existing recall and geometry buttons remain in place; there is no new interface copy or decorative control. Local reproduction and check logs are in `%LOCALAPPDATA%/JellyXR/grab-tracking-*.log`. Actual head/controller/hand loss, reacquisition, input switching, near reach and comfort remain EXP-04/AT-27 device work.
+
+Documentation validation passes 460 relative links/anchors across 33 Markdown files, 41 unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.

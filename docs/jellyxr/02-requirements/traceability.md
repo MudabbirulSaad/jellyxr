@@ -77,3 +77,5 @@ W-01 produced the package. W-02 preparation now has [M1 evidence](../05-delivery
 When a requirement changes, update its work/scenario mappings and any affected business goal. Do not remove an inherited feature merely by moving its XR adaptation to a later release.
 
 The [library-bay comparison evidence](../05-delivery/m2-experiments.md#library-bay-increment--2026-09-30) supports W-02 preparation for FR-015/031 and the clearance portions of FR-014/030. It does not complete W-07, AT-12/26/27 or any device scenario; production artwork interaction and actual headset qualification remain open.
+
+The [grab-tracking recovery evidence](../05-delivery/m2-experiments.md#grab-tracking-recovery-increment--2026-09-30) supports W-02 comparison work for FR-021/023/031. Controlled events prove the repaired cancellation/ownership path; they do not close AT-17/27 or replace actual-controller and hands-only qualification.
