@@ -56,6 +56,8 @@ An emulator's advertised feature or desktop frame rate is not a candidate's Ques
 
 Use the same device, browser, server, media and network settings for candidate comparisons. Record warmup, repeated runs, tool limitations and changed variables. Measure video presentation separately from environment rendering. Include a plain dark environment as a control.
 
+The [timing boundary contract](../04-architecture/system-blueprint.md#comparison-timing-observation-boundaries) separates desktop and each XR session, discards interrupted/media-attachment history and exposes a manual reset after warmup. Use its scope and sample count when recording runs; the [PC/software evidence](../05-delivery/m2-experiments.md#timing-observation-scope-increment--2026-09-30) qualifies observation ownership, not device performance. Record the selected native refresh interval and external profiling evidence independently of this synchronous-work p95.
+
 Do not put credentials or copyrighted test media into the repository. Record permissioned fixture metadata and hashes where useful. A result includes steps, expected behaviour, observed behaviour, measurements, build SHA and limitations.
 
 ## Decision output

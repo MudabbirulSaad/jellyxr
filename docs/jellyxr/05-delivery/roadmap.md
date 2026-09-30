@@ -123,3 +123,5 @@ Partial slices may merge while the milestone stays open. Continue independent wo
 ## Beyond M6
 
 Passthrough, stereo/180/360, reactive film lighting, shared viewing, offline library and actual Vision Pro qualification require separately scoped W-10/W-11 work. Hands, exploration and bounded physical interaction are already v1 requirements.
+
+The [timing scope/reset preparation](m2-experiments.md#timing-observation-scope-increment--2026-09-30) now distinguishes desktop and XR observation windows, pending p95 and interrupted/media-attachment history. Both PC candidates preserve a paused technical video during reset. W-02 still needs native Quest measurements and the required media/input/comfort evidence before G2; the readout does not close the sustained targets at W-09/G4.
