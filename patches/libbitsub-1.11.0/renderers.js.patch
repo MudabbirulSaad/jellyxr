@@ -1,6 +1,62 @@
 --- a/dist/ts/renderers.js
 +++ b/dist/ts/renderers.js
-@@ -223,6 +223,8 @@
+@@ -46,6 +46,8 @@
+     lastRenderedIndex = -1;
+     lastRenderedTime = -1;
+     disposed = false;
++    loadController = new AbortController();
++    cancelPendingParse = null;
+     resizeObserver = null;
+     tempCanvas = null;
+     tempCtx = null;
+@@ -104,6 +106,46 @@
+         this.streamingLoad = options.streamingLoad !== false;
+         this.rangeRequests = options.rangeRequests !== false;
+     }
++    requireActive() {
++        if (this.disposed)
++            throw new Error('Subtitle renderer disposed');
++    }
++    async waitForActive(task) {
++        const result = await task;
++        this.requireActive();
++        return result;
++    }
++    scheduleParse(task) {
++        this.requireActive();
++        return new Promise((resolve, reject) => {
++            const idle = typeof requestIdleCallback !== 'undefined';
++            const run = () => {
++                this.cancelPendingParse = null;
++                if (this.disposed) {
++                    resolve();
++                    return;
++                }
++                try {
++                    task();
++                    resolve();
++                }
++                catch (error) {
++                    reject(error);
++                }
++            };
++            const handle = idle ? requestIdleCallback(run, { timeout: 1000 }) : setTimeout(run, 0);
++            this.cancelPendingParse = () => {
++                if (idle) {
++                    if (typeof cancelIdleCallback !== 'undefined')
++                        cancelIdleCallback(handle);
++                }
++                else {
++                    clearTimeout(handle);
++                }
++                resolve();
++            };
++        });
++    }
+     emitLoadProgress(format, progress, indexedCues) {
+         this.emitEvent({
+             type: 'load-progress',
+@@ -223,6 +265,8 @@
      /** Start initialization. */
      startInit() {
          this.init().catch((error) => {
@@ -9,7 +65,7 @@
              this.emitEvent({
                  type: 'error',
                  format: this.format,
-@@ -233,9 +235,15 @@
+@@ -233,9 +277,15 @@
      /** Initialize the renderer. */
      async init() {
          await initWasm();
@@ -25,7 +81,21 @@
          this.startRenderLoop();
      }
      /** Create the canvas overlay positioned over the video. */
-@@ -322,12 +330,14 @@
+@@ -276,9 +326,12 @@
+         this.video.addEventListener('seeked', this.seekedHandler);
+     }
+     emitEvent(event) {
+-        this.onEvent?.(event);
++        if (!this.disposed)
++            this.onEvent?.(event);
+     }
+     emitWarning(warning) {
++        if (this.disposed)
++            return;
+         this.onWarning?.(warning);
+         this.emitEvent({ type: 'warning', warning });
+         if (this.debug && !this.onWarning) {
+@@ -322,12 +375,14 @@
          try {
              this.webgpuRenderer = new WebGPURenderer();
              await this.webgpuRenderer.init();
@@ -41,7 +111,7 @@
              this.useWebGPU = true;
              this.emitRendererBackend('webgpu');
          }
-@@ -335,6 +345,8 @@
+@@ -335,6 +390,8 @@
              this.webgpuRenderer?.destroy();
              this.webgpuRenderer = null;
              this.useWebGPU = false;
@@ -50,7 +120,7 @@
              this.onWebGPUFallback?.();
              // Try WebGL2 before Canvas2D
              if (isWebGL2Supported()) {
-@@ -350,12 +362,14 @@
+@@ -350,12 +407,14 @@
          try {
              this.webgl2Renderer = new WebGL2Renderer();
              await this.webgl2Renderer.init();
@@ -66,7 +136,7 @@
              this.useWebGL2 = true;
              this.emitRendererBackend('webgl2');
          }
-@@ -363,6 +377,8 @@
+@@ -363,6 +422,8 @@
              this.webgl2Renderer?.destroy();
              this.webgl2Renderer = null;
              this.useWebGL2 = false;
@@ -75,7 +145,633 @@
              this.onWebGL2Fallback?.();
              this.initCanvas2D();
          }
-@@ -1646,4 +1662,3 @@
+@@ -675,6 +736,10 @@
+     /** Dispose of all resources. */
+     dispose() {
+         this.disposed = true;
++        this.isLoaded = false;
++        this.loadController.abort();
++        this.cancelPendingParse?.();
++        this.cancelPendingParse = null;
+         if (this.animationFrameId !== null) {
+             cancelAnimationFrame(this.animationFrameId);
+             this.animationFrameId = null;
+@@ -730,13 +795,15 @@
+         this.startInit();
+     }
+     async loadSubtitles() {
++        this.requireActive();
+         try {
+             this.emitEvent({ type: 'loading', format: 'pgs' });
+             this.onLoading?.();
++            this.requireActive();
+             if (this.subContent) {
+                 const data = new Uint8Array(this.subContent);
+                 this.emitLoadProgress('pgs', this.memoryProgress(data.byteLength), 0);
+-                await this.loadPgsBuffer(data, true);
++                await this.waitForActive(this.loadPgsBuffer(data, true));
+                 this.onLoaded?.();
+                 return;
+             }
+@@ -744,19 +811,21 @@
+                 throw new Error('No subtitle content or URL provided');
+             }
+             if (!this.streamingLoad) {
+-                const { data, strategy, rangeSupported, total } = await fetchSubtitleAsset(this.subUrl, {
++                const { data, strategy, rangeSupported, total } = await this.waitForActive(fetchSubtitleAsset(this.subUrl, { signal: this.loadController.signal,
+                     preferRange: this.rangeRequests,
+                     onProgress: (progress) => this.emitLoadProgress('pgs', progress, this.state.timestamps.length)
+-                });
++                }));
+                 this.emitLoadProgress('pgs', { loaded: data.byteLength, total: total ?? data.byteLength, ratio: 1, rangeSupported, strategy }, 0);
+-                await this.loadPgsBuffer(data, false);
++                await this.waitForActive(this.loadPgsBuffer(data, false));
+                 this.onLoaded?.();
+                 return;
+             }
+-            await this.loadPgsStreaming(this.subUrl);
++            await this.waitForActive(this.loadPgsStreaming(this.subUrl));
+             this.onLoaded?.();
+         }
+         catch (error) {
++            if (this.disposed)
++                return;
+             const resolvedError = normalizeSubtitleError(error, { format: 'pgs' });
+             this.emitEvent({ type: 'error', format: 'pgs', error: resolvedError });
+             this.onError?.(resolvedError);
+@@ -776,17 +845,18 @@
+         }
+     }
+     async loadPgsBuffer(data, preserveSource) {
++        this.requireActive();
+         if (this.state.useWorker) {
+             try {
+                 this.state.sessionId = createWorkerSessionId();
+-                await getOrCreateWorker();
++                await this.waitForActive(getOrCreateWorker());
+                 this.emitWorkerState(true, false, this.state.sessionId);
+                 const transferableData = createTransferableBuffer(data, preserveSource);
+-                const loadResponse = await sendToWorker({
++                const loadResponse = await this.waitForActive(sendToWorker({
+                     type: 'loadPgs',
+                     sessionId: this.state.sessionId,
+                     data: transferableData
+-                });
++                }));
+                 if (loadResponse.type === 'pgsLoaded') {
+                     this.state.workerReady = true;
+                     this.state.metadata = loadResponse.metadata;
+@@ -802,6 +872,7 @@
+                 }
+             }
+             catch (workerError) {
++                this.requireActive();
+                 this.state.useWorker = false;
+                 this.emitWorkerState(false, false, this.state.sessionId, true);
+                 this.emitWarning(createSubtitleWarning('WORKER_FALLBACK', 'PGS worker initialization failed, falling back to main-thread rendering.', {
+@@ -810,22 +881,24 @@
+                 }));
+             }
+         }
+-        await this.loadOnMainThread(data);
++        await this.waitForActive(this.loadOnMainThread(data));
+     }
+     async loadPgsStreaming(url) {
++        this.requireActive();
+         let usedWorker = false;
+         let indexedOnce = false;
+         if (this.state.useWorker) {
+             try {
+                 this.state.sessionId = createWorkerSessionId();
+-                await getOrCreateWorker();
++                await this.waitForActive(getOrCreateWorker());
+                 this.emitWorkerState(true, false, this.state.sessionId);
+-                const begin = await sendToWorker({ type: 'beginPgs', sessionId: this.state.sessionId });
++                const begin = await this.waitForActive(sendToWorker({ type: 'beginPgs', sessionId: this.state.sessionId }));
+                 if (begin.type === 'error')
+                     throw new Error(begin.message);
+                 usedWorker = true;
+             }
+             catch (workerError) {
++                this.requireActive();
+                 this.state.useWorker = false;
+                 usedWorker = false;
+                 this.emitWorkerState(false, false, this.state.sessionId, true);
+@@ -836,24 +909,25 @@
+             }
+         }
+         if (!usedWorker) {
+-            await this.yieldToMain();
++            await this.waitForActive(this.yieldToMain());
+             this.pgsParser = new PgsParser({ debug: this.debug, onWarning: (warning) => this.emitWarning(warning) });
+             this.pgsParser.reset();
+         }
+         try {
+-            const { data, strategy, rangeSupported, total } = await fetchSubtitleAsset(url, {
++            const { data, strategy, rangeSupported, total } = await this.waitForActive(fetchSubtitleAsset(url, { signal: this.loadController.signal,
+                 preferRange: this.rangeRequests,
+                 onProgress: (progress) => this.emitLoadProgress('pgs', progress, this.state.timestamps.length)
+             }, async (chunk, progress) => {
++                this.requireActive();
+                 if (chunk.byteLength === 0)
+                     return;
+                 if (usedWorker && this.state.sessionId) {
+                     const transferable = createTransferableBuffer(chunk, true);
+-                    const response = await sendToWorker({
++                    const response = await this.waitForActive(sendToWorker({
+                         type: 'appendPgs',
+                         sessionId: this.state.sessionId,
+                         data: transferable
+-                    });
++                    }));
+                     if (response.type === 'pgsProgress') {
+                         if (response.added > 0 || !indexedOnce) {
+                             this.applyPgsIndexState(response.metadata, response.timestamps, true, true);
+@@ -877,9 +951,9 @@
+                     }
+                 }
+                 this.emitLoadProgress('pgs', progress, this.state.timestamps.length);
+-            });
++            }));
+             if (usedWorker && this.state.sessionId) {
+-                const finish = await sendToWorker({ type: 'finishPgs', sessionId: this.state.sessionId });
++                const finish = await this.waitForActive(sendToWorker({ type: 'finishPgs', sessionId: this.state.sessionId }));
+                 if (finish.type === 'pgsProgress') {
+                     this.applyPgsIndexState(finish.metadata, finish.timestamps, false, true);
+                     this.state.workerReady = true;
+@@ -911,6 +985,7 @@
+             }, this.state.timestamps.length);
+         }
+         catch (error) {
++            this.requireActive();
+             if (usedWorker) {
+                 this.state.useWorker = false;
+                 this.emitWorkerState(false, false, this.state.sessionId, true);
+@@ -919,30 +994,25 @@
+                 format: 'pgs',
+                 details: { reason: error instanceof Error ? error.message : String(error) }
+             }));
+-            const { data } = await fetchSubtitleAsset(url, { preferRange: this.rangeRequests });
+-            await this.loadPgsBuffer(data, false);
++            const { data } = await this.waitForActive(fetchSubtitleAsset(url, { signal: this.loadController.signal, preferRange: this.rangeRequests }));
++            await this.waitForActive(this.loadPgsBuffer(data, false));
+         }
+     }
+     async loadOnMainThread(data) {
+-        await this.yieldToMain();
++        this.requireActive();
++        await this.waitForActive(this.yieldToMain());
+         this.pgsParser = new PgsParser({ debug: this.debug, onWarning: (warning) => this.emitWarning(warning) });
+-        await new Promise((resolve) => {
+-            const scheduleTask = typeof requestIdleCallback !== 'undefined'
+-                ? (cb) => requestIdleCallback(() => cb(), { timeout: 1000 })
+-                : (cb) => setTimeout(cb, 0);
+-            scheduleTask(() => {
+-                const count = this.pgsParser.load(data);
+-                this.state.timestamps = this.pgsParser.getTimestamps();
+-                this.state.metadata = this.pgsParser.getMetadata();
+-                this.isLoaded = true;
+-                this.setParserMetadata(this.state.metadata);
+-                this.emitIndexed('pgs', this.state.metadata, false);
+-                if (count === 0) {
+-                    this.state.renderIssues.set(-1, 'INVALID_SUBTITLE_DATA');
+-                }
+-                resolve();
+-            });
+-        });
++        await this.waitForActive(this.scheduleParse(() => {
++            const count = this.pgsParser.load(data);
++            this.state.timestamps = this.pgsParser.getTimestamps();
++            this.state.metadata = this.pgsParser.getMetadata();
++            this.isLoaded = true;
++            this.setParserMetadata(this.state.metadata);
++            this.emitIndexed('pgs', this.state.metadata, false);
++            if (count === 0) {
++                this.state.renderIssues.set(-1, 'INVALID_SUBTITLE_DATA');
++            }
++        }));
+     }
+     getWorkerRendererState() {
+         return this.state;
+@@ -962,12 +1032,16 @@
+         return index < 0 ? undefined : this.renderAtIndex(index);
+     }
+     findCurrentIndex(time) {
++        if (this.disposed)
++            return -1;
+         if (this.state.useWorker && this.state.workerReady) {
+             return binarySearchTimestamp(this.state.timestamps, time * 1000);
+         }
+         return this.pgsParser?.findIndexAtTimestamp(time) ?? -1;
+     }
+     renderAtIndex(index) {
++        if (this.disposed)
++            return undefined;
+         if (this.state.frameCache.has(index)) {
+             return this.state.frameCache.get(index) ?? undefined;
+         }
+@@ -978,6 +1052,8 @@
+                     sessionId: this.state.sessionId,
+                     index
+                 }).then((response) => {
++                    if (this.disposed)
++                        return { frame: null, renderIssue: null };
+                     if (response.type === 'pgsFrame') {
+                         return {
+                             frame: response.frame ? convertFrameData(response.frame) : null,
+@@ -985,11 +1061,20 @@
+                         };
+                     }
+                     return { frame: null, renderIssue: null };
++                }).catch((error) => {
++                    if (!this.disposed) {
++                        const resolvedError = normalizeSubtitleError(error, { format: this.format });
++                        this.emitEvent({ type: 'error', format: this.format, error: resolvedError });
++                        this.onError?.(resolvedError);
++                    }
++                    return { frame: null, renderIssue: null };
+                 });
+                 const renderPromise = renderTask.then(({ frame }) => frame);
+                 this.state.pendingRenders.set(index, renderPromise);
+                 this.emitCacheChange(this.state.frameCache.size, this.state.pendingRenders.size);
+                 renderTask.then(({ frame, renderIssue }) => {
++                    if (this.disposed)
++                        return;
+                     setCachedFrame(this.state, index, frame, renderIssue);
+                     this.state.pendingRenders.delete(index);
+                     this.emitCacheChange(this.state.frameCache.size, this.state.pendingRenders.size);
+@@ -1061,6 +1146,8 @@
+         const safeStart = Math.max(0, Math.min(startIndex, endIndex));
+         const safeEnd = Math.min(Math.max(startIndex, endIndex), this.state.timestamps.length - 1);
+         for (let index = safeStart; index <= safeEnd; index++) {
++            if (this.disposed)
++                return;
+             if (this.state.frameCache.has(index))
+                 continue;
+             const result = this.renderAtIndex(index);
+@@ -1091,12 +1178,15 @@
+         this.state.frameCache.clear();
+         this.state.renderIssues.clear();
+         this.state.pendingRenders.clear();
+-        if (this.state.useWorker && this.state.workerReady) {
++        if (this.state.sessionId) {
+             sendToWorker({ type: 'disposePgs', sessionId: this.state.sessionId }).catch(() => { });
+         }
+         this.pgsParser?.dispose();
+         this.pgsParser = null;
+         this.state.sessionId = null;
++        this.state.workerReady = false;
++        this.state.timestamps = new Float64Array(0);
++        this.state.metadata = null;
+     }
+ }
+ /**
+@@ -1130,9 +1220,11 @@
+         this.startInit();
+     }
+     async loadSubtitles() {
++        this.requireActive();
+         try {
+             this.emitEvent({ type: 'loading', format: 'vobsub' });
+             this.onLoading?.();
++            this.requireActive();
+             const useMksSource = !this.idxContent &&
+                 !this.idxUrl &&
+                 isMksSource({
+@@ -1143,19 +1235,21 @@
+             if (this.subContent && (useMksSource || this.idxContent)) {
+                 const subData = new Uint8Array(this.subContent);
+                 this.emitLoadProgress('vobsub', this.memoryProgress(subData.byteLength), 0);
+-                await this.loadVobSubBuffer(subData, this.idxContent, useMksSource, true);
++                await this.waitForActive(this.loadVobSubBuffer(subData, this.idxContent, useMksSource, true));
+                 this.onLoaded?.();
+                 return;
+             }
+             if (useMksSource) {
+-                await this.loadVobSubMksStreaming();
++                await this.waitForActive(this.loadVobSubMksStreaming());
+                 this.onLoaded?.();
+                 return;
+             }
+-            await this.loadVobSubIdxSubStreaming();
++            await this.waitForActive(this.loadVobSubIdxSubStreaming());
+             this.onLoaded?.();
+         }
+         catch (error) {
++            if (this.disposed)
++                return;
+             const resolvedError = normalizeSubtitleError(error, { format: 'vobsub' });
+             this.emitEvent({ type: 'error', format: 'vobsub', error: resolvedError });
+             this.onError?.(resolvedError);
+@@ -1175,15 +1269,17 @@
+         }
+     }
+     async ensureVobSubWorkerSession() {
++        this.requireActive();
+         if (!this.state.useWorker)
+             return false;
+         try {
+             this.state.sessionId = createWorkerSessionId();
+-            await getOrCreateWorker();
++            await this.waitForActive(getOrCreateWorker());
+             this.emitWorkerState(true, false, this.state.sessionId);
+             return true;
+         }
+         catch (workerError) {
++            this.requireActive();
+             this.state.useWorker = false;
+             this.emitWorkerState(false, false, this.state.sessionId, true);
+             this.emitWarning(createSubtitleWarning('WORKER_FALLBACK', 'VobSub worker initialization failed, falling back to main-thread rendering.', {
+@@ -1194,10 +1290,11 @@
+         }
+     }
+     async loadVobSubBuffer(subData, idxData, useMksSource, preserveSource) {
+-        if (await this.ensureVobSubWorkerSession()) {
++        this.requireActive();
++        if (await this.waitForActive(this.ensureVobSubWorkerSession())) {
+             try {
+                 const transferableSubData = createTransferableBuffer(subData, preserveSource);
+-                const loadResponse = await sendToWorker(useMksSource
++                const loadResponse = await this.waitForActive(sendToWorker(useMksSource
+                     ? {
+                         type: 'loadVobSubMks',
+                         sessionId: this.state.sessionId,
+@@ -1208,7 +1305,7 @@
+                         sessionId: this.state.sessionId,
+                         idxContent: idxData,
+                         subData: transferableSubData
+-                    });
++                    }));
+                 if (loadResponse.type === 'vobSubLoaded') {
+                     if (!useMksSource && idxData && loadResponse.count === 0) {
+                         throw createSubtitleDiagnosticError('BAD_IDX', 'IDX metadata did not yield any subtitle timestamps.', {
+@@ -1229,6 +1326,7 @@
+                 }
+             }
+             catch (workerError) {
++                this.requireActive();
+                 if (workerError instanceof SubtitleDiagnosticError && workerError.code === 'BAD_IDX') {
+                     throw workerError;
+                 }
+@@ -1240,20 +1338,21 @@
+                 }));
+             }
+         }
+-        await this.loadOnMainThread(subData, idxData, useMksSource);
++        await this.waitForActive(this.loadOnMainThread(subData, idxData, useMksSource));
+     }
+     async loadVobSubMksStreaming() {
++        this.requireActive();
+         if (this.subContent) {
+-            await this.loadVobSubBuffer(new Uint8Array(this.subContent), undefined, true, true);
++            await this.waitForActive(this.loadVobSubBuffer(new Uint8Array(this.subContent), undefined, true, true));
+             return;
+         }
+         if (!this.subUrl) {
+             throw createSubtitleDiagnosticError('MISSING_INPUT', 'No SUB content or URL provided.', { format: 'vobsub' });
+         }
+-        const { data, strategy, rangeSupported, total } = await fetchSubtitleAsset(this.subUrl, {
++        const { data, strategy, rangeSupported, total } = await this.waitForActive(fetchSubtitleAsset(this.subUrl, { signal: this.loadController.signal,
+             preferRange: this.rangeRequests && this.streamingLoad,
+             onProgress: (progress) => this.emitLoadProgress('vobsub', progress, this.state.timestamps.length)
+-        });
++        }));
+         this.emitLoadProgress('vobsub', {
+             loaded: data.byteLength,
+             total: total ?? data.byteLength,
+@@ -1261,26 +1360,27 @@
+             rangeSupported,
+             strategy
+         }, 0);
+-        await this.loadVobSubBuffer(data, undefined, true, false);
++        await this.waitForActive(this.loadVobSubBuffer(data, undefined, true, false));
+     }
+     async loadVobSubIdxSubStreaming() {
++        this.requireActive();
+         let idxData = this.idxContent;
+         if (!idxData) {
+             if (!this.idxUrl) {
+                 throw createSubtitleDiagnosticError('MISSING_INPUT', 'No IDX content or URL provided.', { format: 'vobsub' });
+             }
+-            idxData = await fetchSubtitleText(this.idxUrl, {
++            idxData = await this.waitForActive(fetchSubtitleText(this.idxUrl, { signal: this.loadController.signal,
+                 onProgress: (progress) => this.emitLoadProgress('vobsub', progress, 0)
+-            });
+-        }
+-        let usedWorker = await this.ensureVobSubWorkerSession();
++            }));
++        }
++        let usedWorker = await this.waitForActive(this.ensureVobSubWorkerSession());
+         if (usedWorker && this.state.sessionId) {
+             try {
+-                const idxResponse = await sendToWorker({
++                const idxResponse = await this.waitForActive(sendToWorker({
+                     type: 'loadVobSubIdx',
+                     sessionId: this.state.sessionId,
+                     idxContent: idxData
+-                });
++                }));
+                 if (idxResponse.type === 'vobSubProgress') {
+                     if (idxResponse.count === 0) {
+                         throw createSubtitleDiagnosticError('BAD_IDX', 'IDX metadata did not yield any subtitle timestamps.', {
+@@ -1296,6 +1396,7 @@
+                 }
+             }
+             catch (error) {
++                this.requireActive();
+                 if (error instanceof SubtitleDiagnosticError && error.code === 'BAD_IDX') {
+                     throw error;
+                 }
+@@ -1309,7 +1410,7 @@
+             }
+         }
+         if (!usedWorker) {
+-            await this.yieldToMain();
++            await this.waitForActive(this.yieldToMain());
+             this.vobsubParser = new VobSubParserLowLevel({
+                 debug: this.debug,
+                 onWarning: (warning) => this.emitWarning(warning)
+@@ -1326,10 +1427,10 @@
+             if (!this.subUrl) {
+                 throw createSubtitleDiagnosticError('MISSING_INPUT', 'No SUB content or URL provided.', { format: 'vobsub' });
+             }
+-            const fetched = await fetchSubtitleAsset(this.subUrl, {
++            const fetched = await this.waitForActive(fetchSubtitleAsset(this.subUrl, { signal: this.loadController.signal,
+                 preferRange: this.rangeRequests && this.streamingLoad,
+                 onProgress: (progress) => this.emitLoadProgress('vobsub', progress, this.state.timestamps.length)
+-            });
++            }));
+             subData = fetched.data;
+             this.emitLoadProgress('vobsub', {
+                 loaded: subData.byteLength,
+@@ -1341,11 +1442,11 @@
+         }
+         if (usedWorker && this.state.sessionId) {
+             const transferable = createTransferableBuffer(subData, Boolean(this.subContent));
+-            const attachResponse = await sendToWorker({
++            const attachResponse = await this.waitForActive(sendToWorker({
+                 type: 'attachVobSubData',
+                 sessionId: this.state.sessionId,
+                 subData: transferable
+-            });
++            }));
+             if (attachResponse.type === 'vobSubProgress') {
+                 this.applyVobSubIndexState(attachResponse.metadata, attachResponse.timestamps, false, true, true);
+                 this.state.workerReady = true;
+@@ -1373,33 +1474,28 @@
+         this.emitIndexed('vobsub', metadata, false);
+     }
+     async loadOnMainThread(subData, idxData, useMksSource = false) {
+-        await this.yieldToMain();
++        this.requireActive();
++        await this.waitForActive(this.yieldToMain());
+         this.vobsubParser = new VobSubParserLowLevel({
+             debug: this.debug,
+             onWarning: (warning) => this.emitWarning(warning)
+         });
+-        await new Promise((resolve) => {
+-            const scheduleTask = typeof requestIdleCallback !== 'undefined'
+-                ? (cb) => requestIdleCallback(() => cb(), { timeout: 1000 })
+-                : (cb) => setTimeout(cb, 0);
+-            scheduleTask(() => {
+-                if (useMksSource) {
+-                    this.vobsubParser.loadFromMks(subData);
+-                }
+-                else if (idxData) {
+-                    this.vobsubParser.loadFromData(idxData, subData);
+-                }
+-                else {
+-                    this.vobsubParser.loadFromSubOnly(subData);
+-                }
+-                this.state.timestamps = this.vobsubParser.getTimestamps();
+-                this.state.metadata = this.vobsubParser.getMetadata();
+-                this.isLoaded = true;
+-                this.setParserMetadata(this.state.metadata);
+-                this.emitIndexed('vobsub', this.state.metadata, false);
+-                resolve();
+-            });
+-        });
++        await this.waitForActive(this.scheduleParse(() => {
++            if (useMksSource) {
++                this.vobsubParser.loadFromMks(subData);
++            }
++            else if (idxData) {
++                this.vobsubParser.loadFromData(idxData, subData);
++            }
++            else {
++                this.vobsubParser.loadFromSubOnly(subData);
++            }
++            this.state.timestamps = this.vobsubParser.getTimestamps();
++            this.state.metadata = this.vobsubParser.getMetadata();
++            this.isLoaded = true;
++            this.setParserMetadata(this.state.metadata);
++            this.emitIndexed('vobsub', this.state.metadata, false);
++        }));
+     }
+     getWorkerRendererState() {
+         return this.state;
+@@ -1417,6 +1513,8 @@
+         return index < 0 ? undefined : this.renderAtIndex(index);
+     }
+     findCurrentIndex(time) {
++        if (this.disposed)
++            return -1;
+         if (this.state.useWorker && this.state.workerReady) {
+             const timeMs = time * 1000;
+             // Only use cache if time is very close (within 1 frame)
+@@ -1432,6 +1530,8 @@
+                     sessionId: this.state.sessionId,
+                     timeMs
+                 }).then((response) => {
++                    if (this.disposed)
++                        return -1;
+                     if (response.type === 'vobSubIndex') {
+                         const newIndex = response.index;
+                         const oldIndex = this.cachedIndex;
+@@ -1444,6 +1544,14 @@
+                     }
+                     this.pendingIndexLookup = null;
+                     return this.cachedIndex;
++                }).catch((error) => {
++                    this.pendingIndexLookup = null;
++                    if (!this.disposed) {
++                        const resolvedError = normalizeSubtitleError(error, { format: this.format });
++                        this.emitEvent({ type: 'error', format: this.format, error: resolvedError });
++                        this.onError?.(resolvedError);
++                    }
++                    return -1;
+                 });
+             }
+             return this.cachedIndex;
+@@ -1451,6 +1559,8 @@
+         return this.vobsubParser?.findIndexAtTimestamp(time) ?? -1;
+     }
+     renderAtIndex(index) {
++        if (this.disposed)
++            return undefined;
+         if (this.state.frameCache.has(index)) {
+             return this.state.frameCache.get(index) ?? undefined;
+         }
+@@ -1462,6 +1572,8 @@
+                     sessionId: this.state.sessionId,
+                     index
+                 }).then((response) => {
++                    if (this.disposed)
++                        return { frame: null, renderIssue: null };
+                     if (response.type === 'vobSubFrame') {
+                         return {
+                             frame: response.frame ? convertFrameData(response.frame) : null,
+@@ -1469,11 +1581,20 @@
+                         };
+                     }
+                     return { frame: null, renderIssue: null };
++                }).catch((error) => {
++                    if (!this.disposed) {
++                        const resolvedError = normalizeSubtitleError(error, { format: this.format });
++                        this.emitEvent({ type: 'error', format: this.format, error: resolvedError });
++                        this.onError?.(resolvedError);
++                    }
++                    return { frame: null, renderIssue: null };
+                 });
+                 const renderPromise = renderTask.then(({ frame }) => frame);
+                 this.state.pendingRenders.set(index, renderPromise);
+                 this.emitCacheChange(this.state.frameCache.size, this.state.pendingRenders.size);
+                 renderTask.then(({ frame, renderIssue }) => {
++                    if (this.disposed)
++                        return;
+                     setCachedFrame(this.state, index, frame, renderIssue);
+                     this.state.pendingRenders.delete(index);
+                     this.emitCacheChange(this.state.frameCache.size, this.state.pendingRenders.size);
+@@ -1554,6 +1675,8 @@
+         const safeStart = Math.max(0, Math.min(startIndex, endIndex));
+         const safeEnd = Math.min(Math.max(startIndex, endIndex), this.state.timestamps.length - 1);
+         for (let index = safeStart; index <= safeEnd; index++) {
++            if (this.disposed)
++                return;
+             if (this.state.frameCache.has(index))
+                 continue;
+             const result = this.renderAtIndex(index);
+@@ -1621,12 +1744,18 @@
+         this.state.frameCache.clear();
+         this.state.renderIssues.clear();
+         this.state.pendingRenders.clear();
+-        if (this.state.useWorker && this.state.workerReady) {
++        if (this.state.sessionId) {
+             sendToWorker({ type: 'disposeVobSub', sessionId: this.state.sessionId }).catch(() => { });
+         }
+         this.vobsubParser?.dispose();
+         this.vobsubParser = null;
++        this.cachedIndex = -1;
++        this.cachedIndexTime = -1;
++        this.pendingIndexLookup = null;
+         this.state.sessionId = null;
++        this.state.workerReady = false;
++        this.state.timestamps = new Float64Array(0);
++        this.state.metadata = null;
+     }
+ }
+ /** Create a video subtitle renderer with automatic format detection. */
+@@ -1646,4 +1775,3 @@
      }
      throw new Error('Unable to detect subtitle format for video renderer');
  }

@@ -1,0 +1,78 @@
+--- a/dist/ts/range-loader.js
++++ b/dist/ts/range-loader.js
+@@ -35,7 +35,15 @@
+     }
+     return headers;
+ }
++function requireActiveSignal(signal) {
++    if (signal?.aborted) {
++        const error = new Error('Subtitle request aborted');
++        error.name = 'AbortError';
++        throw error;
++    }
++}
+ export async function probeRangeSupport(url, options = {}) {
++    requireActiveSignal(options.signal);
+     const headers = mergeHeaders(options.headers, { Range: 'bytes=0-0' });
+     try {
+         const response = await fetch(url, {
+@@ -43,6 +51,7 @@
+             headers,
+             signal: options.signal
+         });
++        requireActiveSignal(options.signal);
+         if (response.status === 206) {
+             const size = parseContentRangeTotal(response.headers.get('content-range')) ??
+                 parseContentLength(response.headers.get('content-length'));
+@@ -75,6 +84,7 @@
+         }
+     }
+     catch {
++        requireActiveSignal(options.signal);
+         /* try HEAD */
+     }
+     try {
+@@ -83,6 +93,7 @@
+             headers: mergeHeaders(options.headers),
+             signal: options.signal
+         });
++        requireActiveSignal(options.signal);
+         if (!head.ok) {
+             return { supportsRange: false, size: null, acceptRanges: null };
+         }
+@@ -94,6 +105,7 @@
+         };
+     }
+     catch {
++        requireActiveSignal(options.signal);
+         return { supportsRange: false, size: null, acceptRanges: null };
+     }
+ }
+@@ -148,6 +160,7 @@
+     const assembled = new Uint8Array(size);
+     let loaded = 0;
+     for (let start = 0; start < size; start += chunkSize) {
++        requireActiveSignal(options.signal);
+         const end = Math.min(size - 1, start + chunkSize - 1);
+         const response = await fetch(url, {
+             method: 'GET',
+@@ -183,12 +196,14 @@
+     return assembled;
+ }
+ export async function fetchSubtitleAsset(url, options = {}, onChunk) {
++    requireActiveSignal(options.signal);
+     const preferRange = options.preferRange !== false;
+     const threshold = options.rangeChunkThreshold ?? DEFAULT_RANGE_CHUNK_THRESHOLD;
+     let rangeSupported = false;
+     let knownSize = null;
+     if (preferRange) {
+         const probe = await probeRangeSupport(url, options);
++        requireActiveSignal(options.signal);
+         rangeSupported = probe.supportsRange;
+         knownSize = probe.size;
+         if (rangeSupported && knownSize != null && knownSize >= threshold) {
+@@ -217,4 +232,3 @@
+     });
+     return new TextDecoder('utf-8').decode(data);
+ }
+-//# sourceMappingURL=range-loader.js.map
