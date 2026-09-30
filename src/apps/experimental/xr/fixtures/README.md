@@ -23,3 +23,9 @@ Room geometry is authored in `roomFixture.ts`; catalogue records are generated i
 `subtitleFixture.ts` adds three original, clearly labelled native WebVTT cues to the calibration video in the opt-in workbench. Cue intervals are 0.25–2.25, 3–5 and 5.75–7.75 seconds. The gaps test clearing; two-line text tests layout. Use the native video controls to pause/seek, and Hide/Show fixture captions to test track-off without changing any Jellyfin selection. Cue timing is browser-owned. Cleanup disables and removes only these fixture cues.
 
 This TypeScript source is distributed under the repository's GPL-2.0-or-later licence. It contains no film dialogue, external subtitle download or account data. It qualifies neither server subtitle delivery nor ASS/bitmap composition. The video file itself remains unchanged and has no embedded subtitle stream.
+
+## Spatial catalogue reference
+
+The opt-in scene now presents `catalogueFixture.ts` records through six world-space cards, type filters, pages and details. `input/spatialCatalogue.ts` defines matching hit geometry and view state; `input/controlArtwork.ts` authors the original calibration stripes and text on opaque canvases. They inherit this repository's licence, use bundled Noto Sans, and contain no downloaded/private artwork or actual movie metadata. A missing-artwork case remains labelled “No artwork”.
+
+This replaces the separate browser catalogue list. The React page keeps setup and diagnostics; the scene owns catalogue interaction. Technical records do not start playback or populate a Jellyfin server. The shared panel owner removes outgoing page resources, retains unchanged panels and avoids redraws until content or interaction state changes. Resource-count tests are not measured GPU-memory or Quest performance evidence.
