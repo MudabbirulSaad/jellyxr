@@ -1,8 +1,8 @@
-import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 
 import { createBabylonPanel } from '../candidates/babylonPanel';
+import { createBabylonCanvasTexture } from '../candidates/babylonCanvasTexture';
 
 import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
@@ -17,7 +17,7 @@ export function createBabylonSubtitles(surface: BorrowedVideoSurface, scene: Sce
     const panel = captionGeometry(readSettings(), screenPercent, pose);
     const canvas = document.createElement('canvas');
     const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning, readSettings);
-    const texture = new DynamicTexture('borrowed-subtitles', canvas, scene, false);
+    const texture = createBabylonCanvasTexture('borrowed-subtitles', canvas, scene);
     texture.hasAlpha = true;
     const material = new StandardMaterial('borrowed-subtitles', scene);
     material.disableLighting = true;
