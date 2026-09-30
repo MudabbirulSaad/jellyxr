@@ -325,7 +325,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     {sample ? `${sample.frames} frames; recent p95 application work ${sample.p95WorkMs.toFixed(2)} ms; remote height ${sample.remoteHeight.toFixed(3)} m.` : 'Frame observations will appear after the scene starts.'}
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.
                 </Typography>
-                <Typography component='p'>Use Open catalogue in the scene for the spatial fixture: six cards, type filtering, paging and details. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
+                <Typography component='p'>Use Open catalogue in the scene for six technical cards, type filtering, paging and details. Search opens a spatial keyboard; Cancel keeps your previous results, and Clear search removes the term. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
 
             </Box>
         </ComparisonFrame>

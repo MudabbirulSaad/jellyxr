@@ -4,7 +4,7 @@ import type { ActivationState } from './activationState';
 export type ControlVisualState = 'idle' | 'focus' | 'pressed' | 'disabled';
 
 export function controlVisualState(target: ControlTarget, input: ReturnType<ActivationState['read']>): ControlVisualState {
-    if (target.enabled === false) return target.kind ? 'idle' : 'disabled';
+    if (target.enabled === false) return target.kind && target.kind !== 'key' ? 'idle' : 'disabled';
     if (input.pressed === target.id) return 'pressed';
     return (input.hover || input.focus) === target.id ? 'focus' : 'idle';
 }
@@ -18,18 +18,51 @@ export function drawControl(target: ControlTarget, state: ControlVisualState, ca
     context.strokeStyle = { disabled: '#586271', idle: '#A7B0BC', focus: '#D7B67A', pressed: '#D7B67A' }[state];
     context.lineWidth = state === 'pressed' ? 12 : 5;
     context.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
+    if (target.kind === 'key') {
+        context.textAlign = 'center';
+        context.textBaseline = 'middle';
+        context.font = '80px "Noto Sans", sans-serif';
+        context.fillStyle = state === 'disabled' ? '#A7B0BC' : '#F2F4F7';
+        context.fillText(target.label, canvas.width / 2, canvas.height / 2);
+        return;
+    }
+    if (target.kind === 'field' || target.kind === 'message') {
+        drawTextPanel(target, canvas, context);
+        return;
+    }
     if (target.kind) {
         drawCatalogue(target, state, canvas, context);
         return;
     }
     context.textAlign = 'center';
+    context.textBaseline = 'middle';
     context.fillStyle = '#F2F4F7';
     context.font = '36px "Noto Sans", sans-serif';
-    context.fillText(target.label, canvas.width / 2, 92);
+    context.fillText(target.label, canvas.width / 2, canvas.height * 0.43);
     context.font = '24px "Noto Sans", sans-serif';
     context.fillStyle = '#A7B0BC';
-    const text = { idle: target.description || 'Technical control', focus: 'Focused', pressed: 'Press held', disabled: 'Unavailable on this page' };
-    context.fillText(hint || text[state], canvas.width / 2, 144);
+    const text = { idle: target.description || 'Technical control', focus: 'Focused', pressed: 'Press held', disabled: target.description || 'Unavailable on this page' };
+    context.fillText(hint || text[state], canvas.width / 2, canvas.height * 0.76);
+}
+
+function drawTextPanel(target: ControlTarget, canvas: HTMLCanvasElement, context: CanvasRenderingContext2D): void {
+    const field = target.kind === 'field';
+    context.textAlign = 'left';
+    context.textBaseline = 'top';
+    context.font = `${field ? 28 : 44}px "Noto Sans", sans-serif`;
+    context.fillStyle = field ? '#A7B0BC' : '#F2F4F7';
+    let y = field ? 20 : 190;
+    for (const line of wrapControlText(target.label, canvas.width - 64, value => context.measureText(value).width)) {
+        context.fillText(line, 32, y);
+        y += field ? 36 : 56;
+    }
+    y += 18;
+    context.font = `${field ? 38 : 32}px "Noto Sans", sans-serif`;
+    context.fillStyle = field ? '#F2F4F7' : '#A7B0BC';
+    for (const line of wrapControlText(target.description || '', canvas.width - 64, value => context.measureText(value).width)) {
+        context.fillText(line, 32, y);
+        y += 50;
+    }
 }
 
 /** Measured word wrapping, including unbroken identifiers; the fixture's full title stays visible. */
@@ -74,7 +107,11 @@ function drawCatalogue(target: ControlTarget, state: ControlVisualState, canvas:
         context.fillText(target.label, 32, 24);
         context.font = '30px "Noto Sans", sans-serif';
         context.fillStyle = '#A7B0BC';
-        context.fillText(target.description || '', 32, 90);
+        let y = 90;
+        for (const line of wrapControlText(target.description || '', canvas.width - 64, value => context.measureText(value).width)) {
+            context.fillText(line, 32, y);
+            y += 40;
+        }
         return;
     }
     const card = target.kind === 'card';
@@ -124,8 +161,8 @@ function drawCatalogue(target: ControlTarget, state: ControlVisualState, canvas:
 }
 
 export function controlCanvasSize(target: ControlTarget): readonly [number, number] {
-    if (target.kind === 'heading') return [1024, 160];
-    if (target.kind === 'detail') return [1024, 744];
-    if (target.kind === 'card') return [512, 548];
-    return [512, 192];
+    let width = 512;
+    if (target.kind === 'key') width = 192;
+    if (target.kind && ['heading', 'field', 'message', 'detail'].includes(target.kind)) width = 1024;
+    return [width, Math.round(width * target.height / target.width)];
 }

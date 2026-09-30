@@ -12,7 +12,7 @@ const viewer = { position: [0, 1.65, 0] as const, forward: [0, 0, -1] as const }
 const cards = (targets: readonly ControlTarget[]) => targets.filter(target => target.kind === 'card');
 
 describe('bounded world-space technical catalogue', () => {
-    it('visits all 1,000 records with at most six resident cards and eleven panels', () => {
+    it('visits all 1,000 records with at most six resident cards and twelve panels', () => {
         const catalogue = new SpatialCatalogue();
         let view = catalogue.handle('catalogue-open');
         const ids = new Set<string>();
@@ -32,7 +32,7 @@ describe('bounded world-space technical catalogue', () => {
         });
         while (view) {
             expect(cards(view.targets).length).toBeLessThanOrEqual(6);
-            expect(view.targets.length).toBeLessThanOrEqual(11);
+            expect(view.targets.length).toBeLessThanOrEqual(12);
             for (const item of cards(view.targets)) ids.add(item.id);
             panels.update(view.targets, idle);
             paint.mockClear();
@@ -41,7 +41,7 @@ describe('bounded world-space technical catalogue', () => {
             view = catalogue.handle('catalogue-next');
         }
         expect(ids.size).toBe(1000);
-        expect(maximum).toBe(11);
+        expect(maximum).toBe(12);
         expect(catalogue.status()).toContain('997–1000 of 1000; 4 resident records');
         panels.dispose();
         panels.dispose();

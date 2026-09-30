@@ -3,7 +3,9 @@ import type { MovementAction } from './movementSession';
 import { rotateFloorPoint } from './movement';
 import { unitRay } from './sceneQuery';
 
-export type CatalogueAction = 'catalogue-open' | 'catalogue-close' | 'catalogue-next' | 'catalogue-previous' | 'catalogue-filter' | 'catalogue-back' | 'catalogue-heading' | 'catalogue-detail' | `catalogue-item-${string}`;
+export type SearchAction = 'catalogue-search' | 'catalogue-clear-search' | 'search-field' | 'search-heading'
+    | 'search-submit' | 'search-cancel' | 'search-backspace' | 'search-space' | 'search-clear' | `search-key-${string}`;
+export type CatalogueAction = SearchAction | 'catalogue-open' | 'catalogue-close' | 'catalogue-next' | 'catalogue-previous' | 'catalogue-filter' | 'catalogue-back' | 'catalogue-heading' | 'catalogue-detail' | `catalogue-item-${string}`;
 export type ControlAction = CatalogueAction | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
 export interface ControlTarget {
     id: ControlAction;
@@ -12,7 +14,7 @@ export interface ControlTarget {
     width: number;
     height: number;
     enabled?: boolean;
-    kind?: 'card' | 'heading' | 'detail';
+    kind?: 'card' | 'heading' | 'detail' | 'key' | 'field' | 'message';
     description?: string;
     artwork?: 'calibration' | 'missing';
 }
