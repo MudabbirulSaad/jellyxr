@@ -5,15 +5,17 @@ import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixture
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
 import { createThreeCanvasSubtitles } from './threeCanvasSubtitles';
 import { createSubtitleArtwork } from './textSubtitles';
+import { captionGeometry, readDefaultCaptions, type ReadCaptionSettings } from './captionSettings';
 
-export function createThreeSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE) {
+export function createThreeSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE,
+    readSettings: ReadCaptionSettings = readDefaultCaptions) {
     const rich = createThreeCanvasSubtitles(surface, scene, screenPercent, pose);
-    const panel = screenGeometry(screenPercent, pose).captions;
+    const panel = captionGeometry(readSettings(), screenPercent, pose);
     const canvas = document.createElement('canvas');
-    const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning);
+    const artwork = createSubtitleArtwork(surface, canvas, rich.readWarning, readSettings);
     const texture = new CanvasTexture(canvas);
     texture.colorSpace = SRGBColorSpace;
-    const material = new MeshBasicMaterial({ map: texture, toneMapped: false });
+    const material = new MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, toneMapped: false });
     const mesh = new Mesh(new PlaneGeometry(panel.width, panel.height), material);
     mesh.name = 'borrowed-subtitles';
     mesh.rotation.x = screenGeometry(screenPercent, pose).pitch;
@@ -23,6 +25,7 @@ export function createThreeSubtitles(surface: BorrowedVideoSurface, scene: Scene
     return {
         update() {
             rich.update();
+            mesh.position.set(...captionGeometry(readSettings(), screenPercent, pose).position);
             if (!artwork.update()) return;
             mesh.visible = artwork.isVisible();
             if (mesh.visible) texture.needsUpdate = true;

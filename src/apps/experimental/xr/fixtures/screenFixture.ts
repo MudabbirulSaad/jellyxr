@@ -28,11 +28,7 @@ export function screenGeometry(percent = 100, pose = DEFAULT_SCREEN_POSE) {
         pitch,
         orientation: [Math.sin(pitch / 2), 0, 0, Math.cos(pitch / 2)] as const,
         videoPosition: point([0, 0, 0.03]),
-        canvasPosition: point([0, 0, 0.05]),
-        captions: {
-            width: 4.8 * scale, height: 1.2 * scale,
-            position: point([0, 0.65 * scale, 0.11])
-        }
+        canvasPosition: point([0, 0, 0.05])
     };
 }
 

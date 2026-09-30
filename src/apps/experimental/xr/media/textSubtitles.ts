@@ -1,4 +1,5 @@
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
+import { readDefaultCaptions, type ReadCaptionSettings } from './captionSettings';
 
 export interface SubtitleFrame {
     text: string;
@@ -98,14 +99,16 @@ export function wrapSubtitle(text: string, measure: (value: string) => number, w
 }
 
 /** Repaints only changed cues. Canvas never receives HTML or private diagnostic text. */
-export function createSubtitleArtwork(surface: BorrowedVideoSurface, canvas: HTMLCanvasElement, readWarning?: () => string | undefined) {
+export function createSubtitleArtwork(surface: BorrowedVideoSurface, canvas: HTMLCanvasElement, readWarning?: () => string | undefined,
+    readSettings: ReadCaptionSettings = readDefaultCaptions) {
     canvas.width = 1600;
-    canvas.height = 400;
+    canvas.height = 600;
     const context = canvas.getContext('2d');
     if (!context) throw new Error('Subtitle drawing is unavailable.');
     const reader = new TextSubtitleReader(surface);
     let previous: string | undefined;
     let previousStatus = '';
+    let previousStyle = '';
     let status = 'No active text cue.';
     let visible = false;
     return {
@@ -117,26 +120,41 @@ export function createSubtitleArtwork(surface: BorrowedVideoSurface, canvas: HTM
             } catch {
                 frame = { text: '', status: 'Subtitle reading failed. Use the ordinary player.', warning: true };
             }
-            if (frame.text === previous && frame.status === previousStatus) return false;
+            const settings = readSettings();
+            const style = `${settings.size}/${settings.backing}`;
+            if (frame.text === previous && frame.status === previousStatus && style === previousStyle) return false;
             previous = frame.text;
             previousStatus = frame.status;
+            previousStyle = style;
             status = frame.status;
             visible = false;
             context.clearRect(0, 0, canvas.width, canvas.height);
             if (!frame.text && !frame.warning) return true;
-            context.font = '50px "Noto Sans", sans-serif';
+            let size = frame.warning ? 1 : settings.size;
+            let backing = frame.warning ? 1 : settings.backing;
+            context.font = `${50 * size}px "Noto Sans", sans-serif`;
             let lines = wrapSubtitle(frame.warning ? frame.status : frame.text, value => context.measureText(value).width, 1480);
             if (!lines) {
                 status = 'Subtitle exceeds the comparison panel. Use the ordinary player.';
                 lines = ['Subtitle layout unavailable.', 'Return to the ordinary player.'];
+                size = backing = 1;
+                context.font = '50px "Noto Sans", sans-serif';
             }
-            context.fillStyle = '#0B0F14';
-            context.fillRect(0, 0, canvas.width, canvas.height);
+            if (backing) {
+                const height = (lines.length * 64 + 48) * size;
+                context.fillStyle = `rgba(11, 15, 20, ${backing})`;
+                context.fillRect(0, (canvas.height - height) / 2, canvas.width, height);
+            }
             context.fillStyle = '#F2F4F7';
+            context.strokeStyle = '#0B0F14';
+            context.lineWidth = 5 * size;
+            context.lineJoin = 'round';
             context.textAlign = 'center';
             context.textBaseline = 'middle';
             for (let index = 0; index < lines.length; index++) {
-                context.fillText(lines[index], 800, 200 + (index - (lines.length - 1) / 2) * 64);
+                const y = 300 + (index - (lines.length - 1) / 2) * 64 * size;
+                context.strokeText(lines[index], 800, y);
+                context.fillText(lines[index], 800, y);
             }
             visible = true;
             return true;

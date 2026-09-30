@@ -11,11 +11,12 @@ import { createBabylonPanel } from '../candidates/babylonPanel';
 import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
+import type { ReadCaptionSettings } from './captionSettings';
 import { fitVideoScreen, type VideoPresentationResource } from './videoPresentation';
 import { createBabylonSubtitles } from './babylonSubtitles';
 
 export function createBabylonVideoTexture(
-    surface: BorrowedVideoSurface, scene: Scene, engine: Engine, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE
+    surface: BorrowedVideoSurface, scene: Scene, engine: Engine, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE, readSettings?: ReadCaptionSettings
 ): VideoPresentationResource {
     const { video } = surface;
     const dimensions = fitVideoScreen(video.videoWidth, video.videoHeight, screenPercent);
@@ -30,7 +31,7 @@ export function createBabylonVideoTexture(
     mesh.rotation.x = screenGeometry(screenPercent, pose).pitch;
     mesh.position.set(...screenGeometry(screenPercent, pose).videoPosition);
     mesh.material = material;
-    const subtitles = createBabylonSubtitles(surface, scene, screenPercent, pose);
+    const subtitles = createBabylonSubtitles(surface, scene, screenPercent, pose, readSettings);
     let lastTime = -1;
     return {
         update() {

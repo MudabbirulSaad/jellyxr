@@ -8,7 +8,8 @@ export type SearchAction = 'catalogue-search' | 'catalogue-clear-search' | 'sear
 export type CatalogueAction = SearchAction | 'catalogue-open' | 'catalogue-close' | 'catalogue-next' | 'catalogue-previous' | 'catalogue-filter' | 'catalogue-back' | 'catalogue-heading' | 'catalogue-detail' | `catalogue-item-${string}`;
 export type ScreenAction = 'screen-open' | 'screen-close' | 'screen-heading' | 'screen-smaller' | 'screen-larger' | 'screen-reset'
     | 'screen-next-setting' | 'screen-closer' | 'screen-farther' | 'screen-higher' | 'screen-lower' | 'screen-tilt-up' | 'screen-tilt-down';
-export type ControlAction = ScreenAction | CatalogueAction | 'text-size' | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
+export type CaptionAction = 'caption-open' | 'caption-close' | 'caption-heading' | 'caption-size' | 'caption-backing' | 'caption-position' | 'caption-reset';
+export type ControlAction = CaptionAction | ScreenAction | CatalogueAction | 'text-size' | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
 export type ControlTextScale = 1 | 1.25 | 1.5;
 export interface ControlTarget {
     id: ControlAction;

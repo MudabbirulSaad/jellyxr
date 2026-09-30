@@ -6,11 +6,12 @@ import { createBabylonPanel } from '../candidates/babylonPanel';
 import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
 import type { BorrowedVideoSurface } from './borrowVideoSurface';
+import type { ReadCaptionSettings } from './captionSettings';
 import { createBabylonSubtitles } from './babylonSubtitles';
 import { fitVideoScreen, type VideoPresentationResource } from './videoPresentation';
 
 /** Opaque-pass depth and zero RGBA expose only the media rectangle to the compositor. */
-export function createBabylonMediaUnderlay(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE): VideoPresentationResource {
+export function createBabylonMediaUnderlay(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE, readSettings?: ReadCaptionSettings): VideoPresentationResource {
     const size = fitVideoScreen(surface.video.videoWidth, surface.video.videoHeight, screenPercent);
     const material = new ShaderMaterial('media-underlay-aperture', scene, {
         vertexSource: 'precision highp float; attribute vec3 position; uniform mat4 worldViewProjection; void main() { gl_Position = worldViewProjection * vec4(position, 1.0); }',
@@ -27,7 +28,7 @@ export function createBabylonMediaUnderlay(surface: BorrowedVideoSurface, scene:
         material.dispose();
     };
     try {
-        const subtitles = createBabylonSubtitles(surface, scene, screenPercent, pose);
+        const subtitles = createBabylonSubtitles(surface, scene, screenPercent, pose, readSettings);
         return {
             update: subtitles.update,
             readSubtitleStatus: subtitles.readStatus,

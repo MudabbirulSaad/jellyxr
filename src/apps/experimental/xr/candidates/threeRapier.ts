@@ -117,9 +117,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         return { origin: [origin.x, origin.y, origin.z], direction: [direction.x, direction.y, direction.z] };
     });
     const video = new VideoPresentation({
-        createTexture: (surface, screenPercent, pose) => createThreeVideoTexture(surface, scene, screenPercent, pose),
+        createTexture: (surface, screenPercent, pose) => createThreeVideoTexture(surface, scene, screenPercent, pose, input.screen.captions.read),
         createLayer: (surface, session, space, screenPercent, pose) => createNativeMediaLayer(surface, session, space,
-            (percent, placement) => createThreeMediaUnderlay(surface, scene, percent, placement), screenPercent, pose)
+            (percent, placement) => createThreeMediaUnderlay(surface, scene, percent, placement, input.screen.captions.read), screenPercent, pose)
     });
     const sampler = new FrameSampler();
     const recovery = new SessionRecovery({

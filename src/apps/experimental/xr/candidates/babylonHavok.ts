@@ -102,9 +102,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         xr.featuresManager.enableFeature(WebXRLayers.Name, 'latest', {}, true, false);
     }
     const video = new VideoPresentation({
-        createTexture: (surface, screenPercent, pose) => createBabylonVideoTexture(surface, scene, engine, screenPercent, pose),
+        createTexture: (surface, screenPercent, pose) => createBabylonVideoTexture(surface, scene, engine, screenPercent, pose, input.screen.captions.read),
         createLayer: (surface, session, space, screenPercent, pose) => createNativeMediaLayer(surface, session, space,
-            (percent, placement) => createBabylonMediaUnderlay(surface, scene, percent, placement), screenPercent, pose)
+            (percent, placement) => createBabylonMediaUnderlay(surface, scene, percent, placement, input.screen.captions.read), screenPercent, pose)
     });
     const physicalRemote = remote ? createHavokRemote(remote, plugin, havok, room.read) : undefined;
     const simulation = new PhysicsScheduler(physicalRemote || { awake: () => true, wake: () => undefined });
