@@ -10,16 +10,16 @@
   "coordinates": "right-handed, +Y up, forward -Z",
   "units": "metres",
   "file": "observatory-room.glb",
-  "bytes": 1089452,
-  "triangles": 15084,
-  "primitives": 4,
+  "bytes": 1292408,
+  "triangles": 17892,
+  "primitives": 5,
   "textureCount": 0,
   "dimensionsMetres": [
     12.199999809265137,
     4.399999812245369,
     14.199999809265137
   ],
-  "sha256": "30e803bdf4cb8f5654fb42e031c6c2759fa6e49aba936a07968e4bf913f3c955",
+  "sha256": "0f3bdedda1ff174257a478e31c68694c7c8b427472b561e4c8f27bef56b0e10e",
   "collision": "observatory-room-collision.json",
   "replaces": [
     "floor",
@@ -28,12 +28,26 @@
     "wall-front",
     "wall-right",
     "wall-back",
-    "library-plinth"
+    "library-plinth",
+    "library-case-left-back",
+    "library-case-left-post-left",
+    "library-case-left-post-right",
+    "library-case-left-shelf-0",
+    "library-case-left-shelf-1",
+    "library-case-left-shelf-2",
+    "library-case-left-shelf-3",
+    "library-case-right-back",
+    "library-case-right-post-left",
+    "library-case-right-post-right",
+    "library-case-right-shelf-0",
+    "library-case-right-shelf-1",
+    "library-case-right-shelf-2",
+    "library-case-right-shelf-3"
   ],
   "outstanding": [
     "Baked lighting/reflections",
     "Authored surface textures and GPU compression",
-    "Final library shelving",
+    "Production artwork placement and interaction",
     "Quest close-range geometry and comfort review",
     "Measured loading, draw calls and GPU cost"
   ]

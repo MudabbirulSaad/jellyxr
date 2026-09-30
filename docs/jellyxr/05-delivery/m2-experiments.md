@@ -1,6 +1,6 @@
 # M2 experiment evidence
 
-Updated: 2026-09-29. Status: comparison workbench preparation passed local checks; G2 remains open. Source revision: d919941b3b, based on xr 8ea4c39a83. The workbench is a disposable experiment, not the production spatial library or an engine-selection decision.
+Updated: 2026-09-30. Status: comparison workbench preparation passed local checks; G2 remains open. Initial source revision: d919941b3b, based on xr 8ea4c39a83; dated increments below identify subsequent revisions. The workbench is a disposable experiment, not the production spatial library or an engine-selection decision.
 
 ## Reproduce the comparison
 
@@ -652,3 +652,25 @@ PC references: [Babylon text with raised tilt](../references/images/m2-placement
 Remaining FR-016 work includes general orientation recentering, qualified curved presentation and scoped production preferences. The controls can cover parts of a lowered video while open; the reference screenshots are not a full placement/accessibility qualification. Actual native layers, both required input methods, complete subtitle/media classes and sustained Quest measurements still block G2. G3/G4 are unchanged.
 
 Documentation validation passes 449 relative links/anchors across 33 Markdown files, 41 unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.
+
+## Library-bay increment — 2026-09-30
+
+Source: `14d0b15c26a8676335b5cd0035a596106935f439`, branch `milestone/m2-library-bays`, based on `xr` `4b633a8d67`. Implements the [library bay comparison contract](../04-architecture/asset-pipeline.md#library-bay-comparison-contract--2026-09-30) under FR-015/031. This is independent asset preparation for both disposable candidates; G2 remains open.
+
+Two original graphite cases now stand on the outer portions of the library plinth. Bevelled posts and boards, recessed backs and narrow warm metal edges establish physical depth while retaining the central seated catalogue workspace. There are no invented posters, fabricated media descriptions or decorative controls. The cases contain seven collision boxes each, leaving actual open compartments; their geometry and proxies are shared by both candidates and the Plain room control.
+
+| Check | Actual result and limits |
+| --- | --- |
+| Asset and provenance | Expanded GLB: 17,892 triangles, five material primitives, zero textures, 1,292,408 bytes. The addition is 2,808 triangles and 202,956 bytes. Repeat generation produced SHA-256 `0f3bdedda1ff174257a478e31c68694c7c8b427472b561e4c8f27bef56b0e10e` both times. Khronos Validator 2.0.0-dev.3.10 returned zero errors, warnings, information and hints. Original GPL-2.0-or-later geometry, no imported assets or dependency changes |
+| Geometry and clearance | Actual Three/glTF and Babylon NullEngine/glTF loaders pass vertex/proxy, hash, count, disposal and surface-query checks. Rays hit the inner back, post and board surfaces at matching distances. The original seven room volumes remain unchanged; fourteen case-part volumes are added. Named library/seat destinations remain clear, shelf destinations are rejected, and full catalogue controls fit at the tested 1.3 m and 1.65 m eye heights |
+| Remote physics | Both installed Havok and Rapier WASM engines run the same controlled insertion/release sequence. The held remote reaches the compartment without a full-case blocker, drops onto the board and remains stable over the following two simulated seconds. Swept queries stop at the back and shelf surfaces. This checks deterministic fixture behaviour, not actual hands, sustained device physics or arbitrary impact speeds |
+| Babylon PC | Keyboard operation reached the library, opened the six-card technical catalogue, closed it, snap-turned 30 degrees right and returned to the seat. The central catalogue stayed clear of the cases; the turned view showed shelf depth. No video was attached or played in this slice |
+| Three PC | The equivalent library/catalogue/close/turn/return sequence worked. The explicit Plain room option retained the open compartments, library access and snap turn using the visible collision proxies. No new mouse-pointer, controller or hand pass is claimed |
+| Local checks | Full suite: 458 tests across 53 files pass. The final test callback-style cleanup was followed by another passing two-engine physics run. Application and authoring TypeScript pass. Full lint: zero errors and 98 inherited warnings after fixing two callback-return errors introduced in the test; affected-file lint and stylelint pass. Ordinary production/ES5 passes 984 files; experimental production/ES5 passes 994 files, with the two inherited bundle-size warnings |
+| Bundle boundary | Ordinary production JavaScript contains none of the new case IDs, shell marker or asset hash; ordinary output contains no GLBs. The experiment stays opt-in. Dependency versions and lockfile are unchanged |
+
+PC references: [Babylon case view](../references/images/m2-library-bays-babylon.png), [Three case view](../references/images/m2-library-bays-three.png), [central technical catalogue](../references/images/m2-library-bays-catalogue.png) and [Three Plain room control](../references/images/m2-library-bays-plain.png). These show selected desktop states only. Logs are outside Git in `%LOCALAPPDATA%/JellyXR/library-bays-*.log`.
+
+UI/UX Pro Max was reviewed selectively. The two permitted searches did not provide a verified shelving-layout match; this composition follows the approved Cinema Observatory specification and general consistency guidance. Headset scale/readability, near hand interaction, actual GPU/query cost, baked lighting and compressed surface textures remain open. Production artwork mounting and constrained artwork interaction are separate work. Quest was absent from ADB at this slice's start; no new device evidence, renderer decision or G2/G3/G4 pass is recorded.
+
+Documentation validation passes 456 relative links/anchors across 33 Markdown files, 41 unique requirements, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.

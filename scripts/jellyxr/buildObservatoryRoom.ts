@@ -8,15 +8,16 @@ import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js
 import { exportGlb } from './gltfAuthoring.ts';
 
 type Vec3 = [number, number, number];
-type Finish = 'backing' | 'acoustic' | 'floor' | 'metal';
+type Finish = 'backing' | 'acoustic' | 'floor' | 'metal' | 'warmMetal';
 const destination = new URL('../../src/apps/experimental/xr/assets/observatory/', import.meta.url);
 const materials: Record<Finish, MeshStandardMaterial> = {
     backing: new MeshStandardMaterial({ color: '#0B0F14', roughness: 0.9 }),
     acoustic: new MeshStandardMaterial({ color: '#202A35', roughness: 0.96 }),
     floor: new MeshStandardMaterial({ color: '#1B222B', roughness: 0.84 }),
-    metal: new MeshStandardMaterial({ color: '#555E66', roughness: 0.4, metalness: 0.8 })
+    metal: new MeshStandardMaterial({ color: '#555E66', roughness: 0.4, metalness: 0.8 }),
+    warmMetal: new MeshStandardMaterial({ color: '#D7B67A', roughness: 0.42, metalness: 0.65 })
 };
-const buckets: Record<Finish, BufferGeometry[]> = { backing: [], acoustic: [], floor: [], metal: [] };
+const buckets: Record<Finish, BufferGeometry[]> = { backing: [], acoustic: [], floor: [], metal: [], warmMetal: [] };
 const collision: { id: string; size: Vec3; position: Vec3 }[] = [];
 
 function part(size: Vec3, position: Vec3, finish: Finish, radius = 0) {
@@ -65,6 +66,25 @@ part([7.9, 0.27, 0.39], [0, 0.165, 5.2], 'backing', 0.025);
 part([8, 0.045, 0.45], [0, 0.3275, 5.2], 'metal', 0.01);
 part([7.78, 0.025, 0.31], [0, 0.0125, 5.2], 'metal', 0.01);
 
+// Two open cases face the named library position. The centre stays clear for seated controls.
+for (const side of [-1, 1]) {
+    const x = side * 2.75;
+    const id = `library-case-${side < 0 ? 'left' : 'right'}`;
+    proxy(`${id}-back`, [1.66, 2.24, 0.06], [x, 1.49, 5.035]);
+    part([1.66, 2.24, 0.06], [x, 1.49, 5.035], 'backing', 0.012);
+    for (const edge of [-1, 1]) {
+        const postX = x + edge * 0.865;
+        proxy(`${id}-post-${edge < 0 ? 'left' : 'right'}`, [0.07, 2.3, 0.4], [postX, 1.5, 5.2]);
+        part([0.07, 2.3, 0.4], [postX, 1.5, 5.2], 'floor', 0.012);
+        part([0.014, 2.2, 0.008], [postX, 1.5, 5.396], 'warmMetal', 0.003);
+    }
+    [0.395, 1.14, 1.885, 2.63].forEach((y, index) => {
+        proxy(`${id}-shelf-${index}`, [1.8, 0.04, 0.4], [x, y, 5.2]);
+        part([1.8, 0.04, 0.4], [x, y, 5.2], 'floor', 0.008);
+        part([1.69, 0.012, 0.009], [x, y - 0.008, 5.3955], 'warmMetal', 0.004);
+    });
+}
+
 const root = new Group();
 root.name = 'Observatory architectural shell';
 for (const finish of Object.keys(buckets) as Finish[]) {
@@ -93,7 +113,7 @@ const manifest = {
     file, bytes: bytes.byteLength, triangles, primitives: root.children.length, textureCount: 0,
     dimensionsMetres: dimensions, sha256: createHash('sha256').update(bytes).digest('hex'),
     collision: 'observatory-room-collision.json', replaces: collision.map(box => box.id),
-    outstanding: ['Baked lighting/reflections', 'Authored surface textures and GPU compression', 'Final library shelving',
+    outstanding: ['Baked lighting/reflections', 'Authored surface textures and GPU compression', 'Production artwork placement and interaction',
         'Quest close-range geometry and comfort review', 'Measured loading, draw calls and GPU cost']
 };
 await mkdir(destination, { recursive: true });

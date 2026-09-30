@@ -43,10 +43,28 @@ function exercise(remote: { grab: RemoteGrab; recall(): void }, position: () => 
     expect(position()[0]).toBeCloseTo(0.35, 1);
     expect(position()[1]).toBeGreaterThan(0.70);
     expect(position()[1]).toBeLessThan(0.74);
+    expect(remote.grab.begin('fixture-controller', position())).toBe(true);
+    // Approach an open library compartment from its front, avoiding the chair and top shelf.
+    for (const point of [[0.35, 3, -1.2], [2.75, 3, 5.7], [2.75, 1.6, 5.7], [2.75, 1.6, 5.2]] as const) {
+        remote.grab.update('fixture-controller', point);
+        advance(300);
+        point.forEach((value, axis) => {
+            expect(position()[axis]).toBeCloseTo(value, 2);
+        });
+    }
+    remote.grab.release();
+    advance(144);
+    expect(position()[1]).toBeGreaterThan(1.17);
+    expect(position()[1]).toBeLessThan(1.19);
+    const settled = position();
+    advance(144);
+    settled.forEach((value, axis) => {
+        expect(position()[axis]).toBeCloseTo(value, 3);
+    });
 }
 
 describe('actual comparison physics adapters', () => {
-    it('runs Havok hold, swept wall stop, release and recall without a renderer or headset', async () => {
+    it('runs Havok hold, wall stop, recall and shelf placement without a renderer or headset', async () => {
         const bytes = await readFile('node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm');
         const wasmBinary = new ArrayBuffer(bytes.byteLength);
         new Uint8Array(wasmBinary).set(bytes);
@@ -80,7 +98,7 @@ describe('actual comparison physics adapters', () => {
         }
     });
 
-    it('runs Rapier hold, swept wall stop, release and recall with the same fixtures', async () => {
+    it('runs Rapier hold, wall stop, recall and shelf placement with the same fixtures', async () => {
         await RAPIER.init();
         const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
         world.timestep = 1 / 72;
