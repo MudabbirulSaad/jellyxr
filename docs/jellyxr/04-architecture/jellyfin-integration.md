@@ -111,6 +111,12 @@ Disposal is terminal for the owned bitmap renderer and its backend. Pending WASM
 
 This boundary addresses startup resource ownership. Cancellation inside parser, worker and network operations requires separate evidence; it is not proved by preventing the final render-loop start. Nor does mocked GPU initialization qualify hardware output or subtitle delivery.
 
+### In-flight bitmap loads
+
+Track disposal must abort that renderer's subtitle fetches, reject late load results before state changes, settle queued parser work without using a freed parser, and dispose its worker session even if loading is not yet acknowledged. The shared worker belongs to the library; do not terminate it when one renderer is removed. A canceled load must not retry, start a fallback parser, emit stale loading/error callbacks or restore frame/index caches. The same guard must cover PGS buffer/progressive paths and VobSub IDX/SUB/MKS paths. Keep normal loading, genuine active errors and concurrent independent renderers working.
+
+Extend the pinned patch only against reproduced ownership failures, with tests at network, worker and scheduled-parser boundaries. Those tests control external completions and must stay distinct from codec fidelity and actual-device qualification. The library's existing range loader accepts an abort signal; use that interface without introducing another subtitle downloader or playback owner.
+
 ### Native media underlay experiment
 
 Investigate placing the native video quad before the renderer's projection layer. Layers compose in list order without scene depth testing between them; placing video last can cover nearer scene controls and captions. The proposed projection pass therefore writes transparent black at a depth-tested, video-sized screen aperture, while the surrounding room stays opaque. Existing caption meshes render in the same projection pass as controls and foreground geometry. This keeps caption timing with the inherited owner and avoids a second subtitle timeline or direct manipulation of compositor-owned textures.

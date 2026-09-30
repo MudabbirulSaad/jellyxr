@@ -59,8 +59,8 @@ if (installed.name !== manifest.package || installed.version !== manifest.versio
 // Validate every input and output before writing any file. A partially patched install
 // is safe to retry; unknown source content is never overwritten.
 const updates = manifest.files.map(entry => {
-    if (!['dist/ts/renderers.js', 'dist/ts/webgpu-renderer.js'].includes(entry.path)
-        || !['renderers.js.patch', 'webgpu-renderer.js.patch'].includes(entry.patch)) {
+    if (!['dist/ts/renderers.js', 'dist/ts/webgpu-renderer.js', 'dist/ts/range-loader.js'].includes(entry.path)
+        || !['renderers.js.patch', 'webgpu-renderer.js.patch', 'range-loader.js.patch'].includes(entry.patch)) {
         throw new Error('Unexpected bitmap dependency patch target');
     }
     const target = new URL(entry.path, packageRoot);
