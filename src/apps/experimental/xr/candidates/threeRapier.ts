@@ -24,6 +24,7 @@ import { createRapierRemote } from '../input/rapierRemote';
 import { createRapierScreen } from '../input/rapierScreen';
 import { loadThreeChairs } from '../assets/threeChairs';
 import { loadThreeArchitecture } from '../assets/threeArchitecture';
+import { loadThreeRemote } from '../assets/threeRemote';
 import type { ChairQuality } from '../assets/chairAssets';
 
 import { FrameSampler } from './frameSampler';
@@ -90,6 +91,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     // A failed import retains visible collision proxies and an explicit diagnostic.
     const chairs = await loadThreeChairs(scene, quality).catch(() => undefined);
     const architecture = await loadThreeArchitecture(scene, detailedRoom).catch(() => undefined);
+    const remoteModel = await loadThreeRemote(remote).catch(() => undefined);
     const physicalRemote = createRapierRemote(remoteBody, room.read);
     const simulation = new PhysicsScheduler(physicalRemote || { awake: () => true, wake: () => undefined });
     const recallRemote = () => physicalRemote?.recall();
@@ -179,7 +181,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             world.step();
         });
         if (remote && remoteBody) {
-            remote.material.emissive.set(physicalRemote?.grab.source() ? FIXTURE_COLOURS.warm : 0);
+            const held = !!physicalRemote?.grab.source();
+            remote.material.emissive.set(held ? FIXTURE_COLOURS.warm : 0);
+            remoteModel?.setHeld(held);
             remote.position.copy(remoteBody.translation());
             remote.quaternion.copy(remoteBody.rotation());
         }
@@ -190,7 +194,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         ...sampler.read(), physicsStatus: simulation.status(), remoteHeight: remote?.position.y || 0, immersive: renderer.xr.isPresenting,
         mediaStatus: video.readStatus(), inputStatus: input.readStatus(),
         assetStatus: [chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.',
-            architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.'].join(' ')
+            architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.',
+            remoteModel?.status || 'Remote model failed to load. Box remains visible; retry by restarting the comparison.'].join(' ')
     }), 1000);
 
     return {
@@ -234,6 +239,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             } finally {
                 chairs?.dispose();
                 architecture?.dispose();
+                remoteModel?.dispose();
                 for (const mesh of meshes) {
                     mesh.geometry.dispose();
                     mesh.material.dispose();

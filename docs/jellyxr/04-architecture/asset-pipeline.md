@@ -1,6 +1,6 @@
 # Observatory asset pipeline
 
-Status: M2 original chair, upholstery maps, architectural shell, library bays and loading comparison implemented; compressed production textures, lighting and Quest qualification remain open. Updated 2026-09-30. Supports FR-015/031, NFR-001/002 and EXP-03/04.
+Status: M2 original chair, upholstery maps, architectural shell, library bays, remote model and loading comparison implemented; compressed production textures, lighting and Quest qualification remain open. Updated 2026-09-30. Supports FR-015/031, NFR-001/002 and EXP-03/04.
 
 ## Source and ownership
 
@@ -49,6 +49,18 @@ The expanded GLB contains 17,892 triangles, five primitives and no textures in 1
 
 Actual Three/glTF and Babylon NullEngine/glTF tests load the same file, check every rendered vertex against the collision volumes, compare representative floor/wall/ceiling/plinth and inner-shelf ray hits and verify disposal. Loader-failure tests retain visible proxies; Plain room skips model loading entirely. Khronos Validator 2.0.0-dev.3.10 reports zero errors, warnings, informational notices and hints for this file. Final geometry, lighting and query costs still require actual GPU/headset measurements.
 
+## Remote model comparison contract — 2026-09-30
+
+Under FR-031 and EXP-03/04, replace only the remote's visible box with an original bevelled graphite model, matte grip panel, underside ribs and restrained warm metal trim. Preserve the existing 0.08 × 0.035 × 0.19 m collision box, local centre, 0.18 kg mass, damping, near-grab ownership, recall, tracking-loss recovery and native sleep scheduling. Keep all authored vertices inside that proxy. The model has no inactive playback buttons, invented display or branding; the comparison's existing control bank owns playback actions. Warm trim gains a bounded emissive response while held and returns to its passive material on release; existing status/recall controls remain available.
+
+Load the same glTF bytes in both candidates, parent the visual model to the existing physical proxy and retain exact translation/rotation through grab, drop and recall. Hide only the proxy's rendering after success; do not disable its body or accidentally hide model children. On failed import, retain the visible box and report a retry through comparison restart. Restore the proxy and dispose only owned model resources on detach. Use separate simple collision JSON, source/licence/hash/count manifest and reproducible Node authoring; add no physics body or external assets.
+
+Validate real-loader material/geometry counts, collision containment, rotated parenting and matching scene ray hits in both engines. Check failure/disposal, held feedback and existing actual-WASM remote tests. This prepares a representative physical object, not a finished production remote, measured headset material quality or G2 selection. UI/UX Pro Max's verified Dragging Movements guidance supports keeping button/keyboard recovery available; its screen-space advice does not determine XR dimensions or constitute hand-input qualification.
+
+The [remote recipe](../../../scripts/jellyxr/buildObservatoryRemote.ts) produces a 176,248-byte GLB with 2,412 triangles, three opaque scalar PBR material primitives and no textures. Its visible bounds are approximately 0.078 × 0.0337 × 0.188 m. SHA-256: `7b35b1c438383b8f0463b25876262da54f421007ab676bdb1ed01e3238b3d048`. The [manifest](../../../src/apps/experimental/xr/assets/observatory/remote-manifest.json) and [collision resource](../../../src/apps/experimental/xr/assets/observatory/observatory-remote-collision.json) record original GPL-2.0-or-later provenance and the existing 0.08 × 0.035 × 0.19 m proxy; the fixture imports that size directly. No external source asset or dependency version change is introduced.
+
+Actual Three and Babylon NullEngine loaders agree on file/material counts, linear trim colour, PBR values and rotated surface hits. Tests verify all rendered vertices remain within the collider, held trim returns to passive on release, and failure/missing feedback leaves the box intact. Detach restores proxy rendering and releases only imported resources. Repeated authoring produces identical bytes; Khronos Validator 2.0.0-dev.3.10 reports zero errors, warnings, informational notices and hints. These are source/file/controlled-loader results; close-range GPU appearance, normal/roughness detail, reflection reference, headset visibility, production controls and measured costs remain open.
+
 ## Rebuild and verify
 
 Use the locked dependencies and Node 24:
@@ -56,14 +68,15 @@ Use the locked dependencies and Node 24:
 ```powershell
 npm run assets:observatory
 npm run assets:room
+npm run assets:remote
 npx tsc --project scripts/jellyxr/tsconfig.json
-npm test -- src/apps/experimental/xr/assets/chairAssets.test.ts src/apps/experimental/xr/assets/roomAsset.test.ts
+npm test -- src/apps/experimental/xr/assets/chairAssets.test.ts src/apps/experimental/xr/assets/roomAsset.test.ts src/apps/experimental/xr/assets/remoteAsset.test.ts
 npm run build:check
 ```
 
-The chair command replaces only its named GLBs, two authored PNGs, collision JSON and manifest under the experimental asset directory. The room command replaces only its GLB, collision JSON and room manifest in that directory. The [material recipe](../../../scripts/jellyxr/upholsteryMaterial.ts) encodes the linear data maps and embeds the same bytes into each GLB. PNGs are lossless reference assets; GPU-compressed variants remain pending. Repeated generation with this source and tool version produced identical GLB hashes. Changes to geometry, materials or tools must regenerate the manifest and pass the loader/hash/collision tests before review.
+The chair command replaces only its named GLBs, two authored PNGs, collision JSON and manifest under the experimental asset directory. The room command replaces only its GLB, collision JSON and room manifest; the remote command replaces only its GLB, collision JSON and remote manifest. The [material recipe](../../../scripts/jellyxr/upholsteryMaterial.ts) encodes the linear data maps and embeds the same bytes into each chair GLB. PNGs are lossless reference assets; GPU-compressed variants remain pending. Repeated generation with this source and tool version produced identical GLB hashes. Changes to geometry, materials or tools must regenerate the manifest and pass the loader/hash/collision tests before review.
 
-Both generators run offline in Node and share the [binary export helper](../../../scripts/jellyxr/gltfAuthoring.ts). Its small Blob reader adapter serves GLTFExporter's geometry path; the material recipe subsequently adds aligned image buffer views, textures and sampler references to the GLB. No DOM/canvas shim is required in the generator. Node 24 supplies PNG compression/CRC support; no image-authoring package or runtime dependency was added. Browser compatibility lint remains active for application/XR code. Only `scripts/jellyxr/*.ts`, which runs in Node and is excluded from application bundles, uses a Node-specific compatibility setting.
+All three generators run offline in Node and share the [binary export helper](../../../scripts/jellyxr/gltfAuthoring.ts). Its small Blob reader adapter serves GLTFExporter's geometry path; the chair material recipe subsequently adds aligned image buffer views, textures and sampler references to the GLB. No DOM/canvas shim is required in the generator. Node 24 supplies PNG compression/CRC support; no image-authoring package or runtime dependency was added. Browser compatibility lint remains active for application/XR code. Only `scripts/jellyxr/*.ts`, which runs in Node and is excluded from application bundles, uses a Node-specific compatibility setting.
 
 Khronos glTF Validator 2.0.0-dev.3.10 was installed outside the repository for this run. Both chair files returned zero errors and zero warnings, plus four informational notices for UV attributes on the remaining untextured finishes. Actual Three GLTFLoader and Babylon NullEngine/glTF-loader tests also passed. Node tests decompress the actual PNG data and supply a controlled ImageBitmap boundary; NullEngine does not upload to a GPU. Tests cover tangent orthogonality, declared channels, bounds/proxies, pixel ranges/hashes and disposal. Those tests do not exercise a headset or GPU.
 

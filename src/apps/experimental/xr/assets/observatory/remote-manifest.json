@@ -1,0 +1,36 @@
+{
+  "id": "observatory-remote",
+  "file": "observatory-remote.glb",
+  "status": "M2 representative model; not final M5 qualification",
+  "author": "JellyXR project; original procedural geometry authored with Codex assistance",
+  "licence": "GPL-2.0-or-later",
+  "licenceFile": "../../../../../../LICENSE",
+  "source": "../../../../../../scripts/jellyxr/buildObservatoryRemote.ts",
+  "externalAssets": [],
+  "authoringDependency": "three 0.186.0 (MIT)",
+  "units": "metres",
+  "coordinates": "right-handed, +Y up, forward -Z",
+  "collision": "observatory-remote-collision.json",
+  "triangles": 2412,
+  "primitives": 3,
+  "textureCount": 0,
+  "dimensionsMetres": [
+    0.07800000160932541,
+    0.03370000049471855,
+    0.18799999356269836
+  ],
+  "bytes": 176248,
+  "sha256": "7b35b1c438383b8f0463b25876262da54f421007ab676bdb1ed01e3238b3d048",
+  "feedback": {
+    "material": "Observatory remote trim",
+    "colourSrgb": "#D7B67A",
+    "intensity": 0.35
+  },
+  "outstanding": [
+    "Final playback-control design",
+    "Authored normal/roughness detail",
+    "Baked reflection reference",
+    "Quest close-range visibility, hand/controller and comfort review",
+    "Measured GPU/load/disposal budgets"
+  ]
+}

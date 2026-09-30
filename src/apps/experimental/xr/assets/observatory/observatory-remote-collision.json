@@ -1,0 +1,19 @@
+{
+  "units": "metres",
+  "coordinates": "right-handed, +Y up, forward -Z",
+  "boxes": [
+    {
+      "id": "remote",
+      "size": [
+        0.08,
+        0.035,
+        0.19
+      ],
+      "position": [
+        0,
+        0,
+        0
+      ]
+    }
+  ]
+}

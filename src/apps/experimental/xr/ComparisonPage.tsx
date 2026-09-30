@@ -298,7 +298,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Button onClick={detailedChairs} aria-pressed={chairQuality === 'detailed'} disabled={busy || !!sample?.immersive}>Detailed chair model</Button>
                     <Button onClick={reducedChairs} aria-pressed={chairQuality === 'reduced'} disabled={busy || !!sample?.immersive}>Reduced chair model</Button>
                 </Stack>
-                <Typography component='p'>{sample?.assetStatus || 'Loading original room and chair assets…'}</Typography>
+                <Typography component='p'>{sample?.assetStatus || 'Loading original room, chair and remote assets…'}</Typography>
                 <Stack direction='row' spacing={2} useFlexGap flexWrap='wrap'>
                     <Button onClick={chooseLayers} aria-pressed={mediaMode === 'media-layer'} variant={mediaMode === 'media-layer' ? 'contained' : 'outlined'} disabled={busy || !!sample?.immersive}>Media layer</Button>
                     <Button onClick={chooseTexture} aria-pressed={mediaMode === 'video-texture'} variant={mediaMode === 'video-texture' ? 'contained' : 'outlined'} disabled={busy || !!sample?.immersive}>Video texture</Button>
