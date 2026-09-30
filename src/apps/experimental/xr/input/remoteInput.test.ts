@@ -36,6 +36,79 @@ function fixture(hand: boolean) {
 }
 
 describe('native near-grab ownership', () => {
+    it.each([false, true])('applies bounded momentum only at a tracked deliberate release (hand: %s)', hand => {
+        const f = fixture(hand);
+        f.event(hand ? 'selectstart' : 'squeezestart');
+        const pose = f.frame.getPose();
+        pose.transform.position.x = 20;
+        f.update();
+        f.grab.step(1 / 72);
+        f.event(hand ? 'selectend' : 'squeezeend');
+        expect(f.release).toHaveBeenCalledWith([3, 0, 0]);
+        expect(f.grab.source()).toBeNull();
+        expect(f.eventFrame.getViewerPose).not.toHaveBeenCalled();
+        f.input.dispose();
+    });
+
+    it.each([false, true])('clears accumulated motion when release tracking is absent (hand: %s)', hand => {
+        const f = fixture(hand);
+        f.event(hand ? 'selectstart' : 'squeezestart');
+        f.frame.getPose().transform.position.x = 20;
+        f.update();
+        f.grab.step(1 / 72);
+        if (hand) f.frame.getJointPose.mockReturnValueOnce(null as never);
+        else f.frame.getPose.mockReturnValueOnce(null as never);
+        f.event(hand ? 'selectend' : 'squeezeend');
+        expect(f.release).toHaveBeenCalledWith();
+        expect(f.grab.source()).toBeNull();
+        f.input.dispose();
+    });
+
+    it.each([false, true])('clears accumulated motion on interruption before release (hand: %s)', hand => {
+        const f = fixture(hand);
+        f.event(hand ? 'selectstart' : 'squeezestart');
+        f.frame.getPose().transform.position.x = 20;
+        f.update();
+        f.grab.step(1 / 72);
+        f.session.visibilityState = 'hidden';
+        f.session.dispatchEvent(new Event('visibilitychange'));
+        f.event(hand ? 'selectend' : 'squeezeend');
+        expect(f.release).toHaveBeenCalledWith();
+        expect(f.release).toHaveBeenCalledOnce();
+        f.input.dispose();
+    });
+
+    it.each([false, true])('rejects momentum at release with a stale head sample (hand: %s)', hand => {
+        const f = fixture(hand);
+        f.event(hand ? 'selectstart' : 'squeezestart');
+        f.frame.getPose().transform.position.x = 20;
+        f.update();
+        f.grab.step(1 / 72);
+        const now = vi.spyOn(performance, 'now').mockReturnValue(performance.now() + 101);
+        try {
+            f.event(hand ? 'selectend' : 'squeezeend');
+            expect(f.release).toHaveBeenCalledWith();
+            expect(f.grab.source()).toBeNull();
+        } finally {
+            now.mockRestore();
+            f.input.dispose();
+        }
+    });
+
+    it.each([false, true])('rejects momentum at release with an invalid grip/joint (hand: %s)', hand => {
+        const f = fixture(hand);
+        f.event(hand ? 'selectstart' : 'squeezestart');
+        const pose = f.frame.getPose();
+        pose.transform.position.x = 20;
+        f.update();
+        f.grab.step(1 / 72);
+        pose.transform.position.x = NaN;
+        f.event(hand ? 'selectend' : 'squeezeend');
+        expect(f.release).toHaveBeenCalledWith();
+        expect(f.grab.source()).toBeNull();
+        f.input.dispose();
+    });
+
     it('uses controller squeeze, blocks selection while held and releases on source removal', () => {
         const f = fixture(false);
         f.event('squeezestart');

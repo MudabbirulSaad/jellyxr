@@ -27,9 +27,10 @@ export function createRapierRemote(body: RigidBody | undefined, collisions?: Col
             body.setNextKinematicTranslation({ x: p[0], y: p[1], z: p[2] });
             body.setNextKinematicRotation(heldRotation);
         },
-        release() {
+        release(velocity = [0, 0, 0]) {
             body.setBodyType(RigidBodyType.Dynamic, true);
             stop();
+            body.setLinvel({ x: velocity[0], y: velocity[1], z: velocity[2] }, true);
         }
     }, collisions);
     return {

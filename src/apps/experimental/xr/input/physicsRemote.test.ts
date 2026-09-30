@@ -22,13 +22,17 @@ import { createRapierRemote } from './rapierRemote';
 import type { RemoteGrab } from './remoteGrab';
 import { createHavokActivity } from './havokActivity';
 
-function exercise(remote: { grab: RemoteGrab; recall(): void }, position: () => Point3, step: () => void) {
-    const advance = (frames: number) => {
+function createRemoteStepper(grab: RemoteGrab, step: () => void) {
+    return (frames: number) => {
         for (let i = 0; i < frames; i++) {
-            remote.grab.step(1 / 72);
+            grab.step(1 / 72);
             step();
         }
     };
+}
+
+function exercise(remote: { grab: RemoteGrab; recall(): void }, position: () => Point3, step: () => void) {
+    const advance = createRemoteStepper(remote.grab, step);
     advance(144);
     expect(position()[1]).toBeGreaterThan(0.70);
     expect(position()[1]).toBeLessThan(0.74);
@@ -128,6 +132,65 @@ function exerciseIdle(remote: PhysicsActivity & { grab: RemoteGrab; recall(): vo
     expectIdle();
 }
 
+function exerciseThrows(remote: { grab: RemoteGrab; recall(): void }, position: () => Point3, velocity: () => Point3, angular: () => Point3, step: () => void) {
+    const advance = createRemoteStepper(remote.grab, step);
+    for (const direction of [-1, 1]) {
+        remote.recall();
+        expect(remote.grab.begin('throw-fixture', position())).toBe(true);
+        remote.grab.update('throw-fixture', [direction * 5.6, 1.5, -1.2]);
+        advance(480);
+        expect(position()[0]).toBeCloseTo(direction * 5.6, 2);
+        remote.grab.update('throw-fixture', [direction * 20, 1.5, -1.2]);
+        advance(1);
+        remote.grab.drop('throw-fixture');
+        expect(velocity()[0]).toBeCloseTo(direction * 3);
+        expect(Math.hypot(...velocity())).toBeLessThanOrEqual(3.0001);
+        expect(angular()).toEqual([0, 0, 0]);
+        // Inspect every step, including impact, rather than just the final resting position.
+        for (let frame = 0; frame < 720; frame++) {
+            step();
+            const point = position();
+            expect(Math.abs(point[0])).toBeLessThan(5.9);
+            expect(point[1]).toBeGreaterThan(-0.001);
+            expect(point[1]).toBeLessThan(4);
+            expect(Math.abs(point[2])).toBeLessThan(6.9);
+        }
+        const settled = position();
+        advance(144);
+        settled.forEach((value, axis) => {
+            expect(position()[axis]).toBeCloseTo(value, 3);
+        });
+    }
+
+    remote.recall();
+    expect(remote.grab.begin('throw-fixture', position())).toBe(true);
+    // Repeat the open-compartment approach, then throw down at the thin shelf board.
+    for (const point of [[0.35, 3, -1.2], [2.75, 3, 5.7], [2.75, 1.6, 5.7], [2.75, 1.6, 5.2]] as const) {
+        remote.grab.update('throw-fixture', point);
+        advance(300);
+    }
+    remote.grab.update('throw-fixture', [2.75, -20, 5.2]);
+    advance(1);
+    remote.grab.drop('throw-fixture');
+    expect(velocity()[1]).toBeCloseTo(-3);
+    expect(angular()).toEqual([0, 0, 0]);
+    for (let frame = 0; frame < 360; frame++) {
+        step();
+        expect(position()[1]).toBeGreaterThan(1.16);
+    }
+    expect(position()[1]).toBeLessThan(1.19);
+
+    // Canceling an equally fast held move clears momentum before native simulation.
+    remote.recall();
+    expect(remote.grab.begin('throw-fixture', position())).toBe(true);
+    remote.grab.update('throw-fixture', [20, 1.5, -1.2]);
+    advance(1);
+    remote.grab.release();
+    expect(velocity()).toEqual([0, 0, 0]);
+    remote.recall();
+    expect(velocity()).toEqual([0, 0, 0]);
+}
+
 describe('actual comparison physics adapters', () => {
     it('runs Havok hold, wall stop, recall and shelf placement without a renderer or headset', async () => {
         const bytes = await readFile('node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm');
@@ -155,6 +218,13 @@ describe('actual comparison physics adapters', () => {
             };
             const step = () => plugin.executeStep(1 / 72, aggregates.map(value => value.body));
             exercise(remote, position, step);
+            exerciseThrows(remote, position, () => {
+                const value = aggregate.body.getLinearVelocity();
+                return [value.x, value.y, value.z];
+            }, () => {
+                const value = aggregate.body.getAngularVelocity();
+                return [value.x, value.y, value.z];
+            }, step);
             exerciseIdle(remote, position, step);
             expect(createHavokActivity({ _pluginData: null }, havok).awake()).toBe(true);
             const observe = vi.spyOn(havok, 'HP_Body_GetActivationState');
@@ -209,6 +279,13 @@ describe('actual comparison physics adapters', () => {
                 return [p.x, p.y, p.z];
             };
             exercise(remote, position, () => world.step());
+            exerciseThrows(remote, position, () => {
+                const value = body!.linvel();
+                return [value.x, value.y, value.z];
+            }, () => {
+                const value = body!.angvel();
+                return [value.x, value.y, value.z];
+            }, () => world.step());
             exerciseIdle(remote, position, () => world.step());
         } finally {
             remote.grab.release();

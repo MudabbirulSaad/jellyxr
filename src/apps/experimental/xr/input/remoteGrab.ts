@@ -11,7 +11,7 @@ export interface RemoteBody {
     read(): RemotePose;
     hold(): void;
     move(position: Point3): void;
-    release(): void;
+    release(velocity?: Point3): void;
 }
 
 const finite = (point: Point3) => point.every(Number.isFinite);
@@ -72,6 +72,7 @@ export class RemoteGrab {
     private owner: string | null = null;
     private offset: Point3 = [0, 0, 0];
     private target: Point3 | null = null;
+    private motion: { velocity: Point3; sampledAt: number } | null = null;
 
     constructor(private readonly body: RemoteBody, private readonly collisions: CollisionSource = () => ROOM_FIXTURE) {}
 
@@ -84,6 +85,7 @@ export class RemoteGrab {
         if (distance > 0.18 || !Number.isFinite(distance)) return false;
         this.body.hold();
         this.owner = source;
+        this.motion = null;
         this.offset = [position[0] - anchor[0], position[1] - anchor[1], position[2] - anchor[2]];
         this.target = position;
         return true;
@@ -102,11 +104,20 @@ export class RemoteGrab {
     step(seconds: number): void {
         if (!this.owner || !this.target || !Number.isFinite(seconds) || seconds <= 0 || seconds > 1 / 30) return;
         const { position, half } = this.body.read();
+        if (!finite(position) || !finite(half)) {
+            this.release();
+            return;
+        }
         const delta = this.target.map((v, i) => v - position[i]);
         const distance = Math.hypot(...delta);
         const fraction = distance > 0 ? Math.min(1 - Math.exp(-20 * seconds), 3 * seconds / distance) : 0;
         const next: Point3 = [position[0] + delta[0] * fraction, position[1] + delta[1] * fraction, position[2] + delta[2] * fraction];
-        this.body.move(constrainRemote(position, next, half, this.collisions()));
+        const constrained = constrainRemote(position, next, half, this.collisions());
+        const velocity = constrained.map((value, axis) => (value - position[axis]) / seconds);
+        const speed = Math.hypot(...velocity);
+        const scale = speed < 0.01 ? 0 : Math.min(1, 3 / speed);
+        this.motion = { velocity: [velocity[0] * scale, velocity[1] * scale, velocity[2] * scale], sampledAt: performance.now() };
+        this.body.move(constrained);
     }
 
     source(): string | null {
@@ -114,9 +125,21 @@ export class RemoteGrab {
     }
 
     release(source?: string): void {
+        this.finish(source);
+    }
+
+    /** Only a tracked, deliberate gesture end calls this; interruptions always use release(). */
+    drop(source: string): void {
+        const age = this.motion ? performance.now() - this.motion.sampledAt : Infinity;
+        this.finish(source, age >= 0 && age <= 100 && this.motion ? this.motion.velocity : [0, 0, 0]);
+    }
+
+    private finish(source?: string, velocity?: Point3): void {
         if (!this.owner || (source && source !== this.owner)) return;
         this.owner = null;
         this.target = null;
-        this.body.release();
+        this.motion = null;
+        if (velocity) this.body.release(velocity);
+        else this.body.release();
     }
 }

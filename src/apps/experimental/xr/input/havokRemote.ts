@@ -33,9 +33,10 @@ export function createHavokRemote(remote: PhysicsAggregate, plugin: HavokPlugin,
         move(p) {
             remote.body.setTargetTransform(new Vector3(...p), heldRotation);
         },
-        release() {
+        release(velocity = [0, 0, 0]) {
             remote.body.setMotionType(PhysicsMotionType.DYNAMIC);
             stop();
+            remote.body.setLinearVelocity(new Vector3(...velocity));
             activity.wake();
         }
     }, collisions);
