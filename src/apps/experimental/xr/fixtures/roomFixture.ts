@@ -2,6 +2,7 @@ import { SCREEN_FRAME } from './screenFixture';
 import { overlapsBox } from './boxGeometry';
 
 import chairCollision from '../assets/observatory/observatory-chair-collision.json';
+import roomCollision from '../assets/observatory/observatory-room-collision.json';
 
 export type Point3 = readonly [number, number, number];
 
@@ -35,6 +36,10 @@ export const ROOM_FIXTURE: readonly FixtureBox[] = [
     { id: 'wall-back', size: [12, 4, 0.2], position: [0, 2, 7], material: 'graphite', collision: 'static' },
     { id: 'screen', size: [SCREEN_FRAME.width, SCREEN_FRAME.height, SCREEN_FRAME.depth], position: [SCREEN_FRAME.x, SCREEN_FRAME.y, SCREEN_FRAME.z], material: 'screen', collision: 'static' },
     { id: 'library-plinth', size: [8, 0.35, 0.45], position: [0, 0.175, 5.2], material: 'metal', collision: 'static' },
+    ...roomCollision.boxes.filter(box => box.id.startsWith('library-case-')).map((box): FixtureBox => ({
+        id: box.id, size: box.size as unknown as Point3, position: box.position as unknown as Point3,
+        material: 'surface', collision: 'static'
+    })),
     { id: 'light-left', size: [0.035, 0.035, 10], position: [-4.5, 3.8, 0], material: 'warm', collision: 'none' },
     { id: 'light-right', size: [0.035, 0.035, 10], position: [4.5, 3.8, 0], material: 'warm', collision: 'none' },
     ...seat('seat-left', -1.25, 1.5),

@@ -14,13 +14,16 @@ import { describe, expect, it, vi } from 'vitest';
 
 import manifest from './observatory/room-manifest.json';
 import collision from './observatory/observatory-room-collision.json';
-import { ROOM_FIXTURE } from '../fixtures/roomFixture';
+import { FIXTURE_LIBRARY, FIXTURE_SEAT, ROOM_FIXTURE, isFixtureDestinationClear } from '../fixtures/roomFixture';
 import { createThreeSceneQuery } from '../input/threeSceneQuery';
 import { createBabylonSceneQuery } from '../input/babylonSceneQuery';
 import type { InputRay } from '../input/controlTargets';
 import { disposeChairModel } from './disposeChairModel';
 import { loadThreeArchitecture } from './threeArchitecture';
 import { loadBabylonArchitecture } from './babylonArchitecture';
+import { constrainRemote } from '../input/remoteGrab';
+import { ControlLayout, isControlPlacementClear } from '../input/controlLayout';
+import { SpatialCatalogue } from '../input/spatialCatalogue';
 
 vi.mock('@babylonjs/core/Loading/sceneLoader', async importOriginal => {
     const actual = await importOriginal<typeof import('@babylonjs/core/Loading/sceneLoader')>();
@@ -93,8 +96,9 @@ describe('original Observatory architectural shell', () => {
         }
     });
 
-    it('keeps authored vertices within the unchanged static collision volumes', async () => {
-        expect(collision.boxes).toHaveLength(7);
+    it('keeps authored vertices within the static collision volumes, including individual shelf parts', async () => {
+        expect(collision.boxes).toHaveLength(21);
+        expect(new Set(collision.boxes.map(box => box.id)).size).toBe(21);
         for (const box of collision.boxes) {
             expect(ROOM_FIXTURE.find(fixture => fixture.id === box.id)).toMatchObject({ ...box, collision: 'static' });
         }
@@ -152,10 +156,18 @@ describe('original Observatory architectural shell', () => {
                 { ray: { origin: [0.6, 1.65, 0], direction: [0, 0, 1] }, distance: 6.9 },
                 { ray: { origin: [0, 1.65, 7 / 12], direction: [1, 0, 0] }, distance: 5.9 },
                 { ray: { origin: [0, 1.65, 7 / 12], direction: [-1, 0, 0] }, distance: 5.9 },
-                { ray: { origin: [0, 1, 5.2], direction: [0, -1, 0] }, distance: 0.65 }
+                { ray: { origin: [0, 1, 5.2], direction: [0, -1, 0] }, distance: 0.65 },
+                // The open compartment is not filled by an invisible solid proxy.
+                { ray: { origin: [2.75, 1.6, 6.2], direction: [0, 0, -1] }, distance: 1.135 },
+                { ray: { origin: [2.75, 1.6, 5.2], direction: [1, 0, 0] }, distance: 0.83 },
+                { ray: { origin: [2.75, 1.6, 5.2], direction: [0, -1, 0] }, distance: 0.44 },
+                { ray: { origin: [2.75, 1.6, 5.2], direction: [0, 1, 0] }, distance: 0.265 }
             ];
             for (const { ray, distance } of cases) {
                 for (const query of queries) expect(query(ray, 10)).toBeCloseTo(distance, 4);
+            }
+            for (const query of queries) {
+                expect(query({ origin: [0, 1.65, 6.2], direction: [0, 0, -1] }, 2)).toBeNull();
             }
             container.dispose();
             expect(b.meshes).toHaveLength(0);
@@ -163,6 +175,27 @@ describe('original Observatory architectural shell', () => {
             disposeChairModel(model.scene);
             b.dispose();
             engine.dispose();
+        }
+    });
+
+    it('keeps the library workspace reachable while stopping remote sweeps at shelf surfaces', () => {
+        expect(isFixtureDestinationClear(FIXTURE_LIBRARY)).toBe(true);
+        expect(isFixtureDestinationClear(FIXTURE_SEAT)).toBe(true);
+        expect(isFixtureDestinationClear([2.75, 0, 5.2])).toBe(false);
+        const half = [0.04, 0.0175, 0.095] as const;
+        expect(constrainRemote([2.75, 1.6, 5.8], [2.75, 1.6, 5.2], half)).toEqual([2.75, 1.6, 5.2]);
+        const back = constrainRemote([2.75, 1.6, 5.8], [2.75, 1.6, 4.8], half);
+        expect(back[2]).toBeCloseTo(5.161);
+        const shelf = constrainRemote([2.75, 1.6, 5.2], [2.75, 1, 5.2], half);
+        expect(shelf[1]).toBeCloseTo(1.1785);
+        for (const height of [1.3, 1.65]) {
+            const layout = new ControlLayout();
+            const catalogue = new SpatialCatalogue();
+            const content = catalogue.handle('catalogue-open')!;
+            layout.setContent(content.targets, true);
+            expect(layout.update({ position: [0, height, 6.2], forward: [0, 0, -1] })).toBe('placed');
+            expect(layout.targets()).toEqual(content.targets);
+            expect(isControlPlacementClear(layout.read(), content.targets)).toBe(true);
         }
     });
 });
