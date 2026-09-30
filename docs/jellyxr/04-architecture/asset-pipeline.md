@@ -23,6 +23,10 @@ The separate [collision resource](../../../src/apps/experimental/xr/assets/obser
 
 ## Rebuild and verify
 
+### Upholstery material contract
+
+Prepare an original repeatable woven surface for the existing cushions, with linear tangent-space normal data and a packed metallic/roughness texture. Use a documented physical tile size across cushion faces, explicit tangent data and mipmap-capable sampling in both renderers. The material must retain the graphite palette without touching video, captions or control artwork. Share material textures across chair instances and release them with their owning model. Keep source recipes, image hashes and licence information with the manifest. Initial lossless PNG assets are authoring/reference inputs; they do not satisfy the final GPU-compressed texture or headset-shimmer gate.
+
 Use the locked dependencies and Node 24:
 
 ```powershell

@@ -1,7 +1,8 @@
-import { Mesh, type Material, type Scene } from 'three';
+import { Mesh, type Scene } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import { assetObservation, chairAsset, CHAIR_POSITIONS, type ChairQuality } from './chairAssets';
+import { disposeChairModel } from './disposeChairModel';
 
 export async function loadThreeChairs(scene: Scene, quality: ChairQuality) {
     const start = performance.now();
@@ -19,14 +20,7 @@ export async function loadThreeChairs(scene: Scene, quality: ChairQuality) {
         status: assetObservation(quality, performance.now() - start),
         dispose() {
             for (const instance of instances) scene.remove(instance);
-            const materials = new Set<Material>();
-            model.scene.traverse(object => {
-                if (object instanceof Mesh) {
-                    object.geometry.dispose();
-                    for (const material of [object.material].flat()) materials.add(material);
-                }
-            });
-            for (const material of materials) material.dispose();
+            disposeChairModel(model.scene);
         }
     };
 }

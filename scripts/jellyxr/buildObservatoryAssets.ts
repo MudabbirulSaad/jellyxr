@@ -4,8 +4,11 @@ import { fileURLToPath } from 'node:url';
 
 import { Box3, BufferGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, Vector3 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { computeMikkTSpaceTangents, mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
+import * as MikkTSpace from 'three/examples/jsm/libs/mikktspace.module.js';
+
+import { embedUpholstery, upholsteryMaps, UPHOLSTERY_TILE_METRES } from './upholsteryMaterial.ts';
 
 // GLTFExporter's binary-only path uses FileReader for Blob.arrayBuffer. No DOM/image shim is needed.
 class BlobReader {
@@ -45,7 +48,20 @@ function buildChair(variant: Variant): Group {
         if (prepared !== geometry) geometry.dispose();
     };
     const rounded = (size: Vec3, radius: number, finish: Finish, position: Vec3, tilt = 0) => {
-        place(new RoundedBoxGeometry(...size, segments, radius), finish, position, tilt);
+        const geometry = new RoundedBoxGeometry(...size, segments, radius);
+        if (finish === 'cushion') {
+            const uv = geometry.getAttribute('uv');
+            const [width, height, depth] = size;
+            const faces = [[depth, height], [depth, height], [width, depth], [width, depth], [width, height], [width, height]];
+            const clampedRadius = Math.min(radius, ...size.map(side => side / 2));
+            const arcLength = (side: number) => Math.max(0, side - 2 * clampedRadius) + Math.PI * clampedRadius / 2;
+            for (let index = 0; index < uv.count; index++) {
+                const face = faces[Math.floor(index / (uv.count / 6))];
+                uv.setXY(index, uv.getX(index) * arcLength(face[0]) / UPHOLSTERY_TILE_METRES,
+                    uv.getY(index) * arcLength(face[1]) / UPHOLSTERY_TILE_METRES);
+            }
+        }
+        place(geometry, finish, position, tilt);
     };
 
     // Metres, floor-origin, +Y up; chair faces -Z. Source proportions are authored here.
@@ -76,6 +92,7 @@ function buildChair(variant: Variant): Group {
     for (const finish of Object.keys(buckets) as Finish[]) {
         const geometry = mergeGeometries(buckets[finish]);
         if (!geometry) throw new Error(`Cannot merge ${finish} geometry.`);
+        if (finish === 'cushion') computeMikkTSpaceTangents(geometry, MikkTSpace);
         const mesh = new Mesh(geometry, materials[finish]);
         mesh.name = `chair-${finish}`;
         root.add(mesh);
@@ -87,6 +104,9 @@ function buildChair(variant: Variant): Group {
 }
 
 await mkdir(destination, { recursive: true });
+await MikkTSpace.ready;
+const maps = upholsteryMaps();
+for (const map of maps) await writeFile(new URL(map.file, destination), map.data);
 const variants = [];
 for (const variant of ['detailed', 'reduced'] as const) {
     const root = buildChair(variant);
@@ -100,7 +120,7 @@ for (const variant of ['detailed', 'reduced'] as const) {
     const binary = await new GLTFExporter().parseAsync(root, { binary: true, onlyVisible: true });
     if (!(binary instanceof ArrayBuffer)) throw new Error('Expected binary glTF.');
     const file = `observatory-chair-${variant}.glb`;
-    const data = new Uint8Array(binary);
+    const data = embedUpholstery(binary, maps);
     await writeFile(new URL(file, destination), data);
     variants.push({ variant, file, bytes: data.byteLength, triangles, primitives: root.children.length,
         dimensionsMetres: dimensions, sha256: createHash('sha256').update(data).digest('hex') });
@@ -122,8 +142,12 @@ const manifest = {
     source: '../../../../../../scripts/jellyxr/buildObservatoryAssets.ts',
     externalAssets: [], authoringDependency: 'three 0.186.0 (MIT)',
     coordinates: collision.coordinates, units: collision.units,
-    materialCount: 5, textureCount: 0, collision: 'observatory-chair-collision.json', variants,
-    outstanding: ['Authored normal/roughness textures', 'Texture compression', 'Baked lighting/reflections',
+    materialCount: 5, textureCount: maps.length,
+    materialSource: '../../../../../../scripts/jellyxr/upholsteryMaterial.ts',
+    textures: maps.map(({ data, ...map }) => ({ ...map, bytes: data.byteLength, sha256: createHash('sha256').update(data).digest('hex') })),
+    textureEncoding: 'PNG RGBA8 reference; runtime mipmaps; GPU compression not yet qualified',
+    collision: 'observatory-chair-collision.json', variants,
+    outstanding: ['GPU texture compression', 'Baked lighting/reflections', 'Quest weave/mipmap/shimmer review',
         'Quest visual/comfort review', 'Measured loading and draw-call budgets']
 };
 await writeFile(new URL('observatory-chair-collision.json', destination), `${JSON.stringify(collision, null, 2)}\n`);
