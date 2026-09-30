@@ -49,7 +49,7 @@ export class ControlLayout {
     cancel(): void { this.pending = false; }
     setContent(targets: readonly ControlTarget[], reanchor: boolean): void {
         this.contentTargets = targets;
-        if (reanchor) this.request();
+        if (reanchor || !isControlPlacementClear(this.anchor, targets)) this.request();
         else this.visibleTargets = targets;
     }
 

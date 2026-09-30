@@ -16,6 +16,10 @@ function pointingRank(aim: PointingAim | null): number {
     return aim.near ? 4 : 3;
 }
 
+function actionLabel(action: ControlAction | null): string {
+    return action?.startsWith('search-key-') ? 'Search key' : action || 'no target';
+}
+
 /** Uses one native select event stream for controller trigger and hand pinch; never gaze. */
 export class ComparisonInput {
     readonly state = new ActivationState();
@@ -219,7 +223,7 @@ export class ComparisonInput {
         if (action === 'select-fixture') this.selectionCount++;
         if (action === 'reset-count') this.selectionCount = 0;
         if (action === 'summon-controls') this.summonControls();
-        this.lastAction = action;
+        this.lastAction = actionLabel(action);
         this.onAction(action);
     }
 
@@ -284,7 +288,7 @@ export class ComparisonInput {
             return;
         }
         const target = this.applyAim(this.aimRay(ray, undefined, this.desktopViewer?.position), 'desktop');
-        this.lastPointer = `${phase}: ${target || 'no target'}`;
+        this.lastPointer = `${phase}: ${actionLabel(target)}`;
         if (phase === 'move') this.state.observe('desktop', target);
         if (phase === 'down') {
             this.state.begin('desktop', target);
@@ -300,7 +304,10 @@ export class ComparisonInput {
         const focus = this.state.read().focus;
         const targets = this.layout.targets(this.floor.isActive()).filter(target => target.enabled !== false);
         if (key === 'Home' && phase === 'down') this.perform('summon-controls');
-        if (key === 'Escape') this.cancel();
+        if (key === 'Escape') {
+            this.cancel();
+            if (phase === 'down' && this.catalogue.search.isOpen()) this.perform('search-cancel');
+        }
         if (this.layout.isPending()) return;
         if (this.floor.isActive()) {
             this.floorKey(phase, key);
@@ -314,9 +321,14 @@ export class ComparisonInput {
             this.state.observe('keyboard', targets[next].id);
         }
         if (key === 'Enter' || key === ' ') {
-            if (phase === 'down') this.state.begin('keyboard', focus || targets[0].id);
-            else this.perform(this.state.commit('keyboard', this.state.read().focus));
+            this.activateKey(phase, focus, targets);
         }
+    }
+
+    private activateKey(phase: 'down' | 'up', focus: ControlAction | null, targets: readonly { id: ControlAction }[]): void {
+        const target = focus ? targets.find(value => value.id === focus)?.id || null : targets[0].id;
+        if (phase === 'down') this.state.begin('keyboard', target);
+        else this.perform(this.state.commit('keyboard', target));
     }
 
     private floorKey(phase: 'down' | 'up', key: string): void {
