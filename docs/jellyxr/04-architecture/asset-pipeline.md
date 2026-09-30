@@ -27,6 +27,14 @@ Prepare an original repeatable woven surface for the existing cushions, with lin
 
 ## Rebuild and verify
 
+### Architectural shell comparison contract
+
+For FR-015/031 and EXP-03, replace the visible floor, ceiling, four walls and library plinth with an original glTF shell. Author a consistent graphite envelope, recessed acoustic panels, a quiet floor grid, ceiling coffers and restrained metal trim. Keep all rendered vertices inside the existing collision volumes; do not change room size, floor height, locomotion clearance, screen, lights, chairs or remote behavior merely to add detail. The model is stable architecture, with no decorative buttons or invented library content.
+
+Both candidates load identical GLB bytes and use their existing PBR/light settings. Merge geometry by finish to bound material primitives, retain a separate collision resource, and record source, licence, dimensions, counts and hashes. Successful loading replaces only the corresponding visible proxies; failure retains them and reports a retry path. Dispose the model with the comparison scene. Keep the shell outside ordinary production. This prepares architectural detail without claiming baked lighting, final shelving, texture compression, measured GPU cost or Quest fidelity.
+
+Retain an explicit Plain room option for the EXP-03 control scene. It renders only the existing architectural collision geometry while retaining the same chosen chair detail, lights, controls and physics. Switching between Architectural shell and Plain room restarts the comparison and clears its video attachment. Disable scene changes during immersive use; record the selected geometry with later measurements so unlike scenes are never ranked together.
+
 Use the locked dependencies and Node 24:
 
 ```powershell

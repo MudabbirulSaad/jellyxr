@@ -33,13 +33,14 @@ import { SessionRecovery } from '../input/sessionRecovery';
 import { viewerWorldPosition } from '../input/movement';
 import { createHavokRemote } from '../input/havokRemote';
 import { loadBabylonChairs } from '../assets/babylonChairs';
+import { loadBabylonArchitecture } from '../assets/babylonArchitecture';
 import type { ChairQuality } from '../assets/chairAssets';
 import '@babylonjs/core/Culling/ray';
 
 import { FrameSampler } from './frameSampler';
 import { FIXTURE_COLOURS, type ComparisonPlaybackActions, type ComparisonScene, type SampleListener } from './types';
 
-export async function createComparison(canvas: HTMLCanvasElement, onSample: SampleListener, playback: ComparisonPlaybackActions, quality: ChairQuality): Promise<ComparisonScene> {
+export async function createComparison(canvas: HTMLCanvasElement, onSample: SampleListener, playback: ComparisonPlaybackActions, quality: ChairQuality, detailedRoom: boolean): Promise<ComparisonScene> {
     const havok = await HavokPhysics({ locateFile: () => havokWasm });
     const engine = new Engine(canvas, true, { adaptToDeviceRatio: false, useExactSrgbConversions: true });
     const scene = new Scene(engine);
@@ -88,6 +89,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
 
     // A failed import retains visible collision proxies and an explicit diagnostic.
     const chairs = await loadBabylonChairs(scene, quality).catch(() => undefined);
+    const architecture = await loadBabylonArchitecture(scene, detailedRoom).catch(() => undefined);
     const clock = new FixedStepClock();
     const sampler = new FrameSampler();
     const xr = await WebXRExperienceHelper.CreateAsync(scene).catch(() => undefined);
@@ -197,7 +199,8 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
     const timer = window.setInterval(() => onSample({
         ...sampler.read(), remoteHeight: remote?.transformNode.position.y || 0,
         immersive: !!xr?.sessionManager.inXRSession, mediaStatus: video.readStatus(), inputStatus: input.readStatus(),
-        assetStatus: chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.'
+        assetStatus: [chairs?.status || 'Chair asset failed to load. Collision proxies remain visible; retry by changing model detail.',
+            architecture?.status || 'Room shell failed to load. Collision proxies remain visible; retry by changing room detail.'].join(' ')
     }), 1000);
 
     return {
@@ -233,6 +236,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
             } finally {
                 xr?.dispose();
                 chairs?.dispose();
+                architecture?.dispose();
                 for (const aggregate of aggregates) aggregate.dispose();
                 scene.dispose();
                 engine.dispose();

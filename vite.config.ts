@@ -5,6 +5,7 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 import './scripts/jellyxr/patchBitmapDependency.mjs';
 
 export default defineConfig({
+    assetsInclude: ['**/*.glb'],
     plugins: [ tsconfigPaths() ],
     test: {
         coverage: {

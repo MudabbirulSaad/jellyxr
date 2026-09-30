@@ -5,23 +5,10 @@ import { fileURLToPath } from 'node:url';
 import { Box3, BufferGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, Vector3 } from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { computeMikkTSpaceTangents, mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 import * as MikkTSpace from 'three/examples/jsm/libs/mikktspace.module.js';
 
 import { embedUpholstery, upholsteryMaps, UPHOLSTERY_TILE_METRES } from './upholsteryMaterial.ts';
-
-// GLTFExporter's binary-only path uses FileReader for Blob.arrayBuffer. No DOM/image shim is needed.
-class BlobReader {
-    result: ArrayBuffer | null = null;
-    onloadend: (() => void) | null = null;
-    readAsArrayBuffer(blob: Blob): Promise<void> {
-        return blob.arrayBuffer().then(result => {
-            this.result = result;
-            this.onloadend?.();
-        });
-    }
-}
-Object.defineProperty(globalThis, 'FileReader', { value: BlobReader });
+import { exportGlb } from './gltfAuthoring.ts';
 
 type Vec3 = [number, number, number];
 type Finish = 'shell' | 'cushion' | 'seam' | 'metal' | 'trim';
@@ -117,8 +104,7 @@ for (const variant of ['detailed', 'reduced'] as const) {
     root.traverse(object => {
         if (object instanceof Mesh) triangles += object.geometry.getAttribute('position').count / 3;
     });
-    const binary = await new GLTFExporter().parseAsync(root, { binary: true, onlyVisible: true });
-    if (!(binary instanceof ArrayBuffer)) throw new Error('Expected binary glTF.');
+    const binary = await exportGlb(root);
     const file = `observatory-chair-${variant}.glb`;
     const data = embedUpholstery(binary, maps);
     await writeFile(new URL(file, destination), data);

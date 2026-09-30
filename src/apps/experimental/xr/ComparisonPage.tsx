@@ -37,6 +37,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
     const active = useRef<ComparisonScene>();
     const [candidate, setCandidate] = useState<Candidate>('babylon');
     const [chairQuality, setChairQuality] = useState<ChairQuality>('detailed');
+    const [detailedRoom, setDetailedRoom] = useState(true);
     const [status, setStatus] = useState('Loading comparison scene…');
     const [ready, setReady] = useState(false);
     const [busy, setBusy] = useState(false);
@@ -132,7 +133,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                         setStatus('No video is attached. Attach playback or start the technical fixture first.');
                     }
                 }
-            }, chairQuality);
+            }, chairQuality, detailedRoom);
             if (cancelled) {
                 await instance.dispose();
                 return;
@@ -153,12 +154,14 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
             mediaOwner.current = null;
             active.current = undefined;
         };
-    }, [candidate, chairQuality]);
+    }, [candidate, chairQuality, detailedRoom]);
 
     const chooseBabylon = useCallback(() => setCandidate('babylon'), []);
     const chooseThree = useCallback(() => setCandidate('three'), []);
     const detailedChairs = useCallback(() => setChairQuality('detailed'), []);
     const reducedChairs = useCallback(() => setChairQuality('reduced'), []);
+    const architecturalShell = useCallback(() => setDetailedRoom(true), []);
+    const plainRoom = useCallback(() => setDetailedRoom(false), []);
     const recall = useCallback(() => active.current?.recallRemote(), []);
     const summonControls = useCallback(() => active.current?.summonControls(), []);
     const enter = useCallback(() => {
@@ -289,11 +292,13 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Button onClick={exit} disabled={!sample?.immersive || busy}>Exit XR</Button>
                 </Stack>
                 <Typography role='status' component='p' gutterBottom sx={{ marginTop: 2 }}>{status}</Typography>
-                <Stack direction='row' spacing={2}>
+                <Stack direction='row' spacing={2} useFlexGap flexWrap='wrap'>
+                    <Button onClick={architecturalShell} aria-pressed={detailedRoom} disabled={busy || !!sample?.immersive}>Architectural shell</Button>
+                    <Button onClick={plainRoom} aria-pressed={!detailedRoom} disabled={busy || !!sample?.immersive}>Plain room</Button>
                     <Button onClick={detailedChairs} aria-pressed={chairQuality === 'detailed'} disabled={busy || !!sample?.immersive}>Detailed chair model</Button>
                     <Button onClick={reducedChairs} aria-pressed={chairQuality === 'reduced'} disabled={busy || !!sample?.immersive}>Reduced chair model</Button>
                 </Stack>
-                <Typography component='p'>{sample?.assetStatus || 'Loading original chair assets…'}</Typography>
+                <Typography component='p'>{sample?.assetStatus || 'Loading original room and chair assets…'}</Typography>
                 <Stack direction='row' spacing={2} useFlexGap flexWrap='wrap'>
                     <Button onClick={chooseLayers} aria-pressed={mediaMode === 'media-layer'} variant={mediaMode === 'media-layer' ? 'contained' : 'outlined'} disabled={busy || !!sample?.immersive}>Media layer</Button>
                     <Button onClick={chooseTexture} aria-pressed={mediaMode === 'video-texture'} variant={mediaMode === 'video-texture' ? 'contained' : 'outlined'} disabled={busy || !!sample?.immersive}>Video texture</Button>
@@ -313,7 +318,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     <Box component='video' ref={fixtureVideo} src={fixtureVideoUrl} muted loop controls playsInline preload='metadata'
                         aria-label='Silent orientation fixture source' sx={{ width: '100%' }} />
                 </Box>
-                <Box component='canvas' key={`${candidate}-${chairQuality}`} ref={canvas} tabIndex={0} aria-label='Technical Observatory room preview'
+                <Box component='canvas' key={`${candidate}-${chairQuality}-${detailedRoom}`} ref={canvas} tabIndex={0} aria-label='Technical Observatory room preview'
                     sx={{ display: 'block', width: '100%', height: '55vh', backgroundColor: '#151B23' }} />
                 <Typography component='p'>{sample?.inputStatus || 'Spatial controls are preparing.'}</Typography>
                 <Typography component='p'>Room controls use world-space hit testing. On PC, click a target or focus the canvas, use arrow keys and press Enter. In XR, point and deliberately trigger or pinch. Movement pauses video and requires Resume. Looking alone does nothing. Hands, depth and comfort still need Quest validation.</Typography>

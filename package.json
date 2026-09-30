@@ -166,6 +166,7 @@
   "scripts": {
     "patch:dependencies": "node scripts/jellyxr/patchBitmapDependency.mjs",
     "assets:observatory": "node scripts/jellyxr/buildObservatoryAssets.ts",
+    "assets:room": "node scripts/jellyxr/buildObservatoryRoom.ts",
     "package:client": "node scripts/jellyxr/packageClient.ts",
     "start": "npm run serve",
     "serve": "webpack serve --config webpack.dev.js",
