@@ -475,3 +475,21 @@ Custom captions share a video-scoped container that either response can create; 
 | UI/UX review | The installed UI/UX Pro Max search for loading feedback returned Feedback / Loading Indicators. The relevant guidance is matching busy feedback to the actual operation and preserving the existing interaction. This change corrects request lifetime without introducing new controls or marketing content |
 
 No new browser, server-delivered subtitle or Quest run is claimed for this slice. These unattended tests do not qualify the legacy UWP file-reader path, native browser cue layout, language/codec fidelity or device timing. The deferred secondary initialization timer, transitions between plain text and canvas formats, actual source changes/overlay cycles and sustained resources remain separate regression work. The earlier PGS replacement blank and G2 selection remain unresolved.
+
+## Upholstery material increment — 2026-09-30
+
+Source revision: 4d2d272ef8, based on xr 4099bb4268 (PR #25). This is independent asset preparation for FR-015/031, NFR-001/002 and EXP-03/04; it does not choose an engine or close G2/M5.
+
+Both original chair variants now embed a 512 × 512 normal map and a 512 × 512 packed metallic/roughness map, authored mathematically from crossing threads. Cushion UVs use an 8 cm physical tile; explicit MikkTSpace tangents accompany the normal data. The normal PNG is 10,086 bytes and the packed PNG 5,437 bytes. These are lossless PNG references with runtime mipmap sampling, not GPU-compressed textures. The detailed GLB is 1,457,108 bytes and reduced GLB 292,788 bytes; triangles, five material primitives, outer dimensions and collision proxies are unchanged.
+
+The source recipe and manifest record provenance and hashes under the repository licence. No downloaded art, photographic surface or new authoring/runtime package is included. Both chair instances share model resources. Three's disposal now releases material textures and closes decoded images once; Babylon uses its asset container lifecycle.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Rebuild | Two generation runs produced identical GLB hashes. Node 24 authoring and its separate TypeScript check pass; the generator embeds image bytes without a browser/canvas shim |
+| File/loader validity | Khronos glTF Validator 2.0.0-dev.3.10 reports zero errors/warnings and four unused-UV informational notices per variant. Both actual loaders accept the files. Six asset cases cover geometry/proxies, material bindings, tangent orthogonality, pixel/hash constraints and shared disposal. Node tests decode PNG data but control ImageBitmap creation; NullEngine does not exercise GPU upload |
+| Desktop workbench | Both candidates load detailed and reduced variants. Six deliberate 30-degree turns expose the detailed chairs from the seated reverse direction in both candidates. Shape and graphite finish remain coherent in those views. Small textile detail is not resolved well enough at that distance to approve its final appearance; close-range inspection and both-eye/shimmer review remain open |
+| Local checks | All 375 tests in 45 files, application/authoring TypeScript, lint (98 inherited warnings), styles and both production builds pass. Ordinary/experimental ES5 checks pass 984/994 files. The ordinary build has no GLBs; both experimental GLBs match the source-manifest hashes |
+| Documentation | Thirty Markdown files pass 409 relative links/anchors, unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 roadmap dependency edges |
+
+The development browser still reports the known HMR origin rejection; manual reload loaded the new assets. No private media was used or started. Desktop frame/load labels are uncontrolled observations and are not performance evidence. No sustained GPU-memory, Quest, compression or material-equivalence pass is inferred. UI/UX Pro Max searches for background noise and hierarchy did not yield material-specific guidance; the existing Observatory specification remains the design authority, with static restrained detail and unchanged unlit video/control surfaces. The [asset pipeline](../04-architecture/asset-pipeline.md) records the next compression, lighting and device steps.
