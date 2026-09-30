@@ -146,3 +146,9 @@ Motion uses short, damped responses for deliberate interactions. Springs cannot 
 Compare library, detail and cinema tasks using the same fixture and viewing settings. Verify bright/dark video frames, long titles, large text, both controllers, hands, seated teleport/turn/return, object recall, reduced motion, poor screen placement, subtitle selection and interruption. Record visual feedback separately from frame timings. Changes justified by evidence update this specification and the linked requirements/decisions together.
 
 Related: [visual alternatives](visual-direction.md), [M1 readiness evidence](../05-delivery/m1-readiness.md), [technology experiments](../06-decisions/technology-evaluation.md).
+
+## M2 spatial catalogue reference
+
+The comparison now offers Open catalogue from the room controls, with six technical records on individual world-space cards. Cards, heading and actions occupy separate depth planes; none is a browser overlay. The same bounded page, filter, detail, Back and Close state runs in both candidates, with explicit missing-artwork and disabled-page states. Close/reopen preserves the current filter/page/detail; Back restores the selected card. Opening or recalling uses the existing deliberate placement checks, while paging and detail changes retain the settled anchor. Recovery controls remain available when the full view cannot fit.
+
+This is a technical readability/input/load comparison, not the production spatial library composition or real Jellyfin data integration. The card titles and original calibration art are clearly labelled fixtures. Card/readability dimensions, reduced texture quality, both-eye depth and actual controller/hand reach still require Quest evidence. UI/UX Pro Max's keyboard-navigation and focus-appearance guidance informs visible focus and disabled-target exclusion; browser pixel recommendations are not treated as XR angular sizing rules.

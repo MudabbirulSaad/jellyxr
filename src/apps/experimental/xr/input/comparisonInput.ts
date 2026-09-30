@@ -8,6 +8,7 @@ import type { RemoteGrab } from './remoteGrab';
 import { ControlLayout, type ControlViewerPose } from './controlLayout';
 import { inspectPointing, type PointingAim } from './pointingAim';
 import type { SceneSurfaceQuery } from './sceneQuery';
+import { SpatialCatalogue } from './spatialCatalogue';
 
 function pointingRank(aim: PointingAim | null): number {
     if (!aim?.action) return 0;
@@ -20,6 +21,7 @@ export class ComparisonInput {
     readonly state = new ActivationState();
     readonly layout = new ControlLayout();
     readonly floor: FloorSelection;
+    readonly catalogue = new SpatialCatalogue();
     private pointing: (PointingAim & { source: string }) | null = null;
     private trackedViewer: { position: Point3; sampledAt: number } | null = null;
     private desktopViewer: ControlViewerPose | undefined;
@@ -82,8 +84,8 @@ export class ComparisonInput {
         if (result === 'placed') this.report('Controls placed here. They remain anchored until recalled.');
         if (result === 'recovery') this.report('Only recovery controls fit here. Return to seat for the full controls, or exit XR.');
         if (result === 'unavailable') this.report('Controls could not be placed safely. Face open room space and try again, or use the headset system exit.');
-        if (!this.layout.targets(this.floor.isActive()).some(target => target.id === this.state.read().focus)) {
-            this.state.observe('layout', this.layout.targets(this.floor.isActive())[0].id);
+        if (!this.layout.targets(this.floor.isActive()).some(target => target.id === this.state.read().focus && target.enabled !== false)) {
+            this.state.observe('layout', this.layout.targets(this.floor.isActive()).find(target => target.enabled !== false)?.id || null);
         }
     }
 
@@ -142,7 +144,7 @@ export class ComparisonInput {
     }
 
     private start = (event: XRInputSourceEvent) => {
-        if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
+        if (this.session?.visibilityState !== 'visible' || this.grab?.source() || this.layout.isPending()) return;
         const target = this.target(event.frame, event.inputSource);
         if (event.inputSource.hand && target === 'summon-controls' && this.beginGrab(event)) return;
         const id = this.id(event.inputSource);
@@ -151,7 +153,7 @@ export class ComparisonInput {
     };
 
     private select = (event: XRInputSourceEvent) => {
-        if (this.session?.visibilityState !== 'visible' || this.grab?.source()) return;
+        if (this.session?.visibilityState !== 'visible' || this.grab?.source() || this.layout.isPending()) return;
         const id = this.id(event.inputSource);
         this.perform(this.state.commit(id, this.target(event.frame, event.inputSource)), id);
     };
@@ -197,6 +199,13 @@ export class ComparisonInput {
 
     private perform(action: ControlAction | null, source = 'keyboard'): void {
         if (!action) return;
+        const catalogue = this.catalogue.handle(action);
+        if (catalogue) {
+            this.state.cancel();
+            this.pointing = null;
+            this.layout.setContent(catalogue.targets, catalogue.reanchor);
+            this.state.observe(source, catalogue.focus);
+        }
         if (action === 'choose-floor') {
             this.cancel();
             this.floor.arm();
@@ -270,6 +279,10 @@ export class ComparisonInput {
     /** Desktop ray uses the same world-space hit bounds and explicit down/up policy. */
     pointer(phase: 'move' | 'down' | 'up' | 'cancel', ray: InputRay | null): void {
         if (this.session) return;
+        if (this.layout.isPending()) {
+            this.state.cancel();
+            return;
+        }
         const target = this.applyAim(this.aimRay(ray, undefined, this.desktopViewer?.position), 'desktop');
         this.lastPointer = `${phase}: ${target || 'no target'}`;
         if (phase === 'move') this.state.observe('desktop', target);
@@ -285,9 +298,10 @@ export class ComparisonInput {
         if (this.session) return;
         this.pointing = null;
         const focus = this.state.read().focus;
-        const targets = this.layout.targets(this.floor.isActive());
+        const targets = this.layout.targets(this.floor.isActive()).filter(target => target.enabled !== false);
         if (key === 'Home' && phase === 'down') this.perform('summon-controls');
         if (key === 'Escape') this.cancel();
+        if (this.layout.isPending()) return;
         if (this.floor.isActive()) {
             this.floorKey(phase, key);
             return;
@@ -326,7 +340,7 @@ export class ComparisonInput {
     }
 
     readStatus(): string {
-        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. ${this.floor.status()}`;
+        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. ${this.floor.status()} ${this.catalogue.status()}`;
     }
 
     readPointing(): (PointingAim & { pressed: boolean }) | null {

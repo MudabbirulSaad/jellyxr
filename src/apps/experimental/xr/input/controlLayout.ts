@@ -37,6 +37,7 @@ export function isControlPlacementClear(anchor: ControlAnchor, targets = CONTROL
 export class ControlLayout {
     private anchor: ControlAnchor = INITIAL_CONTROL_ANCHOR;
     private visibleTargets = CONTROL_TARGETS;
+    private contentTargets = CONTROL_TARGETS;
     private pending = false;
 
     read(): ControlAnchor { return this.anchor; }
@@ -46,6 +47,11 @@ export class ControlLayout {
     isPending(): boolean { return this.pending; }
     request(): void { this.pending = true; }
     cancel(): void { this.pending = false; }
+    setContent(targets: readonly ControlTarget[], reanchor: boolean): void {
+        this.contentTargets = targets;
+        if (reanchor) this.request();
+        else this.visibleTargets = targets;
+    }
 
     update(viewer?: ControlViewerPose): 'unchanged' | 'placed' | 'recovery' | 'unavailable' {
         if (!this.pending) return 'unchanged';
@@ -54,7 +60,7 @@ export class ControlLayout {
             || Math.hypot(viewer.forward[0], viewer.forward[2]) < 0.1) return 'unavailable';
         const yaw = Math.atan2(-viewer.forward[0], -viewer.forward[2]);
         for (const variant of [
-            { targets: CONTROL_TARGETS, distances: [1.4, 1.05, 0.7], result: 'placed' as const },
+            { targets: this.contentTargets, distances: [1.4, 1.05, 0.7], result: 'placed' as const },
             { targets: RECOVERY_TARGETS, distances: [0.65, 0.45], result: 'recovery' as const }
         ]) {
             const anchor = this.findAnchor(viewer, yaw, variant.targets, variant.distances);

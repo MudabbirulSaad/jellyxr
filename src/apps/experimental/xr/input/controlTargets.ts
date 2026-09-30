@@ -3,13 +3,18 @@ import type { MovementAction } from './movementSession';
 import { rotateFloorPoint } from './movement';
 import { unitRay } from './sceneQuery';
 
-export type ControlAction = 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
+export type CatalogueAction = 'catalogue-open' | 'catalogue-close' | 'catalogue-next' | 'catalogue-previous' | 'catalogue-filter' | 'catalogue-back' | 'catalogue-heading' | 'catalogue-detail' | `catalogue-item-${string}`;
+export type ControlAction = CatalogueAction | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
 export interface ControlTarget {
     id: ControlAction;
     label: string;
     position: Point3;
     width: number;
     height: number;
+    enabled?: boolean;
+    kind?: 'card' | 'heading' | 'detail';
+    description?: string;
+    artwork?: 'calibration' | 'missing';
 }
 export interface InputRay { origin: Point3; direction: Point3 }
 export interface ControlAnchor { origin: Point3; yaw: number }
@@ -27,7 +32,8 @@ export const CONTROL_TARGETS: readonly ControlTarget[] = [
     { id: 'return-seat', label: 'Return to seat', position: [0.9, 0.92, -1.4], width: 0.52, height: 0.22 },
     { id: 'resume-media', label: 'Resume video', position: [0, 1.46, -1.4], width: 0.52, height: 0.22 },
     { id: 'choose-floor', label: 'Choose floor', position: [-0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
-    { id: 'cancel-floor', label: 'Cancel move', position: [0.6, 1.46, -1.4], width: 0.52, height: 0.22 }
+    { id: 'cancel-floor', label: 'Cancel move', position: [0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
+    { id: 'catalogue-open', label: 'Open catalogue', position: [0, 1.74, -1.4], width: 0.52, height: 0.22 }
 ];
 
 export const RECOVERY_TARGETS: readonly ControlTarget[] = [
@@ -45,7 +51,11 @@ export function controlLocalPoint(point: Point3, anchor: ControlAnchor): Point3 
     return rotateFloorPoint([point[0] - anchor.origin[0], point[1] - anchor.origin[1], point[2] - anchor.origin[2]], -anchor.yaw);
 }
 
-export interface ControlHit { action: ControlAction; point: Point3; near: boolean }
+function enabledAction(target: ControlTarget): ControlAction | null {
+    return target.enabled === false ? null : target.id;
+}
+
+export interface ControlHit { action: ControlAction | null; point: Point3; near: boolean }
 
 export function traceControl(worldRay: InputRay | null, worldNear?: Point3, anchor = INITIAL_CONTROL_ANCHOR, targets = CONTROL_TARGETS): ControlHit | null {
     const normalized = unitRay(worldRay);
@@ -59,7 +69,7 @@ export function traceControl(worldRay: InputRay | null, worldNear?: Point3, anch
         const hit = targets.find(target => near[2] >= target.position[2] && near[2] - target.position[2] <= 0.05
             && Math.abs(near[0] - target.position[0]) <= target.width / 2
             && Math.abs(near[1] - target.position[1]) <= target.height / 2);
-        if (hit) return { action: hit.id, point: worldPoint([near[0], near[1], hit.position[2]]), near: true };
+        if (hit) return { action: enabledAction(hit), point: worldPoint([near[0], near[1], hit.position[2]]), near: true };
     }
     if (!ray || !ray.origin.every(Number.isFinite) || !ray.direction.every(Number.isFinite)
         || ray.direction[2] >= -0.00001) return null;
@@ -72,7 +82,7 @@ export function traceControl(worldRay: InputRay | null, worldNear?: Point3, anch
         const x = ray.origin[0] + distance * ray.direction[0];
         const y = ray.origin[1] + distance * ray.direction[1];
         if (Math.abs(x - target.position[0]) <= target.width / 2 && Math.abs(y - target.position[1]) <= target.height / 2) {
-            result = { action: target.id, point: worldPoint([x, y, target.position[2]]), near: false };
+            result = { action: enabledAction(target), point: worldPoint([x, y, target.position[2]]), near: false };
             closest = distance;
         }
     }
