@@ -46,3 +46,31 @@ The first rehearsal remains `jellyxr-81cde7a584c1.tar.gz` under the correspondin
 G4 still requires the integrated spatial journey, real Quest controllers/hands/comfort/media evidence, sustained and five-viewer runs, full ordinary parity, HTTPS domain/trusted-IP/separate-origin/base-path/range/WebSocket tests, real upgrade/cache/rollback and upstream-update rehearsal. Dependency/source redistribution obligations and a complete credential/diagnostic audit remain unapproved; the lockfile inventory explicitly leaves absent licence metadata null. A new archive must be built from the final qualified source and accompanied by the reviewed support matrix and limitations.
 
 This slice changes offline tooling and instructions. UI/UX Pro Max was reviewed for applicability; its instruction to skip non-visual infrastructure applies. No application interface, new visual preset or filler content was introduced.
+
+
+## Fresh-install rehearsal — 2026-09-30
+
+Source: xr `c729c0e52d913177aeef804e39e6d1ad08538f7e` (PR #32). An isolated managed checkout began with no node_modules directory; the active development checkout and server were preserved. This closes the earlier fresh-install evidence gap for this exact Windows source/toolchain combination. It does not claim cross-platform or byte-identical archive reproducibility.
+
+| Check | Actual result / boundary |
+| --- | --- |
+| Locked installation | Node 24.13.0 and npm 11.15.0; `npm ci --no-audit` installed 1,782 packages successfully. Existing package deprecation warnings and npm's unknown min-release-age-exclude configuration warning remain. Registry/cache conditions were uncontrolled; elapsed time is not a benchmark |
+| Source identity | Full revision stayed c729c0e52d913177aeef804e39e6d1ad08538f7e, Git tracked state remained clean and package-lock SHA-256 remained 883a2e2d1bef285bf7abdc98547b16c778640c4b2d16fa8a64efe73c51bbb485 |
+| Dependency repair | With repository ignore-scripts enabled, all three installed libbitsub 1.11.0 files initially matched the manifest's original hashes. Explicit `npm run patch:dependencies` produced the expected repaired hashes; running it again succeeded unchanged. Build/test configuration also verifies the repair. No install hook, ignored lifecycle script or dependency upgrade was assumed |
+| Checks | Application and offline-authoring TypeScript pass. Full lint: 98 inherited warnings, zero errors. Stylelint passes. All 427 tests in 49 files pass from the new installation, including actual parser/loader and ownership cases |
+| Ordinary package build | The packager's production build succeeds with two inherited size warnings; ES5 check passes 984 files. The sealed payload verifies, then extraction into a new empty directory and CLI verification pass again for all 2,357 payload files |
+| Experimental build | Separate opt-in production build succeeds with two inherited size warnings; its ES5 check passes 994 files. This does not add experiments to the ordinary archive |
+| Archive/provenance | Outer tar has 2,376 file/directory members, numeric owner/group zero and no account names. The matching Git source snapshot has 1,841 members, including the original room recipe and dependency patch, with no node_modules or Python bytecode cache. No imported source/build inputs were copied from the working development tree |
+| Static payload | Extracted web/ has no GLBs or room comparison marker. Packaged config.json matches the tracked default hash. These focused checks do not replace the full credential, dependency/source redistribution or media audit |
+
+Artifact: `jellyxr-c729c0e52d91.tar.gz`, 41,836,442 bytes, under `%LOCALAPPDATA%/JellyXR/fresh-package-c729c0e52d/`. The sealed payload and separately extracted copy remain alongside it. SHA-256:
+
+```text
+4edc48e297442ddf1efa0e9c97963578b8709b93e7b4a4453b1b48856ebd66e4
+```
+
+No browser, authentication, media, network topology or real-device scenario was executed in this fresh-install slice. ADB returned no connected device. The earlier PC bootstrap and owner-reported Quest results retain their original dates and scope. This is another ordinary-client rehearsal archive, not the final integrated XR artifact or a public release.
+
+A read-only upstream merge preview separately exposed package.json/package-lock.json conflicts against development tip e466eb93f0. See the [upstream inspection](../04-architecture/upstream-assessment.md#update-inspection--2026-09-30). No upstream application change or dependency resolution was adopted; the representative update/retest portion of AT-25 remains open.
+
+Documentation validation passes 433 relative links/anchors across 32 Markdown files, unique requirement definitions, all P0/work/scenario mappings and 17 unchanged dependency edges. No diagrams or application code changed in the evidence commit; whitespace checks pass.
