@@ -134,3 +134,7 @@ The [fresh-install packaging run](packaging-evidence.md#fresh-install-rehearsal-
 The visual selection and target decisions are settled; environment and media evidence is still outstanding. Under D-24, the owner authorised merging the current M1 work into xr without waiting for the CI runner, superseding the earlier draft hold. Integration does not close M1/G1 or pass the remaining checks. Future evidence must update this report, roadmap and risks together rather than changing pending cells to passed by assumption.
 
 Related: [roadmap](roadmap.md), [test strategy](test-strategy.md), [Cinema Observatory](../03-experience/cinema-observatory.md), [decisions](../06-decisions/decision-register.md).
+
+### Timing preparation follow-up — 2026-09-30
+
+The [scope/reset comparison](m2-experiments.md#timing-observation-scope-increment--2026-09-30) checks paused technical media and diagnostic reset on both PC candidates. At this follow-up, ADB reports no connected device, so prior Quest mappings and owner-reported playback remain historical observations. Port 8080 initially refused connections and the prior tracked development process was absent; restarting the same loopback command restores HTTP 200 and a clean watcher type-check. No new Quest, remote-inspector, emulator or ordinary-server control result is claimed. Reconnect and repeat the two-port workflow before subsequent device checks.
