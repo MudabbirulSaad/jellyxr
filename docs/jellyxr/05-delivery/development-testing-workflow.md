@@ -27,6 +27,7 @@ Commands below reproduce the inherited scripts in [package.json](../../../packag
 
 ~~~powershell
 npm ci --no-audit
+npm run patch:dependencies
 npm run build:check
 npm run lint
 npm run stylelint

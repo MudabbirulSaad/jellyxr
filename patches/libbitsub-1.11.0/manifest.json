@@ -1,0 +1,18 @@
+{
+  "package": "libbitsub",
+  "version": "1.11.0",
+  "files": [
+    {
+      "path": "dist/ts/renderers.js",
+      "patch": "renderers.js.patch",
+      "originalSha256": "cf03d4100f58f6458b600c01e454b63a763720e1fe122bfbae75808ca4aab1a6",
+      "patchedSha256": "9399c76ee402f7a7acd8687502992d1ab292da27389fc074b90a15de91b36054"
+    },
+    {
+      "path": "dist/ts/webgpu-renderer.js",
+      "patch": "webgpu-renderer.js.patch",
+      "originalSha256": "0c81c0834bb7406b8ed3fc3e7227e651ffcc04629efc27cab1a2ddc28bf11d84",
+      "patchedSha256": "dd81950ab949c4792272f9b0129156428b8662f9ed7965cb028f192a1220b683"
+    }
+  ]
+}

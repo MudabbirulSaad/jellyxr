@@ -1,0 +1,82 @@
+--- a/dist/ts/renderers.js
++++ b/dist/ts/renderers.js
+@@ -223,6 +223,8 @@
+     /** Start initialization. */
+     startInit() {
+         this.init().catch((error) => {
++            if (this.disposed)
++                return;
+             this.emitEvent({
+                 type: 'error',
+                 format: this.format,
+@@ -233,9 +235,15 @@
+     /** Initialize the renderer. */
+     async init() {
+         await initWasm();
++        if (this.disposed)
++            return;
+         this.createCanvas();
+         await new Promise((resolve) => setTimeout(resolve, 0));
++        if (this.disposed)
++            return;
+         await this.loadSubtitles();
++        if (this.disposed)
++            return;
+         this.startRenderLoop();
+     }
+     /** Create the canvas overlay positioned over the video. */
+@@ -322,12 +330,14 @@
+         try {
+             this.webgpuRenderer = new WebGPURenderer();
+             await this.webgpuRenderer.init();
+-            if (!this.canvas)
++            if (this.disposed || !this.canvas)
+                 return;
+             const bounds = this.getVideoContentBounds();
+             const width = Math.max(1, bounds.width * window.devicePixelRatio);
+             const height = Math.max(1, bounds.height * window.devicePixelRatio);
+             await this.webgpuRenderer.setCanvas(this.canvas, width, height);
++            if (this.disposed)
++                return;
+             this.useWebGPU = true;
+             this.emitRendererBackend('webgpu');
+         }
+@@ -335,6 +345,8 @@
+             this.webgpuRenderer?.destroy();
+             this.webgpuRenderer = null;
+             this.useWebGPU = false;
++            if (this.disposed)
++                return;
+             this.onWebGPUFallback?.();
+             // Try WebGL2 before Canvas2D
+             if (isWebGL2Supported()) {
+@@ -350,12 +362,14 @@
+         try {
+             this.webgl2Renderer = new WebGL2Renderer();
+             await this.webgl2Renderer.init();
+-            if (!this.canvas)
++            if (this.disposed || !this.canvas)
+                 return;
+             const bounds = this.getVideoContentBounds();
+             const width = Math.max(1, bounds.width * window.devicePixelRatio);
+             const height = Math.max(1, bounds.height * window.devicePixelRatio);
+             await this.webgl2Renderer.setCanvas(this.canvas, width, height);
++            if (this.disposed)
++                return;
+             this.useWebGL2 = true;
+             this.emitRendererBackend('webgl2');
+         }
+@@ -363,6 +377,8 @@
+             this.webgl2Renderer?.destroy();
+             this.webgl2Renderer = null;
+             this.useWebGL2 = false;
++            if (this.disposed)
++                return;
+             this.onWebGL2Fallback?.();
+             this.initCanvas2D();
+         }
+@@ -1646,4 +1662,3 @@
+     }
+     throw new Error('Unable to detect subtitle format for video renderer');
+ }
+-//# sourceMappingURL=renderers.js.map

@@ -2,6 +2,7 @@
 /// <reference types="vite/client" />
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
+import './scripts/jellyxr/patchBitmapDependency.mjs';
 
 export default defineConfig({
     plugins: [ tsconfigPaths() ],
