@@ -1,6 +1,6 @@
 # M1 readiness evidence
 
-Updated: 2026-09-30. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports successful library access and ordinary playback on Quest 3. The M2 follow-up records desktop seek and HLS delivery evidence below. Complete audio/subtitle/resume checks, emulator version/profile verification and remote inspection remain pending. The owner reports the emulator is ready. M1 and G1 are not closed.
+Updated: 2026-09-30. Status: build, signed-in desktop smoke test and Quest USB setup recorded; owner reports successful library access and ordinary playback on Quest 3. Desktop follow-ups record seek, HLS delivery, track-control and reload/Resume observations below. Complete audio/subtitle/resume qualification, emulator version/profile verification and remote inspection remain pending. The owner reports the emulator is ready. M1 and G1 are not closed.
 
 This report records observed results for W-02 preparation. It is not a device support announcement. The milestone branch starts at xr commit 84571b91b3362a4aaeaac81e6d9cec77ce89e3c6; application source and locked dependencies remain those of the pinned Jellyfin Web baseline.
 
@@ -103,6 +103,22 @@ During desktop navigation, a browser-control action unintentionally toggled the 
 | Interrupted network/server and expired session | Not exercised | Controlled recovery runs; AT-14 |
 
 ## Remaining steps and gate disposition
+
+### Desktop control follow-up — 2026-09-30
+
+Client source: xr 4ebb2ca076 (PR #30), experiment development build on loopback 8080. The existing signed-in session and permissioned F-01 were used through inherited UI controls. Server public information still reports 10.11.4. ADB returned no connected device in this run; previous successful USB mappings are historical observations, not a current connection claim. Exact embedded Chromium version remains unrecorded.
+
+| Check | Observed result / boundary |
+| --- | --- |
+| Ordinary playback and pause | One video element decoded at 3840 × 2160, readyState 4. Space toggled playing/paused state and the OSD action reflected the change. No XR comparison or second player was started |
+| Chapter seek while paused | Next chapter moved from 400.193 s to 505.714 s, matching the listed 8:25 chapter, and later to 766.099 s, matching 12:46. Playback decoded after seeking and remained paused until explicit Play. The second segment subsequently played to 802.075 s and was paused at readyState 4 before the tab was closed. This does not cover rapid/end-boundary seeking or every chapter |
+| Primary text control | Off changed the exposed text-track mode from showing to disabled while video continued at readyState 4. Restoring English SUBRIP changed mode back to showing. Mode alone does not prove rendered captions or synchronization |
+| Audio control | Selected the alternate audio option during playback, observed advancing video and readyState 4 at 517.398 s, then selected the original English option. Details subsequently showed English selected. No audible language/channel or synchronization pass is claimed |
+| Stop, page reload and Resume | Paused at 535.936 s, used Back, fully reloaded details and selected the visible Resume action. The first decoded sample captured after startup was 546.816 s with playback running at readyState 4, consistent with resuming near the prior position rather than the beginning. The initial seek boundary and exact start offset were not captured; cross-device resume, queue, report ownership and all of AT-07 remain unqualified |
+
+No credentials, private identifiers, titles, dialogue, artwork or screenshots are committed. Playback history changed under D-23. A paused Playback Info attempt displayed only its close control; no new delivery-method claim is inferred from that attempt. Earlier HLS evidence remains dated separately. Selected paused screenshots did not establish an active caption; without a verified cue interval this is neither a rendering pass nor a diagnosed missing-subtitle defect. These are ordinary desktop observations, not Quest, media-layer or XR-session qualification.
+
+### Remaining work
 
 1. Complete the desktop ordinary playback, seek, subtitle and resume checks using a newly established resume point; finish the media/delivery inventory without exporting personal titles/artwork.
 2. Verify the owner-reported emulator setup and record version/profile evidence.
