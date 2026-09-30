@@ -282,6 +282,10 @@ export class HtmlVideoPlayer {
     #currentBitmapSubRenderer;
     #bitmapPresentation = new BitmapPresentation();
     #subtitleRendererGeneration = 0;
+    /** @type {Map<number, { cancel: () => void }>} */
+    #textSubtitleRequests = new Map();
+    /** @type {Map<number, symbol>} */
+    #subtitleSelections = new Map();
     /**
      * @type {number | undefined}
      */
@@ -1278,9 +1282,9 @@ export class HtmlVideoPlayer {
                 tryRemoveElement(this.#videoSecondarySubtitlesElem);
                 this.#videoSecondarySubtitlesElem = null;
             }
-        } else if (this.#videoSubtitlesElem) {
-            // destroy all
-            const subtitlesContainer = this.#videoSubtitlesElem.parentNode;
+        } else {
+            // Either request may have completed first.
+            const subtitlesContainer = (this.#videoSubtitlesElem || this.#videoSecondarySubtitlesElem)?.parentNode;
             if (subtitlesContainer) {
                 tryRemoveElement(subtitlesContainer);
             }
@@ -1333,11 +1337,12 @@ export class HtmlVideoPlayer {
     destroyCustomTrack(videoElement, targetTrackIndex) {
         // Invalidate pending imports/configuration and callbacks before disposing either canvas owner.
         this.#subtitleRendererGeneration++;
-        if (targetTrackIndex === undefined) {
-            this.endPendingSubtitleLoad(PRIMARY_TEXT_TRACK_INDEX);
-            this.endPendingSubtitleLoad(SECONDARY_TEXT_TRACK_INDEX);
-        } else {
-            this.endPendingSubtitleLoad(targetTrackIndex);
+        const slots = this.isPrimaryTrack(targetTrackIndex) || this.isSecondaryTrack(targetTrackIndex) ?
+            [targetTrackIndex] : [PRIMARY_TEXT_TRACK_INDEX, SECONDARY_TEXT_TRACK_INDEX];
+        for (const slot of slots) {
+            this.#subtitleSelections.delete(slot);
+            this.#textSubtitleRequests.get(slot)?.cancel();
+            this.endPendingSubtitleLoad(slot);
         }
 
         this.destroyCustomRenderedTrackElements(targetTrackIndex);
@@ -1372,22 +1377,48 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    async fetchSubtitles(track, item) {
+    async fetchSubtitles(track, item, signal) {
         if (window.Windows && itemHelper.isLocalItem(item)) {
             return this.fetchSubtitlesUwp(track, item);
         }
 
+        const response = await fetch(getTextTrackUrl(track, item, '.js'), { signal });
+        if (!response.ok) throw new Error('Subtitle request failed');
+        return response.json();
+    }
+
+    /** Apply text only while this slot, source and video still own the request. @private */
+    async loadTextSubtitles(videoElement, track, item, targetTextTrackIndex, apply) {
+        this.#textSubtitleRequests.get(targetTextTrackIndex)?.cancel();
+        const playOptions = this._currentPlayOptions;
+        // The inherited legacy entry imports abortcontroller-polyfill after whatwg-fetch.
+        // eslint-disable-next-line compat/compat
+        const controller = new AbortController();
+        let finished = false;
+        const finish = () => {
+            if (finished) return;
+            finished = true;
+            if (this.#textSubtitleRequests.get(targetTextTrackIndex) === request) {
+                this.#textSubtitleRequests.delete(targetTextTrackIndex);
+            }
+            this.decrementFetchQueue();
+        };
+        const request = { cancel: () => {
+            controller.abort();
+            finish();
+        } };
+        const isCurrent = () => this.#textSubtitleRequests.get(targetTextTrackIndex) === request
+            && playOptions === this._currentPlayOptions && videoElement === this.#mediaElement;
+        this.#textSubtitleRequests.set(targetTextTrackIndex, request);
         this.incrementFetchQueue();
         try {
-            const response = await fetch(getTextTrackUrl(track, item, '.js'));
-
-            if (!response.ok) {
-                throw new Error(response);
-            }
-
-            return response.json();
+            const data = await this.fetchSubtitles(track, item, controller.signal);
+            if (isCurrent()) apply(data);
+        } catch {
+            // Keep signed URLs and subtitle contents out of error reporting.
+            if (isCurrent()) onErrorInternal(this, MediaError.NETWORK_ERROR);
         } finally {
-            this.decrementFetchQueue();
+            finish();
         }
     }
 
@@ -1631,29 +1662,28 @@ export class HtmlVideoPlayer {
      * @private
      */
     renderSubtitlesWithCustomElement(videoElement, track, item, targetTextTrackIndex) {
-        this.fetchSubtitles(track, item).then((subtitleData) => {
-            // Exit if the video element was destroyed while fetching subtitles
-            if (!this.#mediaElement) return;
-
+        return this.loadTextSubtitles(videoElement, track, item, targetTextTrackIndex, (subtitleData) => {
             const subtitleAppearance = userSettings.getSubtitleAppearanceSettings();
             const subtitleVerticalPosition = parseInt(subtitleAppearance.verticalPosition, 10);
 
+            let subtitlesContainer = videoElement.parentNode.querySelector('.videoSubtitles');
+            if (!subtitlesContainer) {
+                subtitlesContainer = document.createElement('div');
+                subtitlesContainer.classList.add('videoSubtitles');
+                videoElement.parentNode.appendChild(subtitlesContainer);
+            }
             if (!this.#videoSubtitlesElem && !this.isSecondaryTrack(targetTextTrackIndex)) {
-                let subtitlesContainer = document.querySelector('.videoSubtitles');
-                if (!subtitlesContainer) {
-                    subtitlesContainer = document.createElement('div');
-                    subtitlesContainer.classList.add('videoSubtitles');
-                }
                 const subtitlesElement = document.createElement('div');
                 subtitlesElement.classList.add('videoSubtitlesInner');
-                subtitlesContainer.appendChild(subtitlesElement);
+                if (subtitleVerticalPosition >= 0 && this.#videoSecondarySubtitlesElem) {
+                    subtitlesContainer.insertBefore(subtitlesElement, this.#videoSecondarySubtitlesElem);
+                } else {
+                    subtitlesContainer.appendChild(subtitlesElement);
+                }
                 this.#videoSubtitlesElem = subtitlesElement;
                 this.setSubtitleAppearance(subtitlesContainer, this.#videoSubtitlesElem);
-                videoElement.parentNode.appendChild(subtitlesContainer);
                 this.#currentTrackEvents = subtitleData.TrackEvents;
             } else if (!this.#videoSecondarySubtitlesElem && this.isSecondaryTrack(targetTextTrackIndex)) {
-                const subtitlesContainer = document.querySelector('.videoSubtitles');
-                if (!subtitlesContainer) return;
                 const secondarySubtitlesElement = document.createElement('div');
                 secondarySubtitlesElement.classList.add('videoSecondarySubtitlesInner');
                 // determine the order of the subtitles
@@ -1724,8 +1754,7 @@ export class HtmlVideoPlayer {
             }
 
             if (useCustomSubtitles(userSettings)) {
-                this.renderSubtitlesWithCustomElement(videoElement, track, item, targetTextTrackIndex);
-                return;
+                return this.renderSubtitlesWithCustomElement(videoElement, track, item, targetTextTrackIndex);
             }
         }
 
@@ -1747,15 +1776,15 @@ export class HtmlVideoPlayer {
             trackElement.mode = 'disabled';
         } else {
             // There is a function addTextTrack but no function for removeTextTrack
-            // Therefore we add ONE element and replace its cue data
-            trackElement = videoElement.addTextTrack('subtitles', 'manualTrack', 'und');
+            // Reserve the primary slot if a secondary lookup completes first.
+            for (let index = videoElement.textTracks?.length || 0; index <= targetTextTrackIndex; index++) {
+                trackElement = videoElement.addTextTrack('subtitles', 'manualTrack', 'und');
+                trackElement.mode = 'disabled';
+            }
         }
 
         // download the track json
-        this.fetchSubtitles(track, item).then(data => {
-            // Exit if the video element was destroyed while fetching subtitles
-            if (!this.#mediaElement) return;
-
+        return this.loadTextSubtitles(videoElement, track, item, targetTextTrackIndex, data => {
             console.debug(`downloaded ${data.TrackEvents.length} track events`);
 
             const subtitleAppearance = userSettings.getSubtitleAppearanceSettings();
@@ -1819,7 +1848,23 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    setCurrentTrackElement(streamIndex, targetTextTrackIndex) {
+    setCurrentTrackElement(streamIndex, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+        const selection = Symbol();
+        const playOptions = this._currentPlayOptions;
+        const videoElement = this.#mediaElement;
+        if (!playOptions || !videoElement) return;
+        const slots = streamIndex === -1 && this.isPrimaryTrack(targetTextTrackIndex) ?
+            [PRIMARY_TEXT_TRACK_INDEX, SECONDARY_TEXT_TRACK_INDEX] : [targetTextTrackIndex];
+        for (const slot of slots) {
+            this.#subtitleSelections.delete(slot);
+            const currentIndex = this.isSecondaryTrack(slot) ? this.#customSecondaryTrackIndex : this.#customTrackIndex;
+            const pending = this.#textSubtitleRequests.get(slot);
+            if (pending && (streamIndex === -1 || currentIndex !== streamIndex)) {
+                pending.cancel();
+                this.destroyStoredTrackInfo(slot);
+            }
+        }
+        this.#subtitleSelections.set(targetTextTrackIndex, selection);
         console.debug(`setting new text track index to: ${streamIndex}`);
 
         const mediaStreamTextTracks = getMediaStreamTextTracks(this._currentPlayOptions.mediaSource);
@@ -1848,7 +1893,9 @@ export class HtmlVideoPlayer {
 
         const player = this;
 
-        sessionPromise.then((s) => {
+        return sessionPromise.then((s) => {
+            if (this.#subtitleSelections.get(targetTextTrackIndex) !== selection
+                || playOptions !== this._currentPlayOptions || videoElement !== this.#mediaElement) return;
             if (!s.TranscodingInfo || s.TranscodingInfo.IsVideoDirect) {
                 // restore recorded delivery method if any
                 mediaStreamTextTracks.forEach((t) => {

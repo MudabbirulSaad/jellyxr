@@ -38,11 +38,13 @@ Updated: 2026-09-29. Confirmed means established by the approved plan or subsequ
 
 ## Decision process
 
-### Implementation record — bitmap startup disposal, 2026-09-30
+### Implementation record â€” bitmap startup disposal, 2026-09-30
 
 Under the approved FR-011/018 recovery scope, preserve libbitsub 1.11.0 and carry a narrow local startup-disposal patch with source hashes, provenance and unattended tests against its installed public classes. Tests reproduced late canvas creation in both PGS/VobSub and late GPU allocation or null-device errors at five asynchronous backend stages. This is an implementation repair, not a product-scope change or G2 renderer decision. Reassess the patch against upstream on dependency updates; parser/worker cancellation and actual-device subtitle qualification remain open.
 
 The in-flight loading follow-up reproduced ten renderer failures and a canceled range probe issuing two further fetch attempts. Extend the same pinned repair with abort signals, guarded continuations, cancelable parser scheduling, owned worker-session disposal and ignored late frame/index results. Keep the shared worker alive for other renderers; already-executing synchronous worker parsing may finish before queued disposal. Tests of ownership and normal/error paths do not prove codec fidelity, measured memory recovery or Quest compatibility.
+
+The inherited text-player follow-up uses per-slot request identity and the existing AbortController polyfill, preserving both primary/secondary selection and Jellyfin error ownership. Native slot reservation and video-scoped custom elements handle either completion order. This is an R-23 repair, not a change to the subtitle support matrix; controlled regression cases do not establish browser/server/device qualification.
 
 A deferred decision records alternatives, evidence, owner, impact and deadline in [risks](../05-delivery/risks.md). A selected technology needs a dated entry with experiment results and rejected alternatives; a vendor feature list is not a benchmark.
 

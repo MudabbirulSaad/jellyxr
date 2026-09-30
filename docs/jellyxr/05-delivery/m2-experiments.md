@@ -456,3 +456,22 @@ Disposal now aborts that renderer's subtitle requests, cancels queued main-threa
 Worker parsing already executing synchronously may finish before its queued disposal message. The tests establish session ownership and ignored late replies, not worker CPU preemption or measured memory recovery. The PC fixture uses in-memory original PGS data; it does not qualify HTTP subtitle delivery, VobSub decoding, other bitmap backends, Quest or native layers. Manual reload remains necessary when the development server rejects the tool browser's HMR origin.
 
 R-23 now retains plain-text/custom-DOM and secondary-track request identity, plus real-player source/track transitions and sustained resource verification. The earlier replacement blank observation and exact load-to-caption latency remain unresolved; these ownership repairs are not asserted to explain them. G2 and all dependent milestone gates remain open.
+
+## Text subtitle ownership increment — 2026-09-30
+
+Source revision: a236039a88, based on xr 3f2e9f24b6 (PR #24). This advances FR-011/018, AT-10/14 and EXP-02 in the inherited HTML player. No dependency, server API or playback owner changes.
+
+Five initial tests reproduced native cues returning after disable, stale cues mixing into a replacement, an obsolete custom response claiming the new element, secondary-first custom captions disappearing, and an old server-session lookup overriding the current selection. An additional reverse-lookup test exposed secondary native cues occupying the primary slot. These failures use the real player selection/rendering methods with controlled transport and native cue storage.
+
+Requests now belong to a primary or secondary slot, the current playback options and the video element. Removal aborts and settles the affected request once; late responses and errors are ignored. Busy feedback remains active through JSON body completion, and current failures reach the existing player error channel without including signed URLs or subtitle content. Repeated selection preserves its active fetch, while switching away and back restarts an aborted load. Session lookups check selection identity before applying tracks or changing delivery metadata.
+
+Custom captions share a video-scoped container that either response can create; both completion orders preserve the configured line ordering. Native rendering reserves both track slots when the secondary lookup finishes first. Removing all tracks also handles a secondary-only container. Existing text normalization, sanitization and appearance remain in use.
+
+| Check | Actual result / limit |
+| --- | --- |
+| Regression cases | Seventeen cases cover the six reproduced failures, old-source results, abort and late rejection, loading through JSON decoding, current errors, independent slot removal, secondary-only cleanup, repeated selection and switching away/back. Native cue storage and server replies are controlled; custom elements use the real DOM and inherited presentation methods |
+| Local checks | TypeScript, full lint (98 inherited warnings, no errors), styles and all 372 tests in 45 files pass. Ordinary production/ES5 passes 984 files; experimental production/ES5 passes 994. No dependency or build compatibility exclusion changed; the narrow AbortController lint explanation refers to the existing legacy polyfill |
+| Output/document audit | Both builds contain the request repair and exclude the selected test marker. Thirty Markdown files pass 406 relative links/anchors, requirement/acceptance coverage and the unchanged roadmap dependency graph |
+| UI/UX review | The installed UI/UX Pro Max search for loading feedback returned Feedback / Loading Indicators. The relevant guidance is matching busy feedback to the actual operation and preserving the existing interaction. This change corrects request lifetime without introducing new controls or marketing content |
+
+No new browser, server-delivered subtitle or Quest run is claimed for this slice. These unattended tests do not qualify the legacy UWP file-reader path, native browser cue layout, language/codec fidelity or device timing. The deferred secondary initialization timer, transitions between plain text and canvas formats, actual source changes/overlay cycles and sustained resources remain separate regression work. The earlier PGS replacement blank and G2 selection remain unresolved.
