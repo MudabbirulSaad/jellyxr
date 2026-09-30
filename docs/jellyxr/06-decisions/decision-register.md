@@ -65,3 +65,7 @@ Under FR-031, skip simulation calls only after the installed engine confirms tha
 ### Implementation record — plain-text caption controls, 2026-09-30
 
 FR-012's comparison now exposes scene-local text size, backing and placement with explicit Back/Reset. Settings affect the borrowed plain-text presentation only; authored ASS/bitmap layout, track selection, timeline and server preferences retain their existing owners. The [comparison evidence](../05-delivery/m2-experiments.md#plain-text-caption-settings-increment--2026-09-30) includes paused-cue PC checks and open minification/readability questions. No subtitle support class, production preference policy or G2 decision is approved by this increment.
+
+### Implementation record — canvas filtering, 2026-09-30
+
+The [minification repair](../05-delivery/m2-experiments.md#canvas-minification-filtering-increment--2026-09-30) corrects a demonstrated Babylon/Three canvas-sampling mismatch under FR-012/014/017. Enable trilinear mipmap sampling only when it preserves the canvas dimensions; restricted contexts retain bilinear sampling and authored layout. Tests cover resource replacement, unchanged-update ownership and disposal, with selected original PC media fixtures. Production text strategy, exact GPU cost, native alpha and actual-headset clarity remain G2 decisions/evidence; this does not select a renderer.
