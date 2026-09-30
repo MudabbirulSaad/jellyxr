@@ -56,6 +56,14 @@ Connection UI should offer Retry, Edit endpoint and ordinary-mode continuation w
 
 ## Documentation before release
 
+### Packaging contract
+
+Prepare W-08/W-09 packaging independently of the G2 renderer decision. A package operation must build from a clean tracked revision, reject extra source files, use the locked dependency baseline and preserve the default tracked client configuration. It must never sweep workspace files, credentials or local configuration into the archive. The operation records the actual revision, pinned upstream, lockfile hash, Node/npm versions, fixed build settings and every payload file's size and SHA-256. Include the repository licence, contributor attribution, available dependency notices and a source snapshot at that same revision.
+
+The package contains a dedicated `web/` static root and separate provenance/source/instructions. Only `web/` is served. Verification checks exact payload membership and hashes before deployment; stale or modified files must fail verification. Installation and rollback retain whole versioned directories rather than overwriting an active tree or deleting the existing client. Do not embed a private server endpoint or account in the distributed default configuration. The [packaging procedure](../05-delivery/package-installation.md) defines commands, verification and the pending topology/qualification boundaries.
+
+Package generation and integrity are distinct from qualification. The manifest records that the packager does not assess G4; only the acceptance evidence can establish release readiness. During M2, the ordinary production build is a packaging rehearsal, with experiments excluded. No archive command publishes a release, starts a public service or changes a deployment. HTTPS/domain/IP, base-path, CORS, media-range, WebSocket and cached-client behaviour still require the final hosting/device matrix.
+
 Publish tested instructions for the reference topology and separately served assets, with versioned prerequisites, trusted-certificate guidance, base-path examples, upgrade/rollback and WebSocket/range checks. This phase specifies that work; it does not deploy a service or generate production proxy configuration.
 
 For PC iteration and headset USB development forwarding, see the [development testing workflow](../05-delivery/development-testing-workflow.md). Mapping a development app port does not forward the Jellyfin endpoint or prove production CORS, certificates, base paths and media routes. Repeat the required access matrix on the final hosting topology before G4.
