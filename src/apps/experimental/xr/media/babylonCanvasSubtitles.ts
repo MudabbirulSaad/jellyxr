@@ -1,8 +1,8 @@
-import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 
 import { createBabylonPanel } from '../candidates/babylonPanel';
+import { createBabylonCanvasTexture } from '../candidates/babylonCanvasTexture';
 
 import { DEFAULT_SCREEN_POSE, screenGeometry, type ScreenPose } from '../fixtures/screenFixture';
 
@@ -13,7 +13,7 @@ import { fitVideoScreen } from './videoPresentation';
 export function createBabylonCanvasSubtitles(surface: BorrowedVideoSurface, scene: Scene, screenPercent = 100, pose: ScreenPose = DEFAULT_SCREEN_POSE) {
     const canvas = document.createElement('canvas');
     const artwork = createCanvasSubtitleArtwork(surface, canvas);
-    let texture = new DynamicTexture('borrowed-ass', canvas, scene, false);
+    let texture = createBabylonCanvasTexture('borrowed-ass', canvas, scene);
     texture.hasAlpha = true;
     const material = new StandardMaterial('borrowed-ass', scene);
     material.disableLighting = true;
@@ -34,7 +34,7 @@ export function createBabylonCanvasSubtitles(surface: BorrowedVideoSurface, scen
             const dimensions = texture.getSize();
             if (dimensions.width !== canvas.width || dimensions.height !== canvas.height) {
                 texture.dispose();
-                texture = new DynamicTexture('borrowed-ass', canvas, scene, false);
+                texture = createBabylonCanvasTexture('borrowed-ass', canvas, scene);
                 texture.hasAlpha = true;
                 material.emissiveTexture = texture;
                 material.opacityTexture = texture;

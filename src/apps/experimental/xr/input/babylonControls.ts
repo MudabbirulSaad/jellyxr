@@ -1,9 +1,9 @@
-import { DynamicTexture } from '@babylonjs/core/Materials/Textures/dynamicTexture';
 import { StandardMaterial } from '@babylonjs/core/Materials/standardMaterial';
 import type { Scene } from '@babylonjs/core/scene';
 import { TransformNode } from '@babylonjs/core/Meshes/transformNode';
 
 import { createBabylonPanel } from '../candidates/babylonPanel';
+import { createBabylonCanvasTexture } from '../candidates/babylonCanvasTexture';
 
 import { controlCanvasSize, drawControl } from './controlArtwork';
 import { ControlPanels } from './controlPanels';
@@ -17,7 +17,7 @@ export function createBabylonControls(scene: Scene, activation: ActivationState,
     const controls = new ControlPanels(target => {
         const canvas = document.createElement('canvas');
         [canvas.width, canvas.height] = controlCanvasSize(target);
-        const texture = new DynamicTexture(target.id, canvas, scene, false);
+        const texture = createBabylonCanvasTexture(target.id, canvas, scene);
         const material = new StandardMaterial(target.id, scene);
         material.disableLighting = true;
         material.emissiveTexture = texture;
@@ -42,7 +42,7 @@ export function createBabylonControls(scene: Scene, activation: ActivationState,
     });
     const floorCanvas = document.createElement('canvas');
     floorCanvas.width = floorCanvas.height = 512;
-    const floorTexture = new DynamicTexture('floor-aim', floorCanvas, scene, false);
+    const floorTexture = createBabylonCanvasTexture('floor-aim', floorCanvas, scene);
     floorTexture.hasAlpha = true;
     const floorMaterial = new StandardMaterial('floor-aim', scene);
     floorMaterial.disableLighting = true;
