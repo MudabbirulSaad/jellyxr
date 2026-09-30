@@ -8,7 +8,8 @@ export type SearchAction = 'catalogue-search' | 'catalogue-clear-search' | 'sear
 export type CatalogueAction = SearchAction | 'catalogue-open' | 'catalogue-close' | 'catalogue-next' | 'catalogue-previous' | 'catalogue-filter' | 'catalogue-back' | 'catalogue-heading' | 'catalogue-detail' | `catalogue-item-${string}`;
 export type ScreenAction = 'screen-open' | 'screen-close' | 'screen-heading' | 'screen-smaller' | 'screen-larger' | 'screen-reset'
     | 'screen-next-setting' | 'screen-closer' | 'screen-farther' | 'screen-higher' | 'screen-lower' | 'screen-tilt-up' | 'screen-tilt-down';
-export type ControlAction = ScreenAction | CatalogueAction | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
+export type ControlAction = ScreenAction | CatalogueAction | 'text-size' | 'select-fixture' | 'reset-count' | 'recall-remote' | 'exit-xr' | 'resume-media' | 'summon-controls' | 'choose-floor' | 'cancel-floor' | 'confirm-floor' | MovementAction;
+export type ControlTextScale = 1 | 1.25 | 1.5;
 export interface ControlTarget {
     id: ControlAction;
     label: string;
@@ -19,6 +20,7 @@ export interface ControlTarget {
     kind?: 'card' | 'heading' | 'detail' | 'key' | 'field' | 'message';
     description?: string;
     artwork?: 'calibration' | 'missing';
+    textScale?: ControlTextScale;
 }
 export interface InputRay { origin: Point3; direction: Point3 }
 export interface ControlAnchor { origin: Point3; yaw: number }
@@ -38,7 +40,8 @@ export const CONTROL_TARGETS: readonly ControlTarget[] = [
     { id: 'choose-floor', label: 'Choose floor', position: [-0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
     { id: 'cancel-floor', label: 'Cancel move', position: [0.6, 1.46, -1.4], width: 0.52, height: 0.22 },
     { id: 'catalogue-open', label: 'Open catalogue', position: [0, 1.74, -1.4], width: 0.52, height: 0.22 },
-    { id: 'screen-open', label: 'Screen settings', position: [0.6, 1.74, -1.4], width: 0.52, height: 0.22 }
+    { id: 'screen-open', label: 'Screen settings', position: [0.6, 1.74, -1.4], width: 0.52, height: 0.22 },
+    { id: 'text-size', label: 'Text size', description: '100% · Change size', position: [-0.6, 1.74, -1.4], width: 0.52, height: 0.22 }
 ];
 
 export const RECOVERY_TARGETS: readonly ControlTarget[] = [

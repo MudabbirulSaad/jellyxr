@@ -21,7 +21,7 @@ export function drawControl(target: ControlTarget, state: ControlVisualState, ca
     if (target.kind === 'key') {
         context.textAlign = 'center';
         context.textBaseline = 'middle';
-        context.font = '80px "Noto Sans", sans-serif';
+        context.font = `${80 * (target.textScale || 1)}px "Noto Sans", sans-serif`;
         context.fillStyle = state === 'disabled' ? '#A7B0BC' : '#F2F4F7';
         context.fillText(target.label, canvas.width / 2, canvas.height / 2);
         return;
@@ -34,35 +34,43 @@ export function drawControl(target: ControlTarget, state: ControlVisualState, ca
         drawCatalogue(target, state, canvas, context);
         return;
     }
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.fillStyle = '#F2F4F7';
-    context.font = '36px "Noto Sans", sans-serif';
-    context.fillText(target.label, canvas.width / 2, canvas.height * 0.43);
-    context.font = '24px "Noto Sans", sans-serif';
-    context.fillStyle = '#A7B0BC';
-    const text = { idle: target.description || 'Technical control', focus: 'Focused', pressed: 'Press held', disabled: target.description || 'Unavailable on this page' };
-    context.fillText(hint || text[state], canvas.width / 2, canvas.height * 0.76);
+    const scale = target.textScale || 1;
+    const text = { idle: target.description || 'Technical control', focus: 'Focused', pressed: 'Press held', disabled: target.description || 'Unavailable' };
+    const title = textBlock(context, target.label, 36 * scale, canvas.width - 48);
+    const sizeState = { idle: 'Change size', focus: 'Focused', pressed: 'Press held', disabled: 'Unavailable' };
+    const description = textBlock(context, hint || (target.id === 'text-size' ? `${scale * 100}% · ${sizeState[state]}` : text[state]), 24 * scale, canvas.width - 48);
+    const y = (canvas.height - title.height - description.height - 8) / 2;
+    drawBlock(context, title, canvas.width / 2, y, '#F2F4F7', 'center');
+    drawBlock(context, description, canvas.width / 2, y + title.height + 8, '#A7B0BC', 'center');
+}
+
+interface TextBlock { lines: string[]; font: string; lineHeight: number; height: number }
+
+function textBlock(context: CanvasRenderingContext2D, text: string, size: number, width: number, bold = false): TextBlock {
+    const font = `${bold ? 'bold ' : ''}${size}px "Noto Sans", sans-serif`;
+    context.font = font;
+    const lines = wrapControlText(text, width, value => context.measureText(value).width);
+    return { lines, font, lineHeight: size * 1.2, height: lines.length * size * 1.2 };
+}
+
+function drawBlock(context: CanvasRenderingContext2D, block: TextBlock, x: number, y: number, colour: string, align: CanvasTextAlign = 'left'): void {
+    context.font = block.font;
+    context.textAlign = align;
+    context.textBaseline = 'top';
+    context.fillStyle = colour;
+    block.lines.forEach((line, index) => {
+        context.fillText(line, x, y + index * block.lineHeight);
+    });
 }
 
 function drawTextPanel(target: ControlTarget, canvas: HTMLCanvasElement, context: CanvasRenderingContext2D): void {
     const field = target.kind === 'field';
-    context.textAlign = 'left';
-    context.textBaseline = 'top';
-    context.font = `${field ? 28 : 44}px "Noto Sans", sans-serif`;
-    context.fillStyle = field ? '#A7B0BC' : '#F2F4F7';
-    let y = field ? 20 : 190;
-    for (const line of wrapControlText(target.label, canvas.width - 64, value => context.measureText(value).width)) {
-        context.fillText(line, 32, y);
-        y += field ? 36 : 56;
-    }
-    y += 18;
-    context.font = `${field ? 38 : 32}px "Noto Sans", sans-serif`;
-    context.fillStyle = field ? '#F2F4F7' : '#A7B0BC';
-    for (const line of wrapControlText(target.description || '', canvas.width - 64, value => context.measureText(value).width)) {
-        context.fillText(line, 32, y);
-        y += 50;
-    }
+    const scale = target.textScale || 1;
+    const title = textBlock(context, target.label, (field ? 28 : 44) * scale, canvas.width - 64);
+    const description = textBlock(context, target.description || '', (field ? 38 : 32) * scale, canvas.width - 64);
+    const y = field ? 20 : (canvas.height - title.height - description.height - 18) / 2;
+    drawBlock(context, title, 32, y, field ? '#A7B0BC' : '#F2F4F7');
+    drawBlock(context, description, 32, y + title.height + 18, field ? '#F2F4F7' : '#A7B0BC');
 }
 
 /** Measured word wrapping, including unbroken identifiers; the fixture's full title stays visible. */
@@ -99,65 +107,46 @@ function splitLongWord(word: string, width: number, measure: (value: string) => 
 }
 
 function drawCatalogue(target: ControlTarget, state: ControlVisualState, canvas: HTMLCanvasElement, context: CanvasRenderingContext2D): void {
-    context.textAlign = 'left';
-    context.textBaseline = 'top';
-    context.fillStyle = '#F2F4F7';
+    const scale = target.textScale || 1;
     if (target.kind === 'heading') {
-        context.font = 'bold 44px "Noto Sans", sans-serif';
-        context.fillText(target.label, 32, 24);
-        context.font = '30px "Noto Sans", sans-serif';
-        context.fillStyle = '#A7B0BC';
-        let y = 90;
-        for (const line of wrapControlText(target.description || '', canvas.width - 64, value => context.measureText(value).width)) {
-            context.fillText(line, 32, y);
-            y += 40;
-        }
+        const title = textBlock(context, target.label, 44 * scale, canvas.width - 64, true);
+        const description = textBlock(context, target.description || '', 30 * scale, canvas.width - 64);
+        drawBlock(context, title, 32, 24, '#F2F4F7');
+        drawBlock(context, description, 32, 24 + title.height + 12, '#A7B0BC');
         return;
     }
     const card = target.kind === 'card';
     const margin = 28;
     const width = canvas.width - margin * 2;
-    const artworkHeight = card ? 115 : 145;
+    const action = { pressed: 'Press held', focus: 'Focused · Open details', idle: 'Open technical details', disabled: 'Unavailable' }[state];
+    const title = textBlock(context, target.label, (card ? 30 : 44) * scale, width);
+    const description = textBlock(context, card ? action : target.description || '', (card ? 24 : 30) * scale, width);
+    // Give text priority; never reduce its requested size to preserve calibration artwork.
+    const artworkHeight = Math.max(0, Math.min(card ? 115 : 145,
+        canvas.height - margin * 2 - title.height - description.height - 44));
+    drawArtwork(target, context, margin, width, artworkHeight, scale);
+    const y = margin + artworkHeight + 22;
+    drawBlock(context, title, margin, y, '#F2F4F7');
+    drawBlock(context, description, margin, card ? canvas.height - margin - description.height : y + title.height + 22, '#A7B0BC');
+}
+
+function drawArtwork(target: ControlTarget, context: CanvasRenderingContext2D, margin: number, width: number, height: number, scale: number): void {
+    if (!height) return;
     if (target.artwork === 'calibration') {
         const colours = ['#35475A', '#59728A', '#D7B67A', '#A7B0BC'];
         colours.forEach((colour, index) => {
             context.fillStyle = colour;
-            context.fillRect(margin + index * width / colours.length, margin, width / colours.length, artworkHeight);
+            context.fillRect(margin + index * width / colours.length, margin, width / colours.length, height);
         });
-        context.fillStyle = '#0B0F14';
-        context.fillRect(margin + 12, margin + 12, width - 24, 42);
-        context.fillStyle = '#F2F4F7';
-        context.font = '26px "Noto Sans", sans-serif';
-        context.fillText('Calibration artwork', margin + 22, margin + 18);
     } else {
         context.fillStyle = '#0B0F14';
-        context.fillRect(margin, margin, width, artworkHeight);
-        context.fillStyle = '#A7B0BC';
-        context.font = '28px "Noto Sans", sans-serif';
-        context.fillText('No artwork', margin + 18, margin + 40);
+        context.fillRect(margin, margin, width, height);
     }
-    let y = margin + artworkHeight + 22;
-    context.font = `${card ? 30 : 44}px "Noto Sans", sans-serif`;
-    context.fillStyle = '#F2F4F7';
-    const lines = wrapControlText(target.label, width, value => context.measureText(value).width);
-    for (const line of lines) {
-        context.fillText(line, margin, y);
-        y += card ? 38 : 56;
-    }
-    if (!card) {
-        y += 22;
-        context.font = '30px "Noto Sans", sans-serif';
-        context.fillStyle = '#A7B0BC';
-        for (const line of wrapControlText(target.description || '', width, value => context.measureText(value).width)) {
-            context.fillText(line, margin, y);
-            y += 40;
-        }
-    } else {
-        context.font = '24px "Noto Sans", sans-serif';
-        context.fillStyle = '#A7B0BC';
-        const action = { pressed: 'Press held', focus: 'Focused · Open details', idle: 'Open technical details', disabled: 'Unavailable' }[state];
-        context.fillText(action, margin, canvas.height - 46);
-    }
+    const label = textBlock(context, target.artwork === 'calibration' ? 'Calibration artwork' : 'No artwork', 26 * scale, width - 32);
+    if (label.height + 24 > height) return;
+    context.fillStyle = '#0B0F14';
+    context.fillRect(margin + 8, margin + 8, width - 16, label.height + 16);
+    drawBlock(context, label, margin + 16, margin + 16, '#F2F4F7');
 }
 
 export function controlCanvasSize(target: ControlTarget): readonly [number, number] {

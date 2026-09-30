@@ -332,6 +332,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                 </Typography>
                 <Typography component='p'>Use Open catalogue in the scene for six technical cards, type filtering, paging and details. Search opens a spatial keyboard; Cancel keeps your previous results, and Clear search removes the term. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
                 <Typography component='p'>Screen settings opens anchored controls for size, distance, height and tilt. Next setting cycles between them; Reset screen restores the default size and position. Video, captions and the solid screen move together. A blocked placement keeps the previous position and explains how to recover. Back to controls retains the placement for this scene. These bounded comparison settings still need headset readability and comfort testing.</Typography>
+                <Typography component='p'>Text size in the room controls cycles between 100%, 125% and 150% for this scene. Labels and search text wrap; larger information panels keep their matching hit bounds. Return to the room controls to change size again. Video and subtitle sizing are independent. These settings still need headset readability and reach testing.</Typography>
 
             </Box>
         </ComparisonFrame>
