@@ -9,6 +9,7 @@ import { ControlLayout, type ControlViewerPose } from './controlLayout';
 import { inspectPointing, type PointingAim } from './pointingAim';
 import type { SceneSurfaceQuery } from './sceneQuery';
 import { SpatialCatalogue } from './spatialCatalogue';
+import { SpatialScreen } from './spatialScreen';
 
 function pointingRank(aim: PointingAim | null): number {
     if (!aim?.action) return 0;
@@ -26,6 +27,7 @@ export class ComparisonInput {
     readonly layout = new ControlLayout();
     readonly floor: FloorSelection;
     readonly catalogue = new SpatialCatalogue();
+    readonly screen = new SpatialScreen();
     private pointing: (PointingAim & { source: string }) | null = null;
     private trackedViewer: { position: Point3; sampledAt: number } | null = null;
     private desktopViewer: ControlViewerPose | undefined;
@@ -203,12 +205,12 @@ export class ComparisonInput {
 
     private perform(action: ControlAction | null, source = 'keyboard'): void {
         if (!action) return;
-        const catalogue = this.catalogue.handle(action);
-        if (catalogue) {
+        const content = this.screen.handle(action) || this.catalogue.handle(action);
+        if (content) {
             this.state.cancel();
             this.pointing = null;
-            this.layout.setContent(catalogue.targets, catalogue.reanchor);
-            this.state.observe(source, catalogue.focus);
+            this.layout.setContent(content.targets, content.reanchor);
+            this.state.observe(source, content.focus);
         }
         if (action === 'choose-floor') {
             this.cancel();
@@ -305,8 +307,8 @@ export class ComparisonInput {
         const targets = this.layout.targets(this.floor.isActive()).filter(target => target.enabled !== false);
         if (key === 'Home' && phase === 'down') this.perform('summon-controls');
         if (key === 'Escape') {
-            this.cancel();
-            if (phase === 'down' && this.catalogue.search.isOpen()) this.perform('search-cancel');
+            if (phase === 'down') this.escape();
+            return;
         }
         if (this.layout.isPending()) return;
         if (this.floor.isActive()) {
@@ -323,6 +325,12 @@ export class ComparisonInput {
         if (key === 'Enter' || key === ' ') {
             this.activateKey(phase, focus, targets);
         }
+    }
+
+    private escape(): void {
+        this.cancel();
+        if (this.catalogue.search.isOpen()) this.perform('search-cancel');
+        if (this.screen.isOpen()) this.perform('screen-close');
     }
 
     private activateKey(phase: 'down' | 'up', focus: ControlAction | null, targets: readonly { id: ControlAction }[]): void {
@@ -352,7 +360,7 @@ export class ComparisonInput {
     }
 
     readStatus(): string {
-        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. ${this.floor.status()} ${this.catalogue.status()}`;
+        return `${this.selectionCount} deliberate fixture selections. Last action: ${this.lastAction} Pointer: ${this.lastPointer} Remote: ${this.grab?.source() ? 'held' : 'released'}. ${this.floor.status()} ${this.catalogue.status()} ${this.screen.status()}`;
     }
 
     readPointing(): (PointingAim & { pressed: boolean }) | null {

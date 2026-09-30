@@ -98,9 +98,9 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         xr.featuresManager.enableFeature(WebXRLayers.Name, 'latest', {}, true, false);
     }
     const video = new VideoPresentation({
-        createTexture: surface => createBabylonVideoTexture(surface, scene, engine),
-        createLayer: (surface, session, space) => createNativeMediaLayer(surface, session, space,
-            () => createBabylonMediaUnderlay(surface, scene))
+        createTexture: (surface, screenPercent) => createBabylonVideoTexture(surface, scene, engine, screenPercent),
+        createLayer: (surface, session, space, screenPercent) => createNativeMediaLayer(surface, session, space,
+            percent => createBabylonMediaUnderlay(surface, scene, percent), screenPercent)
     });
     const physicalRemote = remote ? createHavokRemote(remote, plugin) : undefined;
     const remoteMaterial = scene.getMaterialByName('remote-material');
@@ -183,7 +183,7 @@ export async function createComparison(canvas: HTMLCanvasElement, onSample: Samp
         controls.update();
         pointing.update();
         video.update(xr?.sessionManager.inXRSession ? xr.sessionManager.session : null,
-            xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null);
+            xr?.sessionManager.inXRSession ? xr.sessionManager.referenceSpace : null, input.screen.readSize());
         if (recovery.isSuspended()) {
             clock.reset();
         } else {

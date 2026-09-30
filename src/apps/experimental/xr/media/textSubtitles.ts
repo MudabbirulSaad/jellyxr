@@ -97,9 +97,6 @@ export function wrapSubtitle(text: string, measure: (value: string) => number, w
     return lines;
 }
 
-// The fixture's permanently visible controls occupy the lower sightline. Keep captions above them.
-export const SUBTITLE_PANEL = { width: 4.8, height: 1.2, x: 0, y: 2.65, z: -6.39 };
-
 /** Repaints only changed cues. Canvas never receives HTML or private diagnostic text. */
 export function createSubtitleArtwork(surface: BorrowedVideoSurface, canvas: HTMLCanvasElement, readWarning?: () => string | undefined) {
     canvas.width = 1600;

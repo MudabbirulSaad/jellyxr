@@ -1,3 +1,5 @@
+import { SCREEN_FRAME } from './screenFixture';
+
 import chairCollision from '../assets/observatory/observatory-chair-collision.json';
 
 export type Point3 = readonly [number, number, number];
@@ -27,7 +29,7 @@ export const ROOM_FIXTURE: readonly FixtureBox[] = [
     { id: 'wall-right', size: [0.2, 4, 14], position: [6, 2, 0], material: 'graphite', collision: 'static' },
     { id: 'wall-front', size: [12, 4, 0.2], position: [0, 2, -7], material: 'graphite', collision: 'static' },
     { id: 'wall-back', size: [12, 4, 0.2], position: [0, 2, 7], material: 'graphite', collision: 'static' },
-    { id: 'screen', size: [6.4, 3.6, 0.04], position: [0, 2, -6.5], material: 'screen', collision: 'static' },
+    { id: 'screen', size: [SCREEN_FRAME.width, SCREEN_FRAME.height, SCREEN_FRAME.depth], position: [SCREEN_FRAME.x, SCREEN_FRAME.y, SCREEN_FRAME.z], material: 'screen', collision: 'static' },
     { id: 'library-plinth', size: [8, 0.35, 0.45], position: [0, 0.175, 5.2], material: 'metal', collision: 'static' },
     { id: 'light-left', size: [0.035, 0.035, 10], position: [-4.5, 3.8, 0], material: 'warm', collision: 'none' },
     { id: 'light-right', size: [0.035, 0.035, 10], position: [4.5, 3.8, 0], material: 'warm', collision: 'none' },

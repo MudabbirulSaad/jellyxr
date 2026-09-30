@@ -331,6 +331,7 @@ export function Component({ embedded = false }: { embedded?: boolean } = {}) {
                     {' '}These timings exclude GPU, compositor and video decoding; they are not Quest qualification.
                 </Typography>
                 <Typography component='p'>Use Open catalogue in the scene for six technical cards, type filtering, paging and details. Search opens a spatial keyboard; Cancel keeps your previous results, and Clear search removes the term. Back restores the selected card. Close catalogue returns to room controls. These technical records have no attached media.</Typography>
+                <Typography component='p'>Screen size opens anchored controls for a 60–100% image envelope. Smaller and Larger change it in ten-point steps; Reset size restores 100%. Video and captions resize together while the room stays fixed. Back to controls keeps the size for this scene. Distance, tilt and headset readability remain unqualified.</Typography>
 
             </Box>
         </ComparisonFrame>

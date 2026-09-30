@@ -22,6 +22,18 @@ The explicit `JELLYXR_EXPERIMENTS=1` build flag enables this route. Ordinary `se
 
 The fixture UI uses actionable technical labels. Normal product routes never show synthetic film descriptions or fake library content. It creates no competing Jellyfin player or progress reporter; a separate, silent calibration clip is opt-in and refuses to start while ordinary playback is active.
 
+## Screen-size comparison contract — 2026-09-30
+
+Under [FR-016](../02-requirements/functional-requirements.md#fr-016), compare deliberate screen-size changes in both disposable scenes before selecting a presentation path. Keep the architectural screen and its collision proxy fixed, with a graphite surround so reduced images do not expose a bright white border. The displayed image may occupy 60–100% of the existing 6.4 × 3.6 m envelope, in ten-percentage-point steps. These are bounded experiment values, not accepted headset sizing recommendations.
+
+Scene-rendered **Screen size**, **Smaller**, **Larger**, **Reset size** and **Back to controls** actions must use the existing shared controller/hand/desktop hit-testing path. Show the current percentage and physical envelope, disable actions at their limits, and preserve the stable control anchor while adjusting. Retain Return to seat and Exit XR recovery. Closing the panel preserves the size for this scene; Reset restores 100%. No preference is persisted yet.
+
+Video aspect ratio, ASS/bitmap artwork, native quad, projection aperture and plain-text caption geometry must derive from the same percentage. Size changes may replace owned presentation resources but must not release the borrowed player, seek, pause, play, change tracks or restart progress reporting. Unchanged size must not allocate resources each frame. A rejected media layer remains an explicit error, with no silent texture fallback.
+
+Validate boundary/Reset behaviour, stable target placement, both renderer geometries, layer/aperture agreement, cleanup and playback ownership in controlled tests. Inspect both PC texture previews with the labelled calibration media and captions. Real layer resizing, hand/controller operation, subtitle readability and comfort remain Quest checks. Distance, height, tilt, curved presentation, general screen recentering and scoped production preferences remain unimplemented portions of FR-016; this increment does not close that requirement or G2.
+
+UI/UX Pro Max's verified **Disabled States** guidance informs distinct disabled controls; the existing focus/press feedback and concrete action labels are retained. Its mobile sizing and haptic defaults are not XR qualification evidence.
+
 ## Candidate versions and provenance
 
 | Package | Exact experimental version | Installed package licence |
@@ -583,3 +595,25 @@ Saved PC reference views: [plain Babylon baseline](../references/images/m2-plain
 No CSS/SCSS changed, so stylelint was not repeated. Both ordinary and experimental builds pass; later documentation and reference-image additions do not alter application source. Remaining gates include complete room/back-wall visual review, final library shelving, authored surface textures, compression/mips, baked lighting/reflections, actual scene-query/GPU cost, native media layers, binocular depth, hand/controller reach and sustained Quest qualification. G2/G3/G4 remain open.
 
 Documentation validation passes 430 relative links/anchors across 32 Markdown files, unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.
+
+## Screen-size increment — 2026-09-30
+
+Source: `723b3cb5f3138b1bc13dd9112e6cd97806558d3c`, branch `milestone/m2-screen-sizing`, based on `xr` `92039c9316`. Implements the [bounded comparison contract](#screen-size-comparison-contract--2026-09-30) for FR-016/012/014, without selecting a renderer or changing the ordinary player.
+
+Both scenes expose a seven-panel size view through the existing spatial input path. Explicit Smaller/Larger steps update one shared percentage, with disabled limits, Reset, Back, Return to seat and Exit XR. Size changes retain the control anchor and player lease while replacing owned video/caption resources. The native quad and projection content receive the same value. The screen backing and all colliders stay fixed; its graphite finish removes the bright surround that PC inspection exposed at reduced sizes.
+
+| Check | Actual result and limits |
+| --- | --- |
+| Controlled regression | Twelve additional cases; 439 tests across 51 files pass. Covers size limits, retained size, Reset, disabled geometry, stable placement, deliberate activation/cancellation, both real renderer video/caption/aperture geometries, native composition arguments and disposal without player commands. Artwork drawing is mocked in the geometry cases; native layer calls use a controlled host |
+| Defects found while authoring | Tests reproduced disabled focus when reopening at 60% and Escape key-up canceling the return layout. Both are fixed. PC inspection exposed a heading covering the plain caption; the size panel is lower, and a reference-seat projection assertion protects that separation. This does not qualify other head positions or authored caption placement |
+| Babylon PC texture | Playing calibration video reduced from 100% to 60%; plain-text caption and image appeared together at the reduced size. After native seek, paused time was 0.40597 s before and after Reset to 100%. PGS 1 appeared at 80% after seeking into its active interval. Before the first PGS cue, the existing unqualified-bitmap message appeared; that state is not a caption fidelity pass |
+| Three PC texture | Attached the same paused technical video with PGS 1, reduced 100% to 60%, then Reset and Escape restored full size and the main controls. Paused time remained 0.64597 s through the latter sequence. No Jellyfin-delivered track or audible media was exercised in this slice |
+| UI operation | PC keyboard actions verified both scenes. A coordinate click in the scrolled workbench did not activate the target; no mouse-pointer pass is recorded. Real controller/hand sizing and input switching remain untested on Quest |
+| Local checks | TypeScript passes. Full lint: 98 inherited warnings, zero errors; affected lint passes again after layout refinement. Stylelint passes. Ordinary production/ES5 passes 984 files; experimental production/ES5 passes 994, with the two inherited bundle-size warnings. Final layout passes the full 439-test run |
+| Bundle boundary | Ordinary output contains no new sizing-copy/action markers or room marker. Dependencies and lockfile are unchanged. The controls remain behind the existing experimental build boundary |
+
+PC references: [Babylon text at 60%](../references/images/m2-size-babylon-60.png) and [Three PGS at 60%](../references/images/m2-size-three-60.png). Both show only labelled, original calibration content. They are visual evidence of selected desktop states, not binocular depth, text readability in-headset, timing, colour fidelity or a renderer ranking. Logs remain outside Git in `%LOCALAPPDATA%/JellyXR/screen-size-*.log`.
+
+Additional screen distance/height/tilt, curved presentation, general recentering and persisted preferences remain open under FR-016. ASS resizing has controlled geometry coverage but was not visually rechecked in this slice. Native layer resizing, subtitle classes and all required hand/controller, comfort and sustained Quest evidence remain open at G2; G3/G4 are not advanced.
+
+Documentation validation passes 444 relative links/anchors across 33 Markdown files, 41 unique requirement definitions, all P0/work/scenario mappings and the unchanged 17 dependency edges. No diagrams changed; whitespace checks pass.
