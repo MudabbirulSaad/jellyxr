@@ -86,6 +86,10 @@ Physics owns only movable remote/artwork/panel bodies and their collision proxie
 
 The session coordinator owns reference-space changes and deliberate teleport/snap orientation. It validates destinations, asks the existing playback owner to pause before a viewing-position change, and requires explicit Resume. It does not own a second playback clock. Library identity, filters, selection and pagination survive movement and library/cinema transitions.
 
+### Grab tracking continuity comparison
+
+Under FR-021/023/031 and AT-27, both comparison candidates must cancel a held remote when the animation frame has no valid viewer pose, even if a controller grip or hand joints remain available. A new grab requires the same recent valid animation-frame head sample used for selection; an input-event frame must not call `getViewerPose`. Cancellation clears the grab target and releases once without retaining a throw velocity. Restored tracking does not resume the old grab; a fresh squeeze/pinch is required. Keep logical focus, remote recall and button alternatives. Controlled event tests establish this ownership rule; actual headset loss/recovery remains a separate qualification scenario.
+
 ## Production loading boundary
 
 M3 hosts a bounded XR feature within the existing React application. Load renderer, physics and room assets only at the feature boundary; preserve ordinary routes and localization. Capability detection explains unavailable entry without treating a user-agent string as proof. The borrowed media bridge detaches without stopping or reporting through a second owner. Subtitle presentation and text rendering are chosen at G2.
